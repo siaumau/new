@@ -36,7 +36,7 @@ const items = ref([]);
 
 const fetchItems = async () => {
   try {
-    const response = await axios.get('http://localhost:8000/api/items');
+    const response = await axios.get('http://localhost:8000/items');
     items.value = response.data;
   } catch (error) {
     console.error('Error fetching items:', error);
@@ -58,7 +58,7 @@ const editItem = (item) => {
 const deleteItem = async (id) => {
   if (confirm('Are you sure you want to delete this item?')) {
     try {
-      await axios.delete(`http://localhost:8000/api/items/${id}`);
+      await axios.delete(`http://localhost:8000/items/${id}`);
       fetchItems(); // Refresh the list
     } catch (error) {
       console.error('Error deleting item:', error);

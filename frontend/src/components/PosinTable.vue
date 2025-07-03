@@ -38,7 +38,7 @@ const posins = ref([]);
 
 const fetchPosins = async () => {
   try {
-    const response = await axios.get('http://localhost:8000/api/posin');
+    const response = await axios.get('http://localhost:8000/posin');
     posins.value = response.data;
   } catch (error) {
     console.error('Error fetching posin records:', error);
@@ -60,7 +60,7 @@ const editPosin = (posin) => {
 const deletePosin = async (id) => {
   if (confirm('Are you sure you want to delete this posin record?')) {
     try {
-      await axios.delete(`http://localhost:8000/api/posin/${id}`);
+      await axios.delete(`http://localhost:8000/posin/${id}`);
       fetchPosins(); // Refresh the list
     } catch (error) {
       console.error('Error deleting posin record:', error);

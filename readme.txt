@@ -14,7 +14,7 @@
 
       這將會在 http://127.0.0.1:8000 啟動伺服器 (或顯示其他端口)。
 
-   4. 您可以透過瀏覽器訪問 http://127.0.0.1:8000/api/documentation 來查看 Swagger API 文件。
+   4. 您可以透過瀏覽器訪問 http://localhost:8000/documentation 來查看 Swagger API 文件。
 
   前端 (Vue):
 
@@ -47,3 +47,17 @@
 
 
 我將建立 ItemController。我會使用 php artisan make:controller ItemController --api 命令，這會生成一個包含基本 API 方法的控制器。
+
+  一旦後端可以被外部訪問，前端的 axios 請求 URL 也需要從 http://127.0.0.1:8000 更改為後端的實際 IP 地址或網域名稱。
+
+
+  由於我已經將前端程式碼中的所有 localhost:8000 替換為 127.0.0.1:8000，如果您使用 php artisan serve --host=0.0.0.0 --port=8000 啟動後端，前端應該可以直接工作。
+
+  如果您希望使用其他 IP 地址或網域名稱，您需要手動修改前端程式碼中的所有 http://127.0.0.1:8000 為您新的後端 URL。
+
+
+  總結：
+
+
+   1. 啟動後端： 使用 php artisan serve --host=0.0.0.0 --port=8000 (或您的實際 IP) 啟動 Laravel 伺服器。
+   2. 啟動前端： 執行 npm run dev 啟動 Vue 應用程式。

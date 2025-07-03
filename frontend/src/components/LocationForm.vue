@@ -83,9 +83,9 @@ watch(() => props.location, (newLocation) => {
 const saveLocation = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`http://localhost:8000/api/locations/${form.value.id}`, form.value);
+      await axios.put(`http://localhost:8000/locations/${form.value.id}`, form.value);
     } else {
-      await axios.post('http://localhost:8000/api/locations', form.value);
+      await axios.post('http://localhost:8000/locations', form.value);
     }
     emit('saved');
     closeForm();

@@ -38,7 +38,7 @@ const locations = ref([]);
 
 const fetchLocations = async () => {
   try {
-    const response = await axios.get('http://localhost:8000/api/locations');
+    const response = await axios.get('http://localhost:8000/locations');
     locations.value = response.data;
   } catch (error) {
     console.error('Error fetching locations:', error);
@@ -60,7 +60,7 @@ const editLocation = (location) => {
 const deleteLocation = async (id) => {
   if (confirm('Are you sure you want to delete this location?')) {
     try {
-      await axios.delete(`http://localhost:8000/api/locations/${id}`);
+      await axios.delete(`http://localhost:8000/locations/${id}`);
       fetchLocations(); // Refresh the list
     } catch (error) {
       console.error('Error deleting location:', error);

@@ -83,9 +83,9 @@ watch(() => props.item, (newItem) => {
 const saveItem = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`http://localhost:8000/api/items/${form.value.item_id}`, form.value);
+      await axios.put(`http://localhost:8000/items/${form.value.item_id}`, form.value);
     } else {
-      await axios.post('http://localhost:8000/api/items', form.value);
+      await axios.post('http://localhost:8000/items', form.value);
     }
     emit('saved');
     closeForm();
