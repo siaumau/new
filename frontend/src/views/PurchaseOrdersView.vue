@@ -28,7 +28,7 @@ const onPurchaseOrderSaved = () => {
 </script>
 
 <template>
-  <div>
+  <div class="h-full w-full bg-[#f9fafb]">
     <PurchaseOrderTable
       @add-new="openNewPurchaseOrderForm"
       @edit-purchase-order="openEditPurchaseOrderForm"

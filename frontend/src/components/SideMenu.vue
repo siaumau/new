@@ -31,7 +31,7 @@ const navigateTo = (path) => {
 </script>
 
 <template>
-  <div class="bg-[#19A2B3] text-white h-full w-64 flex flex-col">
+  <div class="bg-[#19A2B3] text-white h-screen w-64 flex flex-col">
     <!-- 系統標題 -->
     <div class="p-4 flex items-center gap-2 border-b border-[#1694A3]">
       <div class="w-10 h-10 bg-white rounded-md flex items-center justify-center text-[#19A2B3]">

@@ -297,7 +297,7 @@ onMounted(() => {
             <button
               type="button"
               @click="addItem"
-              class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm"
+              class="bg-[#19A2B3] hover:bg-[#158293] text-white py-1 px-3 rounded text-sm"
             >
               添加項目
             </button>
@@ -387,7 +387,7 @@ onMounted(() => {
           </button>
           <button
             type="submit"
-            class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+            class="bg-[#19A2B3] hover:bg-[#158293] text-white py-2 px-4 rounded"
             :disabled="loading"
           >
             {{ loading ? '處理中...' : '保存' }}
