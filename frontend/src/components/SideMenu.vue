@@ -14,7 +14,7 @@ const props = defineProps({
 
 // 選單項目
 const menuItems = [
-  { icon: 'dashboard', text: '儀表板', path: '/dashboard', id: 'dashboard' },
+  { icon: 'dashboard', text: '儀表板', path: '/purchase-orders', id: 'dashboard' },
   { icon: 'purchase-orders', text: '進貨單', path: '/purchase-orders', id: 'purchase-orders' },
   { icon: 'locations', text: '位置管理', path: '/locations', id: 'locations' },
   { icon: 'items', text: '商品管理', path: '/items', id: 'items' },

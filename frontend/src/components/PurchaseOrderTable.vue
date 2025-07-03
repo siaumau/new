@@ -332,7 +332,7 @@ onMounted(() => {
 
 <style scoped>
 .purchase-order-container {
-  @apply p-6 bg-gray-50 min-h-screen;
+  @apply p-6 bg-gray-50 min-h-screen  ;
 }
 
 .table-section {

@@ -174,7 +174,7 @@ const loadEditData = () => {
 // 載入商品和供應商列表
 const fetchItems = async () => {
   try {
-    const response = await axios.get('/api/v1/items');
+    const response = await axios.get('/items');
     availableItems.value = response.data.data || response.data;
   } catch (err) {
     console.error('Error fetching items:', err);
@@ -183,11 +183,19 @@ const fetchItems = async () => {
 
 const fetchSuppliers = async () => {
   try {
-    // 這裡需要調整為實際的後端API端點
-    const response = await axios.get('/api/v1/suppliers');
-    suppliers.value = response.data.data || response.data;
+    // 暫時使用模擬資料，因為後端沒有 suppliers 表
+    // 從 posin 表中獲取唯一的用戶作為供應商
+    const response = await axios.get('/posin');
+    const uniqueSuppliers = [...new Set(response.data.data.map(order => order.supplier))];
+    suppliers.value = uniqueSuppliers.map((name, index) => ({ id: index + 1, name }));
   } catch (err) {
     console.error('Error fetching suppliers:', err);
+    // 如果 API 失敗，使用預設供應商
+    suppliers.value = [
+      { id: 1, name: '涂宸菱' },
+      { id: 2, name: '黃彥銓' },
+      { id: 3, name: '黃威朝' }
+    ];
   }
 };
 
