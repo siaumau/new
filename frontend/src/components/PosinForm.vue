@@ -178,9 +178,9 @@ const savePosin = async () => {
     });
 
     if (isEditing.value) {
-      await axios.put(`http://127.0.0.1:8000/api/posin/${form.value.posin_id}`, payload);
+      await axios.put(`http://127.0.0.1:8000/posin/${form.value.posin_id}`, payload);
     } else {
-      await axios.post('http://127.0.0.1:8000/api/posin', payload);
+      await axios.post('http://127.0.0.1:8000/posin', payload);
     }
     emit('saved');
     closeForm();
