@@ -67,22 +67,19 @@ const fetchPurchaseOrders = async () => {
   error.value = null;
 
   try {
-    // 在實際環境中，這裡會呼叫真實的 API
-    // const response = await axios.get('/api/v1/purchase-orders', {
-    //   params: {
-    //     page: currentPage.value,
-    //     per_page: itemsPerPage.value,
-    //     search: searchQuery.value,
-    //     status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
-    //   }
-    // });
+    // 呼叫真實的 API
+    const response = await axios.get('/api/v1/posin', {
+      params: {
+        page: currentPage.value,
+        per_page: itemsPerPage.value,
+        search: searchQuery.value,
+        status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
+      }
+    });
 
-    // 使用模擬資料
-    await new Promise(resolve => setTimeout(resolve, 300)); // 模擬網絡延遲
-
-    purchaseOrders.value = mockPurchaseOrders;
-    totalItems.value = 578;
-    totalPages.value = 58;
+    purchaseOrders.value = response.data.data;
+    totalItems.value = response.data.total;
+    totalPages.value = response.data.last_page;
   } catch (err) {
     console.error('Error fetching purchase orders:', err);
     error.value = '無法載入進貨訂單資料。請稍後再試。';
@@ -103,15 +100,11 @@ const handleDelete = async (id) => {
   if (!confirm('確定要刪除此進貨訂單？')) return;
 
   try {
-    // 在實際環境中，這裡會呼叫真實的 API
-    // await axios.delete(`/api/v1/purchase-orders/${id}`);
+    // 呼叫真實的 API
+    await axios.delete(`/api/v1/posin/${id}`);
 
-    // 使用模擬資料
-    await new Promise(resolve => setTimeout(resolve, 300)); // 模擬網絡延遲
-
-    purchaseOrders.value = purchaseOrders.value.filter(order => order.id !== id);
-    totalItems.value = purchaseOrders.value.length;
-    totalPages.value = Math.ceil(purchaseOrders.value.length / itemsPerPage.value);
+    // 重新載入資料
+    await fetchPurchaseOrders();
   } catch (err) {
     console.error('Error deleting purchase order:', err);
     alert('刪除進貨訂單時發生錯誤。請稍後再試。');

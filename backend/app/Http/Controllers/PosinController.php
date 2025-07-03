@@ -12,14 +12,91 @@ class PosinController extends Controller
     /**
      * @OA\Get(
      *     path="/posin",
-     *     summary="Get all posin records",
-     *     @OA\Response(response="200", description="List of posin records")
+     *     summary="Get all posin records with pagination and search",
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number",
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Items per page",
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search term",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Status filter",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(response="200", description="Paginated list of posin records")
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
-        $posin = Posin::with('posinItems')->get();
-        return response()->json($posin);
+        $query = Posin::with('posinItems');
+
+        // 搜尋功能
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('posin_sn', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('posin_user', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('posin_note', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        // 狀態篩選（這裡我們用一個簡單的邏輯來判斷狀態）
+        if ($request->has('status') && !empty($request->status) && $request->status !== 'all') {
+            // 由於原始表格沒有狀態欄位，我們根據 posin_log 是否為空來判斷
+            if ($request->status === '已完成') {
+                $query->whereNotNull('posin_log');
+            } elseif ($request->status === '進行中') {
+                $query->whereNull('posin_log');
+            }
+        }
+
+        // 排序
+        $query->orderBy('posin_dt', 'desc');
+
+        // 分頁
+        $perPage = $request->get('per_page', 10);
+        $posinRecords = $query->paginate($perPage);
+
+                // 格式化每個項目的資料以符合前端需求
+        $formattedItems = [];
+        foreach ($posinRecords->items() as $posin) {
+            $formattedItems[] = [
+                'id' => $posin->posin_id,
+                'order_number' => $posin->posin_sn,
+                'supplier' => $posin->posin_user,
+                'purchase_date' => $posin->posin_dt ? date('Y/n/j', strtotime($posin->posin_dt)) : '',
+                'created_at' => $posin->posin_dt ? date('Y/n/j', strtotime($posin->posin_dt)) : '',
+                'status' => $posin->posin_log ? '已完成' : '進行中',
+                'items_count' => $posin->posinItems->count(),
+                'total_amount' => $posin->posinItems->sum('item_price'),
+                'notes' => $posin->posin_note,
+                'posin_items' => $posin->posinItems
+            ];
+        }
+
+        return response()->json([
+            'data' => $formattedItems,
+            'current_page' => $posinRecords->currentPage(),
+            'last_page' => $posinRecords->lastPage(),
+            'per_page' => $posinRecords->perPage(),
+            'total' => $posinRecords->total(),
+            'from' => $posinRecords->firstItem(),
+            'to' => $posinRecords->lastItem(),
+        ]);
     }
 
     /**
