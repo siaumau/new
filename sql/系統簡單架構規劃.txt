@@ -1,0 +1,21 @@
+  新專案的技術規格如下：
+   * 前端: Vue.js
+   * UI 框架: Tailwind CSS
+   * 後端: PHP
+   * API 文件: Swagger (OpenAPI)
+   * 資料庫: 結構與資料已在 D:\sideproject\new\sql 提供
+
+計畫如下：
+
+
+   1. 建立專案目錄結構: 在 D:\sideproject\new 中建立 frontend 和 backend 資料夾來分別存放前後端程式碼。
+   2. 後端環境建置 (PHP + Laravel):
+       * 使用 Composer 建立一個新的 Laravel 專案。Laravel 是一個成熟的 PHP
+         框架，擁有良好的生態系，能輕易地整合 Swagger。
+       * 為 Laravel 安裝 l5-swagger 套件，用來自動生成 Swagger API 文件。
+   3. 前端環境建置 (Vue + Tailwind CSS):
+       * 使用官方的 create-vue 工具來建立新的 Vue 專案。
+       * 在建立過程中，我會選擇整合 Tailwind CSS。
+   4. 資料庫整合:
+       * 我會先讀取 D:\sideproject\new\sql\all.sql 來理解您的資料庫結構，這將是後續開發 API 的基礎。
+       * 當後端環境建置完成後，我會協助您設定 .env 檔案來連接資料庫。
