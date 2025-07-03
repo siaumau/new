@@ -35,4 +35,12 @@
       這將會在 http://localhost:5173 (或顯示其他端口) 啟動開發伺服器。
 
 
-  如果您有任何其他問題或需要進一步的協助，請隨時告訴我。
+  後端 (PHP + Laravel):
+   * 在 D:\sideproject\new\backend 建立了 Laravel 專案。
+   * 配置了資料庫連接到 inventory_system。
+   * 使用 kitloong/laravel-migrations-generator 將您現有的資料庫結構反向工程為 Laravel 遷移檔案，並確保它們被 Laravel 遷移系統識別。
+   * 安裝並配置了 l5-swagger，現在可以生成 API 文件。
+
+  前端 (Vue + Tailwind CSS):
+   * 在 D:\sideproject\new\frontend 建立了 Vue 專案。
+   * 配置了 Tailwind CSS。
