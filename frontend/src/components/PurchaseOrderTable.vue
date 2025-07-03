@@ -145,7 +145,7 @@ onMounted(() => {
       <h2 class="text-xl font-bold">進貨產品建單</h2>
       <button
         @click="handleAddNew"
-        class="bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded flex items-center"
+        class="bg-[#19A2B3] hover:bg-[#158293] text-white py-2 px-4 rounded flex items-center"
       >
         <span class="mr-2">+</span>
         <span>新增進貨單</span>
@@ -234,6 +234,7 @@ onMounted(() => {
                 <td class="px-6 py-4 whitespace-nowrap">{{ order.created_at }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span
+                    class="px-2 py-1 rounded-full text-xs font-medium bg-[#caeef3] text-[#19A2B3]"
                     class="px-2 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800"
                   >
                     進行中
