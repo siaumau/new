@@ -44,3 +44,6 @@
   前端 (Vue + Tailwind CSS):
    * 在 D:\sideproject\new\frontend 建立了 Vue 專案。
    * 配置了 Tailwind CSS。
+
+
+我將建立 ItemController。我會使用 php artisan make:controller ItemController --api 命令，這會生成一個包含基本 API 方法的控制器。

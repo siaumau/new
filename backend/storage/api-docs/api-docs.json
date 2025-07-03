@@ -19,6 +19,702 @@
                     }
                 }
             }
+        },
+        "/items": {
+            "get": {
+                "summary": "Get all items",
+                "operationId": "38f04083708efa13b19c689b47445d64",
+                "responses": {
+                    "200": {
+                        "description": "List of items"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create a new item",
+                "operationId": "5303a71efd2a2fd638dc3ce2bdda9997",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "item_name": {
+                                        "type": "string"
+                                    },
+                                    "item_cid": {
+                                        "type": "integer"
+                                    },
+                                    "item_sn": {
+                                        "type": "string"
+                                    },
+                                    "item_spec": {
+                                        "type": "string"
+                                    },
+                                    "item_save": {
+                                        "type": "integer"
+                                    },
+                                    "item_price": {
+                                        "type": "number"
+                                    },
+                                    "suggested_retail_price": {
+                                        "type": "integer"
+                                    },
+                                    "item_note": {
+                                        "type": "string"
+                                    },
+                                    "item_open": {
+                                        "type": "integer"
+                                    },
+                                    "item_sort": {
+                                        "type": "integer"
+                                    },
+                                    "item_mstock": {
+                                        "type": "integer"
+                                    },
+                                    "item_type": {
+                                        "type": "string"
+                                    },
+                                    "item_years": {
+                                        "type": "string"
+                                    },
+                                    "item_holdmonth": {
+                                        "type": "integer"
+                                    },
+                                    "item_outvyear": {
+                                        "type": "string"
+                                    },
+                                    "item_predict": {
+                                        "type": "integer"
+                                    },
+                                    "item_insertdate": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "item_editdate": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "item_barcode": {
+                                        "type": "string"
+                                    },
+                                    "item_inbox": {
+                                        "type": "integer"
+                                    },
+                                    "ppt_id": {
+                                        "type": "integer"
+                                    },
+                                    "item_vcode": {
+                                        "type": "string"
+                                    },
+                                    "item_size": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Item created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/items/{id}": {
+            "get": {
+                "summary": "Get a specific item",
+                "operationId": "3e662703a702b80e7f3dc6dd432f9128",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item details"
+                    },
+                    "404": {
+                        "description": "Item not found"
+                    }
+                }
+            },
+            "put": {
+                "summary": "Update an item",
+                "operationId": "4a2d683f0a5edace6de8e8d0d12c2ee9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "item_name": {
+                                        "type": "string"
+                                    },
+                                    "item_cid": {
+                                        "type": "integer"
+                                    },
+                                    "item_sn": {
+                                        "type": "string"
+                                    },
+                                    "item_spec": {
+                                        "type": "string"
+                                    },
+                                    "item_save": {
+                                        "type": "integer"
+                                    },
+                                    "item_price": {
+                                        "type": "number"
+                                    },
+                                    "suggested_retail_price": {
+                                        "type": "integer"
+                                    },
+                                    "item_note": {
+                                        "type": "string"
+                                    },
+                                    "item_open": {
+                                        "type": "integer"
+                                    },
+                                    "item_sort": {
+                                        "type": "integer"
+                                    },
+                                    "item_mstock": {
+                                        "type": "integer"
+                                    },
+                                    "item_type": {
+                                        "type": "string"
+                                    },
+                                    "item_years": {
+                                        "type": "string"
+                                    },
+                                    "item_holdmonth": {
+                                        "type": "integer"
+                                    },
+                                    "item_outvyear": {
+                                        "type": "string"
+                                    },
+                                    "item_predict": {
+                                        "type": "integer"
+                                    },
+                                    "item_insertdate": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "item_editdate": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "item_barcode": {
+                                        "type": "string"
+                                    },
+                                    "item_inbox": {
+                                        "type": "integer"
+                                    },
+                                    "ppt_id": {
+                                        "type": "integer"
+                                    },
+                                    "item_vcode": {
+                                        "type": "string"
+                                    },
+                                    "item_size": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Item updated successfully"
+                    },
+                    "404": {
+                        "description": "Item not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete an item",
+                "operationId": "f7d8019e7a58101f594ab509931e3bb2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Item deleted successfully"
+                    },
+                    "404": {
+                        "description": "Item not found"
+                    }
+                }
+            }
+        },
+        "/locations": {
+            "get": {
+                "summary": "Get all locations",
+                "operationId": "3bad728e786474a24578b9579ee37a1a",
+                "responses": {
+                    "200": {
+                        "description": "List of locations"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create a new location",
+                "operationId": "084543be926b0fda5932ccead19664a0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "location_code": {
+                                        "type": "string"
+                                    },
+                                    "location_name": {
+                                        "type": "string"
+                                    },
+                                    "building_code": {
+                                        "type": "string"
+                                    },
+                                    "floor_number": {
+                                        "type": "string"
+                                    },
+                                    "floor_area_code": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "storage_type_code": {
+                                        "type": "string"
+                                    },
+                                    "sub_area_code": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "position_code": {
+                                        "type": "string"
+                                    },
+                                    "capacity": {
+                                        "type": "integer"
+                                    },
+                                    "current_stock": {
+                                        "type": "integer"
+                                    },
+                                    "qr_code_data": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Location created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/locations/{id}": {
+            "get": {
+                "summary": "Get a specific location",
+                "operationId": "a47f6442ea1ed2ac63badaa117e6b2fd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Location details"
+                    },
+                    "404": {
+                        "description": "Location not found"
+                    }
+                }
+            },
+            "put": {
+                "summary": "Update a location",
+                "operationId": "e442621fa159969379b067b60f5e2bf9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "location_code": {
+                                        "type": "string"
+                                    },
+                                    "location_name": {
+                                        "type": "string"
+                                    },
+                                    "building_code": {
+                                        "type": "string"
+                                    },
+                                    "floor_number": {
+                                        "type": "string"
+                                    },
+                                    "floor_area_code": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "storage_type_code": {
+                                        "type": "string"
+                                    },
+                                    "sub_area_code": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "position_code": {
+                                        "type": "string"
+                                    },
+                                    "capacity": {
+                                        "type": "integer"
+                                    },
+                                    "current_stock": {
+                                        "type": "integer"
+                                    },
+                                    "qr_code_data": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Location updated successfully"
+                    },
+                    "404": {
+                        "description": "Location not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete a location",
+                "operationId": "7eb22475e1a756942731587375f27883",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Location deleted successfully"
+                    },
+                    "404": {
+                        "description": "Location not found"
+                    }
+                }
+            }
+        },
+        "/posin": {
+            "get": {
+                "summary": "Get all posin records",
+                "operationId": "440d24f78bad00ac94a4954476fad344",
+                "responses": {
+                    "200": {
+                        "description": "List of posin records"
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create a new posin record",
+                "operationId": "1b2516193e06693077effc9a45bf3ecb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "_users_id": {
+                                        "type": "integer"
+                                    },
+                                    "posin_sn": {
+                                        "type": "string"
+                                    },
+                                    "posin_user": {
+                                        "type": "string"
+                                    },
+                                    "posin_dt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "posin_note": {
+                                        "type": "string"
+                                    },
+                                    "posin_items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "itemtype": {
+                                                    "type": "integer"
+                                                },
+                                                "item_id": {
+                                                    "type": "integer"
+                                                },
+                                                "item_name": {
+                                                    "type": "string"
+                                                },
+                                                "item_sn": {
+                                                    "type": "string"
+                                                },
+                                                "item_spec": {
+                                                    "type": "string"
+                                                },
+                                                "item_batch": {
+                                                    "type": "string"
+                                                },
+                                                "item_count": {
+                                                    "type": "integer"
+                                                },
+                                                "item_price": {
+                                                    "type": "number"
+                                                },
+                                                "item_expireday": {
+                                                    "type": "string",
+                                                    "format": "date"
+                                                },
+                                                "item_validyear": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Posin record created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/posin/{id}": {
+            "get": {
+                "summary": "Get a specific posin record",
+                "operationId": "93e71ce2e4908229877bf1d6e8dc0593",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Posin record details"
+                    },
+                    "404": {
+                        "description": "Posin record not found"
+                    }
+                }
+            },
+            "put": {
+                "summary": "Update a posin record",
+                "operationId": "6ca1f98fa66e097245983c9fc3a38204",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "_users_id": {
+                                        "type": "integer"
+                                    },
+                                    "posin_sn": {
+                                        "type": "string"
+                                    },
+                                    "posin_user": {
+                                        "type": "string"
+                                    },
+                                    "posin_dt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "posin_note": {
+                                        "type": "string"
+                                    },
+                                    "posin_items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "posinitem_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "itemtype": {
+                                                    "type": "integer"
+                                                },
+                                                "item_id": {
+                                                    "type": "integer"
+                                                },
+                                                "item_name": {
+                                                    "type": "string"
+                                                },
+                                                "item_sn": {
+                                                    "type": "string"
+                                                },
+                                                "item_spec": {
+                                                    "type": "string"
+                                                },
+                                                "item_batch": {
+                                                    "type": "string"
+                                                },
+                                                "item_count": {
+                                                    "type": "integer"
+                                                },
+                                                "item_price": {
+                                                    "type": "number"
+                                                },
+                                                "item_expireday": {
+                                                    "type": "string",
+                                                    "format": "date"
+                                                },
+                                                "item_validyear": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Posin record updated successfully"
+                    },
+                    "404": {
+                        "description": "Posin record not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete a posin record",
+                "operationId": "c2b49f56fdd918e5b26d93cbaea8a216",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Posin record deleted successfully"
+                    },
+                    "404": {
+                        "description": "Posin record not found"
+                    }
+                }
+            }
         }
     }
 }
