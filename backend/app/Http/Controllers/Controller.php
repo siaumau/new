@@ -20,4 +20,16 @@ use Illuminate\Routing\Controller as BaseController;
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
+    /**
+     * @OA\Get(
+     *     path="/controller-test",
+     *     summary="Test Controller API endpoint",
+     *     @OA\Response(response="200", description="Successful operation")
+     * )
+     */
+    public function controllerTest()
+    {
+        return response()->json(['message' => 'Controller Test successful']);
+    }
 }

@@ -45,6 +45,7 @@ return [
                  */
                 'annotations' => [
                     base_path('app'),
+                    base_path('routes'),
                 ],
             ],
         ],
@@ -149,7 +150,7 @@ return [
              *
              * @see \OpenApi\scan
              */
-            'pattern' => null,
+            'pattern' => '*.php',
 
             /*
              * Absolute path to directories that should be excluded from scanning

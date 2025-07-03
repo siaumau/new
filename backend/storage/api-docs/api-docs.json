@@ -1,0 +1,24 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Inventory System API Documentation",
+        "description": "API documentation for the Inventory System",
+        "contact": {
+            "email": "your-email@example.com"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/controller-test": {
+            "get": {
+                "summary": "Test Controller API endpoint",
+                "operationId": "2cca0e31e0e639a3f2a689bdfe382f3d",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                }
+            }
+        }
+    }
+}

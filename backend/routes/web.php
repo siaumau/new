@@ -16,3 +16,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+/**
+ * @OA\Get(
+ *     path="/web-test",
+ *     summary="Test Web API endpoint",
+ *     @OA\Response(response="200", description="Successful operation")
+ * )
+ */
+Route::get('/web-test', function () {
+    return response()->json(['message' => 'Web Test successful']);
+});
