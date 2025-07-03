@@ -1,9 +1,5 @@
 <?php
 
-use App\Http\Controllers\ItemController;
-use App\Http\Controllers\LocationController;
-use App\Http\Controllers\PosinController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,21 +13,4 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-Route::apiResource('items', ItemController::class);
-Route::apiResource('locations', LocationController::class);
-Route::apiResource('posin', PosinController::class);
-
-/**
- * @OA\Get(
- *     path="/test",
- *     summary="Test API endpoint",
- *     @OA\Response(response="200", description="Successful operation")
- * )
- */
-Route::get('/test', function () {
-    return response()->json(['message' => 'Test successful']);
-});
+require __DIR__.'/api_v1.php';

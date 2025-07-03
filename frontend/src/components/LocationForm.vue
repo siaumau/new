@@ -69,6 +69,24 @@ const form = ref({
   is_active: true,
 });
 
+const resetForm = () => {
+  form.value = {
+    location_code: '',
+    location_name: '',
+    building_code: '',
+    floor_number: '',
+    floor_area_code: null,
+    storage_type_code: '',
+    sub_area_code: null,
+    position_code: '',
+    capacity: 0,
+    current_stock: 0,
+    qr_code_data: null,
+    notes: null,
+    is_active: true,
+  };
+};
+
 watch(() => props.location, (newLocation) => {
   if (newLocation) {
     isEditing.value = true;

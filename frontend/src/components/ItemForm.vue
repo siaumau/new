@@ -69,6 +69,36 @@ const form = ref({
   item_size: '',
 });
 
+const resetForm = () => {
+  form.value = {
+    item_name: '',
+    item_cid: 1,
+    item_sn: '',
+    item_spec: '',
+    item_eng: null,
+    item_save: 0,
+    item_save2: null,
+    item_price: 0,
+    suggested_retail_price: 0,
+    item_note: '',
+    item_open: 1,
+    item_sort: 0,
+    item_mstock: 0,
+    item_type: '',
+    item_years: null,
+    item_holdmonth: 0,
+    item_outvyear: '',
+    item_predict: 0,
+    item_insertdate: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    item_editdate: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    item_barcode: '',
+    item_inbox: 0,
+    ppt_id: 0,
+    item_vcode: null,
+    item_size: '',
+  };
+};
+
 watch(() => props.item, (newItem) => {
   if (newItem) {
     isEditing.value = true;

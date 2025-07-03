@@ -107,6 +107,18 @@ const form = ref({
   posin_items: [],
 });
 
+const resetForm = () => {
+  form.value = {
+    _users_id: 1,
+    posin_sn: '',
+    posin_user: '',
+    posin_dt: new Date().toISOString().slice(0, 16),
+    posin_log: null,
+    posin_note: '',
+    posin_items: [],
+  };
+};
+
 const defaultPosinItem = () => ({
   itemtype: 1,
   item_id: 0,
@@ -166,9 +178,9 @@ const savePosin = async () => {
     });
 
     if (isEditing.value) {
-      await axios.put(`http://localhost:8000/api/posin/${form.value.posin_id}`, payload);
+      await axios.put(`http://127.0.0.1:8000/api/posin/${form.value.posin_id}`, payload);
     } else {
-      await axios.post('http://localhost:8000/api/posin', payload);
+      await axios.post('http://127.0.0.1:8000/api/posin', payload);
     }
     emit('saved');
     closeForm();
@@ -181,18 +193,6 @@ const savePosin = async () => {
 const closeForm = () => {
   emit('close');
   resetForm();
-};
-
-const resetForm = () => {
-  form.value = {
-    _users_id: 1,
-    posin_sn: '',
-    posin_user: '',
-    posin_dt: new Date().toISOString().slice(0, 16),
-    posin_log: null,
-    posin_note: '',
-    posin_items: [],
-  };
 };
 </script>
 
