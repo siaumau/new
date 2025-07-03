@@ -4,7 +4,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import axios from 'axios'
-import { i18n } from './i18n'
+import i18n from './i18n'
 
 // 設定 axios 基礎 URL
 axios.defaults.baseURL = 'http://localhost:8000';  // 後端 API 的基礎 URL
