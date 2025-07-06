@@ -1,154 +1,269 @@
 <template>
-  <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-4">{{ $t('posinItems.title') }}</h1>
+  <div class="min-h-screen bg-gray-50">
+    <!-- 頁面標題區域 -->
+    <div class="bg-white shadow-sm border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-6">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ $t('posinItems.title') }}</h1>
+            <p class="mt-1 text-sm text-gray-600">{{ $t('posinItems.messages.pageDescription') }}</p>
+          </div>
+          <div class="flex space-x-3">
+            <button
+              @click="convertToUsPurchaseOrder"
+              class="bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg flex items-center space-x-2 transition-colors shadow-sm"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{{ $t('posinItems.actions.convertToUsPurchaseOrder') }}</span>
+            </button>
+            <button
+              @click="refreshData"
+              class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg flex items-center space-x-2 transition-colors"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>{{ $t('posinItems.actions.refresh') }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <!-- 商品項目表格 -->
-    <div class="overflow-x-auto">
-      <table class="min-w-full bg-white border border-gray-300 rounded-lg shadow">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="py-3 px-4 border-b text-left font-medium text-gray-700">{{ $t('posinItems.table.itemSN') }}</th>
-            <th class="py-3 px-4 border-b text-left font-medium text-gray-700">{{ $t('posinItems.table.itemName') }}</th>
-            <th class="py-3 px-4 border-b text-left font-medium text-gray-700">{{ $t('posinItems.table.spec') }}</th>
-            <th class="py-3 px-4 border-b text-center font-medium text-gray-700">{{ $t('posinItems.table.quantity') }}</th>
-            <th class="py-3 px-4 border-b text-center font-medium text-gray-700">{{ $t('posinItems.table.packageSpec') }}</th>
-            <th class="py-3 px-4 border-b text-center font-medium text-gray-700">{{ $t('posinItems.table.boxCount') }}</th>
-            <th class="py-3 px-4 border-b text-center font-medium text-gray-700">{{ $t('posinItems.table.unitPrice') }}</th>
-            <th class="py-3 px-4 border-b text-center font-medium text-gray-700">{{ $t('posinItems.table.subtotal') }}</th>
-            <th class="py-3 px-4 border-b text-center font-medium text-gray-700">{{ $t('posinItems.table.expiryDate') }}</th>
-            <th class="py-3 px-4 border-b text-center font-medium text-gray-700">{{ $t('posinItems.table.actions') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in posinItems" :key="item.posinitem_id" class="hover:bg-gray-50">
-            <td class="py-3 px-4 border-b">{{ item.item_sn }}</td>
-            <td class="py-3 px-4 border-b font-medium">{{ item.item_name }}</td>
-            <td class="py-3 px-4 border-b text-sm text-gray-600">{{ item.item_spec }}</td>
-            <td class="py-3 px-4 border-b text-center">{{ item.item_count }}</td>
-            <td class="py-3 px-4 border-b text-center">{{ getPackageSpec(item) }}</td>
-            <td class="py-3 px-4 border-b text-center">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {{ getBoxCount(item) }}
-              </span>
-            </td>
-            <td class="py-3 px-4 border-b text-center">${{ item.item_price }}</td>
-            <td class="py-3 px-4 border-b text-center font-medium">${{ getSubtotal(item) }}</td>
-            <td class="py-3 px-4 border-b text-center">{{ formatDate(item.item_expireday) }}</td>
-            <td class="py-3 px-4 border-b text-center">
-              <button
-                @click="openQRModal(item)"
-                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded text-sm transition-colors"
-              >
-                {{ $t('posinItems.table.generateQR') }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- 主要內容區域 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 載入中狀態 -->
+      <div v-if="loading" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span class="ml-3 text-gray-600">{{ $t('posinItems.messages.loading') }}</span>
+      </div>
+
+      <!-- 商品項目表格 -->
+      <div v-else class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <!-- 表格標題 -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h2 class="text-lg font-semibold text-gray-900">{{ $t('posinItems.messages.itemList') }}</h2>
+          <p class="text-sm text-gray-600 mt-1">{{ $t('posinItems.messages.totalItems', { count: posinItems.length }) }}</p>
+        </div>
+
+        <!-- 表格內容 -->
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.itemSN') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.itemName') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.spec') }}
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.quantity') }}
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.packageSpec') }}
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.boxCount') }}
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.unitPrice') }}
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.subtotal') }}
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.expiryDate') }}
+                </th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ $t('posinItems.table.actions') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="item in posinItems" :key="item.posinitem_id" class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {{ item.item_sn }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900">{{ item.item_name }}</div>
+                  <div class="text-sm text-gray-500">批號: {{ item.item_batch }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  {{ item.item_spec }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <span class="text-sm font-semibold text-gray-900">{{ item.item_count }}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">
+                  {{ getPackageSpec(item) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {{ getBoxCount(item) }} 箱
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                  ${{ item.item_price }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <span class="text-sm font-semibold text-gray-900">${{ getSubtotal(item) }}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">
+                  {{ formatDate(item.item_expireday) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <div class="flex justify-center space-x-2">
+                    <button
+                      @click="openQRModal(item)"
+                      class="bg-green-500 hover:bg-green-600 text-white font-medium py-1.5 px-3 rounded text-xs transition-colors shadow-sm"
+                      :title="$t('posinItems.actions.generateQR')"
+                    >
+                      {{ $t('posinItems.table.generateQR') }}
+                    </button>
+                    <button
+                      @click="deleteItem(item)"
+                      class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 rounded text-xs transition-colors shadow-sm"
+                      :title="$t('posinItems.actions.deleteItem')"
+                    >
+                      {{ $t('posinItems.table.delete') }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 空狀態 -->
+        <div v-if="posinItems.length === 0" class="text-center py-12">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">{{ $t('posinItems.messages.noItems') }}</h3>
+          <p class="mt-1 text-sm text-gray-500">{{ $t('posinItems.messages.noItemsDescription') }}</p>
+        </div>
+      </div>
     </div>
 
     <!-- QR Code 生成彈出窗口 -->
-    <div v-if="showQRModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-2xl font-bold text-gray-800">{{ $t('posinItems.qrCode.title') }}</h2>
-          <button @click="closeQRModal" class="text-gray-500 hover:text-gray-700">
+    <div v-if="showQRModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <!-- 彈窗標題 -->
+        <div class="flex justify-between items-center border-b border-gray-200 p-6">
+          <h2 class="text-2xl font-bold text-gray-900">{{ $t('posinItems.qrCode.title') }}</h2>
+          <button @click="closeQRModal" class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <!-- 商品詳細資訊 -->
-        <div class="bg-gray-50 rounded-lg p-4 mb-6">
-          <h3 class="font-bold text-lg mb-3">{{ selectedItem?.item_name }}</h3>
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="font-medium">{{ $t('posinItems.qrCode.itemSN') }}</span>
-              <span class="ml-2">{{ selectedItem?.item_sn }}</span>
-            </div>
-            <div>
-              <span class="font-medium">{{ $t('posinItems.qrCode.batch') }}</span>
-              <span class="ml-2">{{ selectedItem?.item_batch }}</span>
-            </div>
-            <div>
-              <span class="font-medium">{{ $t('posinItems.qrCode.spec') }}</span>
-              <span class="ml-2">{{ selectedItem?.item_spec }}</span>
-            </div>
-            <div>
-              <span class="font-medium">{{ $t('posinItems.qrCode.quantity') }}</span>
-              <span class="ml-2">{{ selectedItem?.item_count }}</span>
-            </div>
-            <div>
-              <span class="font-medium">{{ $t('posinItems.qrCode.packageSpec') }}</span>
-              <span class="ml-2">{{ getPackageSpec(selectedItem) }}</span>
-            </div>
-            <div>
-              <span class="font-medium">{{ $t('posinItems.qrCode.boxCount') }}</span>
-              <span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {{ getBoxCount(selectedItem) }}
-              </span>
-            </div>
-            <div>
-              <span class="font-medium">{{ $t('posinItems.qrCode.purchaseDate') }}</span>
-              <span class="ml-2">{{ formatPurchaseDate(selectedItem) }}</span>
-            </div>
-            <div>
-              <span class="font-medium">{{ $t('posinItems.qrCode.expiryDate') }}</span>
-              <span class="ml-2">{{ formatDate(selectedItem?.item_expireday) }}</span>
+        <div class="p-6">
+          <!-- 商品詳細資訊 -->
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-6 border border-blue-200">
+            <h3 class="font-bold text-xl mb-4 text-gray-900">{{ selectedItem?.item_name }}</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div class="bg-white rounded-lg p-3 shadow-sm">
+                <span class="font-medium text-gray-600">{{ $t('posinItems.qrCode.itemSN') }}</span>
+                <div class="text-lg font-semibold text-gray-900 mt-1">{{ selectedItem?.item_sn }}</div>
+              </div>
+              <div class="bg-white rounded-lg p-3 shadow-sm">
+                <span class="font-medium text-gray-600">{{ $t('posinItems.qrCode.batch') }}</span>
+                <div class="text-lg font-semibold text-gray-900 mt-1">{{ selectedItem?.item_batch }}</div>
+              </div>
+              <div class="bg-white rounded-lg p-3 shadow-sm">
+                <span class="font-medium text-gray-600">{{ $t('posinItems.qrCode.spec') }}</span>
+                <div class="text-lg font-semibold text-gray-900 mt-1">{{ selectedItem?.item_spec }}</div>
+              </div>
+              <div class="bg-white rounded-lg p-3 shadow-sm">
+                <span class="font-medium text-gray-600">{{ $t('posinItems.qrCode.quantity') }}</span>
+                <div class="text-lg font-semibold text-gray-900 mt-1">{{ selectedItem?.item_count }}</div>
+              </div>
+              <div class="bg-white rounded-lg p-3 shadow-sm">
+                <span class="font-medium text-gray-600">{{ $t('posinItems.qrCode.packageSpec') }}</span>
+                <div class="text-lg font-semibold text-gray-900 mt-1">{{ getPackageSpec(selectedItem) }}</div>
+              </div>
+              <div class="bg-white rounded-lg p-3 shadow-sm">
+                <span class="font-medium text-gray-600">{{ $t('posinItems.qrCode.boxCount') }}</span>
+                <div class="text-lg font-semibold text-blue-600 mt-1">{{ getBoxCount(selectedItem) }} 箱</div>
+              </div>
+              <div class="bg-white rounded-lg p-3 shadow-sm">
+                <span class="font-medium text-gray-600">{{ $t('posinItems.qrCode.purchaseDate') }}</span>
+                <div class="text-lg font-semibold text-gray-900 mt-1">{{ formatPurchaseDate(selectedItem) }}</div>
+              </div>
+              <div class="bg-white rounded-lg p-3 shadow-sm">
+                <span class="font-medium text-gray-600">{{ $t('posinItems.qrCode.expiryDate') }}</span>
+                <div class="text-lg font-semibold text-gray-900 mt-1">{{ formatDate(selectedItem?.item_expireday) }}</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- QR Code 生成設定 -->
-        <div class="border-t pt-4">
-          <h4 class="font-bold text-lg mb-3">{{ $t('posinItems.qrCode.boxQRTitle') }}</h4>
-          <p class="text-sm text-gray-600 mb-4">
-            {{ $t('posinItems.qrCode.description', { count: getBoxCount(selectedItem) }) }}
-          </p>
-          <p class="text-sm text-gray-600 mb-2">{{ $t('posinItems.qrCode.labelInfo') }}</p>
-          <p class="text-sm text-gray-600 mb-4">
-            {{ $t('posinItems.qrCode.codeFormat', { example: getExampleCode(selectedItem) }) }}
-          </p>
+          <!-- QR Code 生成設定 -->
+          <div class="border-t border-gray-200 pt-6">
+            <div class="bg-white rounded-lg p-6 border border-gray-200">
+              <h4 class="font-bold text-xl mb-4 text-gray-900 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.99c.28 0 .5.22.5.5s-.22.5-.5.5H12m0 0h.01" />
+                </svg>
+                {{ $t('posinItems.qrCode.boxQRTitle') }}
+              </h4>
 
-          <div class="flex items-center space-x-4 mb-6">
-            <label class="font-medium">{{ $t('posinItems.qrCode.generateCount') }}</label>
-            <input
-              v-model="qrGenerateCount"
-              type="number"
-              min="1"
-              :max="getBoxCount(selectedItem)"
-              class="border rounded px-3 py-2 w-20 text-center"
-            />
-            <span class="text-sm text-gray-600">{{ $t('posinItems.qrCode.generateCountUnit') }}</span>
-          </div>
+              <div class="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
+                <p class="text-sm text-blue-800 mb-2">
+                  {{ $t('posinItems.qrCode.description', { count: getBoxCount(selectedItem) }) }}
+                </p>
+                <p class="text-sm text-blue-700 mb-2">{{ $t('posinItems.qrCode.labelInfo') }}</p>
+                <p class="text-sm text-blue-700">
+                  {{ $t('posinItems.qrCode.codeFormat', { example: getExampleCode(selectedItem) }) }}
+                </p>
+              </div>
 
-          <div class="flex space-x-4">
-            <button
-              @click="downloadQRLabels"
-              class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded flex items-center space-x-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>{{ $t('posinItems.qrCode.download', { count: qrGenerateCount }) }}</span>
-            </button>
-            <button
-              @click="previewLabels"
-              class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center space-x-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              <span>{{ $t('posinItems.qrCode.preview') }}</span>
-            </button>
-            <button
-              @click="closeQRModal"
-              class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
-            >
-              {{ $t('posinItems.qrCode.cancel') }}
-            </button>
+              <div class="flex items-center space-x-4 mb-6">
+                <label class="font-medium text-gray-700">{{ $t('posinItems.qrCode.generateCount') }}</label>
+                <input
+                  v-model="qrGenerateCount"
+                  type="number"
+                  min="1"
+                  :max="getBoxCount(selectedItem)"
+                  class="border border-gray-300 rounded-lg px-3 py-2 w-20 text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <span class="text-sm text-gray-600">{{ $t('posinItems.qrCode.generateCountUnit') }}</span>
+              </div>
+
+              <div class="flex flex-wrap gap-3">
+                <button
+                  @click="downloadQRLabels"
+                  class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg flex items-center space-x-2 transition-colors shadow-sm"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>{{ $t('posinItems.qrCode.download', { count: qrGenerateCount }) }}</span>
+                </button>
+                <button
+                  @click="previewLabels"
+                  class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg flex items-center space-x-2 transition-colors shadow-sm"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span>{{ $t('posinItems.qrCode.preview') }}</span>
+                </button>
+                <button
+                  @click="closeQRModal"
+                  class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                >
+                  {{ $t('posinItems.qrCode.cancel') }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -159,9 +274,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const { t } = useI18n()
+const router = useRouter()
 
 // Props
 const props = defineProps({
@@ -221,6 +338,44 @@ const fetchPosinItems = async () => {
     ]
   } finally {
     loading.value = false
+  }
+}
+
+const refreshData = () => {
+  fetchPosinItems()
+}
+
+const deleteItem = async (item) => {
+  if (!confirm(t('posinItems.messages.deleteConfirm', { name: item.item_name }))) return
+
+  try {
+    await axios.delete(`/api/v1/posin-items/${item.posinitem_id}`)
+    // 重新載入資料
+    await fetchPosinItems()
+    alert(t('posinItems.messages.deleteSuccess'))
+  } catch (error) {
+    console.error('Error deleting item:', error)
+    alert(t('posinItems.messages.deleteError'))
+  }
+}
+
+const convertToUsPurchaseOrder = async () => {
+  const confirmed = confirm(t('posinItems.messages.convertConfirm'))
+
+  if (!confirmed) return
+
+  try {
+    const response = await axios.patch(`/api/v1/posin/${props.posinId}/generate-us-purchase-order`)
+    alert(t('posinItems.messages.convertSuccess'))
+    // 可以導航回列表頁面或更新狀態
+    router.push('/purchase-orders')
+  } catch (error) {
+    console.error('Error converting to US purchase order:', error)
+    if (error.response?.status === 422) {
+      alert(t('posinItems.messages.convertAlreadyGenerated'))
+    } else {
+      alert(t('posinItems.messages.convertError'))
+    }
   }
 }
 
@@ -314,8 +469,9 @@ onMounted(() => {
 <style scoped>
 /* 確保表格在小螢幕上可橫向捲動 */
 @media (max-width: 768px) {
-  .container {
-    padding: 0.5rem;
+  .max-w-7xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   table {
@@ -325,5 +481,25 @@ onMounted(() => {
   th, td {
     padding: 0.5rem;
   }
+
+  .flex {
+    flex-wrap: wrap;
+  }
+}
+
+/* 動畫效果 */
+.transition-colors {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* 按鈕懸停效果 */
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 表格行懸停效果 */
+tbody tr:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 </style>

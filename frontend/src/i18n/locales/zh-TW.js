@@ -99,8 +99,30 @@ export default {
       expiryDate: '有效期限',
       actions: '操作',
       generateQR: '生成QR',
+      delete: '刪除',
       unit: '個/箱',
       box: '箱'
+    },
+    actions: {
+      convertToUsPurchaseOrder: '轉美國進貨單',
+      refresh: '刷新',
+      deleteItem: '刪除商品項目',
+      generateQR: '生成QR標籤'
+    },
+    messages: {
+      loading: '載入中...',
+      pageDescription: '管理進貨單商品項目，生成QR標籤',
+      itemList: '商品項目清單',
+      totalItems: '共 {count} 項商品',
+      noItems: '暫無商品項目',
+      noItemsDescription: '此進貨單尚未添加任何商品',
+      deleteConfirm: '確定要刪除商品「{name}」嗎？',
+      deleteSuccess: '商品項目已成功刪除',
+      deleteError: '刪除商品項目時發生錯誤，請稍後再試',
+      convertConfirm: '確定要轉換為美國進貨單嗎？\n\n轉換後將無法修改此進貨單的內容。\n系統將自動生成美國進貨單供後續處理。',
+      convertSuccess: '美國進貨單已成功生成！',
+      convertError: '轉換美國進貨單時發生錯誤，請稍後再試',
+      convertAlreadyGenerated: '此進貨單已經轉換過美國進貨單，無法重複轉換'
     },
     qrCode: {
       title: '商品QR Code生成',

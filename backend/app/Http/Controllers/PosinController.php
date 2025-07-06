@@ -405,6 +405,37 @@ class PosinController extends Controller
     }
 
     /**
+     * @OA\Delete(
+     *     path="/api/v1/posin-items/{id}",
+     *     summary="Delete a posin item",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200", description="Posin item deleted successfully"),
+     *     @OA\Response(response="404", description="Posin item not found")
+     * )
+     */
+    public function deletePosinItem($id)
+    {
+        try {
+            $posinItem = PosinItem::find($id);
+
+            if (!$posinItem) {
+                return response()->json(['message' => 'Posin item not found'], 404);
+            }
+
+            $posinItem->delete();
+
+            return response()->json(['message' => 'Posin item deleted successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error deleting posin item', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/v1/generate-qr-labels",
      *     summary="Generate QR code labels for a posin item",

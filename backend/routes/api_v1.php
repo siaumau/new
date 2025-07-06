@@ -31,6 +31,7 @@ Route::prefix('api/v1')->group(function () {
 
     // 進貨單商品項目相關路由
     Route::get('posin/{id}/items', [PosinController::class, 'getPosinItems']);
+    Route::delete('posin-items/{id}', [PosinController::class, 'deletePosinItem']);
 
     // QR Code生成路由
     Route::post('generate-qr-labels', [PosinController::class, 'generateQRLabels']);

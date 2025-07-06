@@ -41,74 +41,108 @@ const fetchPosinInfo = async () => {
 }
 
 const goBack = () => {
-  router.go(-1)
+  router.push('/purchase-orders')
 }
 </script>
 
 <template>
-  <div class="h-full w-full bg-[#f9fafb]">
+  <div class="min-h-screen bg-gray-50">
     <!-- 頂部導航 -->
-    <div class="bg-white border-b border-gray-200 px-6 py-4">
-      <div class="flex items-center space-x-4">
-        <button
-          @click="goBack"
-          class="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          <span>返回</span>
-        </button>
+    <div class="bg-white shadow-sm border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between py-4">
+          <div class="flex items-center space-x-4">
+            <button
+              @click="goBack"
+              class="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span class="font-medium">返回進貨單列表</span>
+            </button>
 
-        <div class="text-sm text-gray-500">
-          <span>進貨單管理</span>
-          <svg class="w-4 h-4 inline mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-          <span>商品項目</span>
-        </div>
-      </div>
-
-      <!-- 進貨單基本信息 -->
-      <div v-if="posinInfo && !loading" class="mt-4 bg-gray-50 rounded-lg p-4">
-        <h2 class="text-lg font-semibold text-gray-800 mb-2">進貨單基本信息</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <span class="font-medium text-gray-600">進貨單號:</span>
-            <span class="ml-2 text-gray-800">{{ posinInfo.posin_sn }}</span>
-          </div>
-          <div>
-            <span class="font-medium text-gray-600">建單人員:</span>
-            <span class="ml-2 text-gray-800">{{ posinInfo.posin_user }}</span>
-          </div>
-          <div>
-            <span class="font-medium text-gray-600">進貨日期:</span>
-            <span class="ml-2 text-gray-800">{{ posinInfo.posin_dt ? new Date(posinInfo.posin_dt).toLocaleDateString('zh-TW') : '' }}</span>
-          </div>
-          <div>
-            <span class="font-medium text-gray-600">項目數量:</span>
-            <span class="ml-2 text-gray-800">{{ posinInfo.posin_items?.length || 0 }} 項</span>
+            <div class="flex items-center text-sm text-gray-500">
+              <span>進貨單管理</span>
+              <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              <span class="text-gray-900 font-medium">商品項目</span>
+            </div>
           </div>
         </div>
-        <div v-if="posinInfo.posin_note" class="mt-2">
-          <span class="font-medium text-gray-600">備註:</span>
-          <span class="ml-2 text-gray-800">{{ posinInfo.posin_note }}</span>
-        </div>
-      </div>
 
-      <!-- 載入中狀態 -->
-      <div v-if="loading" class="mt-4 text-center text-gray-500">
-        載入中...
+        <!-- 進貨單基本信息 -->
+        <div v-if="posinInfo && !loading" class="pb-6">
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold text-gray-900">進貨單基本信息</h2>
+              <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  ID: {{ posinInfo.posin_id }}
+                </span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-sm font-medium text-gray-600 mb-1">進貨單號</div>
+                <div class="text-lg font-semibold text-gray-900">{{ posinInfo.posin_sn }}</div>
+              </div>
+
+              <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-sm font-medium text-gray-600 mb-1">建單人員</div>
+                <div class="text-lg font-semibold text-gray-900">{{ posinInfo.posin_user }}</div>
+              </div>
+
+              <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-sm font-medium text-gray-600 mb-1">進貨日期</div>
+                <div class="text-lg font-semibold text-gray-900">
+                  {{ posinInfo.posin_dt ? new Date(posinInfo.posin_dt).toLocaleDateString('zh-TW') : '' }}
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-sm font-medium text-gray-600 mb-1">項目數量</div>
+                <div class="text-lg font-semibold text-indigo-600">{{ posinInfo.posin_items?.length || 0 }} 項</div>
+              </div>
+            </div>
+
+            <div v-if="posinInfo.posin_note" class="mt-4 bg-white rounded-lg p-4 shadow-sm">
+              <div class="text-sm font-medium text-gray-600 mb-1">備註</div>
+              <div class="text-gray-900">{{ posinInfo.posin_note }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 載入中狀態 -->
+        <div v-if="loading" class="text-center py-8">
+          <div class="inline-flex items-center">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span class="ml-3 text-gray-600">載入中...</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- 商品項目表格 -->
-    <div class="p-6">
-      <PosinItemsTable v-if="posinId" :posinId="posinId" />
-    </div>
+    <PosinItemsTable v-if="posinId" :posinId="posinId" />
   </div>
 </template>
 
 <style scoped>
 /* 自定義樣式 */
+.transition-colors {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
