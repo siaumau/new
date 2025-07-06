@@ -238,7 +238,7 @@ class PosinController extends Controller
             '_users_id' => 'required|integer',
             'posin_sn' => 'required|string',
             'posin_user' => 'required|string',
-            'posin_dt' => 'required|date',
+            'posin_dt' => 'nullable|date',
             'posin_note' => 'required|string',
             'posin_items' => 'required|array',
             'posin_items.*.posinitem_id' => 'nullable|integer',

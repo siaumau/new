@@ -18,7 +18,7 @@
           </div>
           <div class="mb-4">
             <label for="posin_dt" class="block text-gray-700 text-sm font-bold mb-2">Posin Date:</label>
-            <input type="datetime-local" id="posin_dt" v-model="form.posin_dt" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            <input type="datetime-local" id="posin_dt" v-model="form.posin_dt" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
           </div>
           <div class="mb-4 col-span-2">
             <label for="posin_note" class="block text-gray-700 text-sm font-bold mb-2">Posin Note:</label>
@@ -101,7 +101,7 @@ const form = ref({
   _users_id: 1, // Default user ID
   posin_sn: '',
   posin_user: '',
-  posin_dt: new Date().toISOString().slice(0, 16), // YYYY-MM-DDTHH:mm format for datetime-local
+  posin_dt: '', // Empty string for optional datetime
   posin_log: null,
   posin_note: '',
   posin_items: [],
@@ -112,7 +112,7 @@ const resetForm = () => {
     _users_id: 1,
     posin_sn: '',
     posin_user: '',
-    posin_dt: new Date().toISOString().slice(0, 16),
+    posin_dt: '',
     posin_log: null,
     posin_note: '',
     posin_items: [],
@@ -167,8 +167,10 @@ const savePosin = async () => {
   try {
     // Format dates back to database format if needed, or let Laravel handle it
     const payload = JSON.parse(JSON.stringify(form.value));
-    if (payload.posin_dt) {
+    if (payload.posin_dt && payload.posin_dt.trim() !== '') {
       payload.posin_dt = payload.posin_dt + ':00'; // Add seconds for datetime format
+    } else {
+      payload.posin_dt = null; // Set to null if empty
     }
     payload.posin_items = payload.posin_items.map(item => {
       if (item.item_expireday) {
