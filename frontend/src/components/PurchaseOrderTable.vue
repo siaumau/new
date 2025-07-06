@@ -1,7 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 
+const router = useRouter();
 const purchaseOrders = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -93,7 +95,8 @@ const handleAddNew = () => {
 };
 
 const handleEdit = (purchaseOrder) => {
-  emit('edit-purchase-order', purchaseOrder);
+  // 導航到商品項目頁面
+  router.push(`/posin/${purchaseOrder.id}/items`);
 };
 
 const handleDelete = async (id) => {
@@ -289,12 +292,8 @@ onMounted(() => {
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
                   @click="handleEdit(order)"
-                  :disabled="order.us_purchase_order_status === 'generated' || order.us_purchase_order_status === 'reviewed'"
-                  :class="{
-                    'bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded text-xs transition-colors': order.us_purchase_order_status === 'pending',
-                    'bg-gray-300 text-gray-500 px-3 py-1 rounded text-xs cursor-not-allowed': order.us_purchase_order_status === 'generated' || order.us_purchase_order_status === 'reviewed'
-                  }"
-                  :title="order.us_purchase_order_status !== 'pending' ? '美國進貨單已產生，無法編輯' : ''"
+                  class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                  :title="'查看商品項目'"
                 >
                   編輯
                 </button>
