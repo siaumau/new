@@ -26,6 +26,9 @@ Route::prefix('api/v1')->group(function () {
     Route::apiResource('locations', LocationController::class);
     Route::apiResource('posin', PosinController::class);
 
+    // 美國進貨單生成路由
+    Route::patch('posin/{id}/generate-us-purchase-order', [PosinController::class, 'generateUsPurchaseOrder']);
+
     /**
      * @OA\Get(
      *     path="/api/v1/test",

@@ -23,6 +23,7 @@ const form = ref({
   supplier: '',
   purchase_date: '',
   expected_delivery_date: '',
+  record_time: '',
   status: 'pending',
   notes: '',
   items: []
@@ -59,9 +60,9 @@ const handleSubmit = async () => {
           item_name: selectedItem?.item_name || '',
           item_sn: selectedItem?.item_sn || '',
           item_spec: selectedItem?.item_spec || '',
-          item_batch: new Date().toISOString().split('T')[0].replace(/-/g, ''),
+          item_batch: item.item_batch || new Date().toISOString().split('T')[0].replace(/-/g, ''),
           item_count: item.quantity,
-          item_price: item.price,
+          item_price: 0, // 預設為 0
           item_expireday: null,
           item_validyear: null
         };
@@ -88,11 +89,46 @@ const handleSubmit = async () => {
   }
 };
 
+// 產生美國進貨單
+const generateUsPurchaseOrder = async () => {
+  // 顯示確認對話框
+  const confirmed = confirm(
+    '確定要產生美國進貨單嗎？\n\n' +
+    '送出後無法再針對內容做修改調整。\n' +
+    'DTC後台會自動產生一個筆美國進貨單供審查。'
+  );
+
+  if (!confirmed) return;
+
+  loading.value = true;
+  error.value = null;
+
+  try {
+    const response = await axios.patch(`/api/v1/posin/${props.purchaseOrder.id}/generate-us-purchase-order`);
+
+    // 顯示成功訊息
+    alert('美國進貨單已成功產生！\n\n此筆訂單將無法再進行編輯。');
+
+    // 關閉表單並重新載入資料
+    emit('saved', response.data);
+    emit('close');
+  } catch (err) {
+    console.error('Error generating US purchase order:', err);
+    if (err.response?.status === 422) {
+      error.value = '此筆訂單已經產生過美國進貨單，無法重複產生。';
+    } else {
+      error.value = '產生美國進貨單時發生錯誤。請稍後再試。';
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
 // 表單驗證
 const validateForm = () => {
   // 驗證必填欄位
   if (!form.value.supplier) {
-    alert('請選擇供應商');
+    alert('請選擇建單人員');
     return false;
   }
 
@@ -117,11 +153,6 @@ const validateForm = () => {
       alert('所有項目的數量必須大於零');
       return false;
     }
-
-    if (!item.price || item.price < 0) {
-      alert('所有項目的價格不能為負數');
-      return false;
-    }
   }
 
   return true;
@@ -133,8 +164,7 @@ const addItem = () => {
     posinitem_id: null,
     item_id: '',
     quantity: 1,
-    price: 0,
-    subtotal: 0
+    item_batch: ''
   });
 };
 
@@ -143,29 +173,13 @@ const removeItem = (index) => {
   form.value.items.splice(index, 1);
 };
 
-// 計算小計
-const calculateSubtotal = (item) => {
-  return item.quantity * item.price;
-};
-
-// 監聽數量和價格變化以更新小計
-const updateSubtotal = (item) => {
-  item.subtotal = calculateSubtotal(item);
-};
-
-// 計算總金額
-const totalAmount = computed(() => {
-  return form.value.items.reduce((total, item) => {
-    return total + (item.subtotal || 0);
-  }, 0);
-});
-
 // 重置表單
 const resetForm = () => {
   form.value = {
     supplier: '',
     purchase_date: '',
     expected_delivery_date: '',
+    record_time: '',
     status: 'pending',
     notes: '',
     items: []
@@ -180,6 +194,7 @@ const loadEditData = () => {
       supplier: props.purchaseOrder.supplier,
       purchase_date: props.purchaseOrder.purchase_date,
       expected_delivery_date: props.purchaseOrder.expected_delivery_date || '',
+      record_time: props.purchaseOrder.created_at || props.purchaseOrder.record_time || '',
       status: props.purchaseOrder.status,
       notes: props.purchaseOrder.notes || '',
       items: []
@@ -191,15 +206,13 @@ const loadEditData = () => {
         posinitem_id: item.posinitem_id,
         item_id: item.item_id,
         quantity: item.item_count,
-        price: item.item_price,
-        subtotal: item.item_count * item.item_price
+        item_batch: item.item_batch || ''
       }));
     } else if (props.purchaseOrder.items && props.purchaseOrder.items.length > 0) {
       form.value.items = props.purchaseOrder.items.map(item => ({
         item_id: item.item_id,
         quantity: item.quantity,
-        price: item.price,
-        subtotal: item.subtotal || calculateSubtotal(item)
+        item_batch: item.item_batch || ''
       }));
     } else {
       // 如果沒有項目，添加一個空白項目
@@ -289,9 +302,9 @@ onMounted(() => {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">供應商 <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">建單人員 <span class="text-red-500">*</span></label>
             <select v-model="form.supplier" class="w-full border rounded px-3 py-2" required>
-              <option value="" disabled>選擇供應商</option>
+              <option value="" disabled>選擇建單人員</option>
               <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.name">
                 {{ supplier.name }}
               </option>
@@ -318,7 +331,17 @@ onMounted(() => {
             />
           </div>
 
-          <div>
+          <div v-if="isEditing">
+            <label class="block text-sm font-medium text-gray-700 mb-1">紀錄時間</label>
+            <input
+              type="text"
+              :value="form.record_time"
+              class="w-full border rounded px-3 py-2 bg-gray-100"
+              readonly
+            />
+          </div>
+
+          <div v-if="!isEditing">
             <label class="block text-sm font-medium text-gray-700 mb-1">預計到貨日期</label>
             <input
               type="date"
@@ -355,8 +378,7 @@ onMounted(() => {
                 <tr>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">商品</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">數量</th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">單價</th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">小計</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">批號</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
@@ -365,8 +387,9 @@ onMounted(() => {
                   <td class="px-4 py-2">
                     <select
                       v-model="item.item_id"
-                      class="w-full border rounded px-2 py-1"
+                      class="w-full border rounded px-2 py-1 bg-gray-100"
                       required
+                      disabled
                     >
                       <option value="" disabled>選擇商品</option>
                       <option v-for="availableItem in availableItems" :key="availableItem.item_id" :value="availableItem.item_id">
@@ -378,25 +401,19 @@ onMounted(() => {
                     <input
                       type="number"
                       v-model.number="item.quantity"
-                      @input="updateSubtotal(item)"
                       min="1"
-                      class="w-20 border rounded px-2 py-1"
+                      class="w-20 border rounded px-2 py-1 bg-gray-100"
                       required
+                      disabled
                     />
                   </td>
                   <td class="px-4 py-2">
                     <input
-                      type="number"
-                      v-model.number="item.price"
-                      @input="updateSubtotal(item)"
-                      min="0"
-                      step="0.01"
+                      type="text"
+                      v-model="item.item_batch"
                       class="w-24 border rounded px-2 py-1"
-                      required
+                      placeholder="輸入批號"
                     />
-                  </td>
-                  <td class="px-4 py-2">
-                    {{ item.subtotal ? item.subtotal.toFixed(2) : '0.00' }}
                   </td>
                   <td class="px-4 py-2">
                     <button
@@ -411,13 +428,6 @@ onMounted(() => {
                   </td>
                 </tr>
               </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="3" class="px-4 py-2 text-right font-medium">總金額：</td>
-                  <td class="px-4 py-2 font-bold">${{ totalAmount.toFixed(2) }}</td>
-                  <td></td>
-                </tr>
-              </tfoot>
             </table>
           </div>
         </div>
@@ -430,6 +440,15 @@ onMounted(() => {
             :disabled="loading"
           >
             取消
+          </button>
+          <button
+            v-if="isEditing && purchaseOrder?.us_purchase_order_status === 'pending'"
+            type="button"
+            @click="generateUsPurchaseOrder"
+            class="bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded"
+            :disabled="loading"
+          >
+            自動產生美國進貨單
           </button>
           <button
             type="submit"

@@ -24,7 +24,7 @@ const mockPurchaseOrders = [
     created_at: '2025/5/27',
     status: '進行中',
     items_count: 2,
-    total_amount: 0,
+    us_purchase_order_status: 'pending',
     notes: 'PCT349空運'
   },
   {
@@ -35,7 +35,7 @@ const mockPurchaseOrders = [
     created_at: '2025/5/14',
     status: '進行中',
     items_count: 10,
-    total_amount: 0,
+    us_purchase_order_status: 'generated',
     notes: 'PCT340海運'
   },
   {
@@ -46,7 +46,7 @@ const mockPurchaseOrders = [
     created_at: '2025/5/6',
     status: '進行中',
     items_count: 59,
-    total_amount: 0,
+    us_purchase_order_status: 'pending',
     notes: 'PCT342A海運'
   },
   {
@@ -57,7 +57,7 @@ const mockPurchaseOrders = [
     created_at: '2025/4/22',
     status: '進行中',
     items_count: 1,
-    total_amount: 0,
+    us_purchase_order_status: 'reviewed',
     notes: 'SKU 9953 Anniversary GWP Bag_20250421'
   }
 ];
@@ -249,10 +249,9 @@ onMounted(() => {
               <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">進貨單號</th>
               <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">用戶</th>
               <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">進貨日期</th>
-              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">紀錄時間</th>
               <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">狀態</th>
-              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">商品項目數量</th>
-              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">總金額</th>
+              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">項目數</th>
+              <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">美國進貨單</th>
               <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">操作</th>
               <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">備註</th>
             </tr>
@@ -268,9 +267,6 @@ onMounted(() => {
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ order.purchase_date }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ order.created_at }}
-              </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                   {{ order.status }}
@@ -279,19 +275,32 @@ onMounted(() => {
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
                 {{ order.items_count }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                ${{ order.total_amount }}
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
+                <span v-if="order.us_purchase_order_status === 'generated'" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                  已產生
+                </span>
+                <span v-else-if="order.us_purchase_order_status === 'reviewed'" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                  已審查
+                </span>
+                <span v-else class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                  待處理
+                </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <button
                   @click="handleEdit(order)"
-                  class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                  :disabled="order.us_purchase_order_status === 'generated' || order.us_purchase_order_status === 'reviewed'"
+                  :class="{
+                    'bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded text-xs transition-colors': order.us_purchase_order_status === 'pending',
+                    'bg-gray-300 text-gray-500 px-3 py-1 rounded text-xs cursor-not-allowed': order.us_purchase_order_status === 'generated' || order.us_purchase_order_status === 'reviewed'
+                  }"
+                  :title="order.us_purchase_order_status !== 'pending' ? '美國進貨單已產生，無法編輯' : ''"
                 >
                   編輯
                 </button>
               </td>
-              <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                {{ order.notes }}
+              <td class="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                {{ order.notes && order.notes.length > 10 ? order.notes.substring(0, 10) + '...' : order.notes }}
               </td>
             </tr>
           </tbody>

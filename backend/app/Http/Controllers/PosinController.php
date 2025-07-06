@@ -82,8 +82,8 @@ class PosinController extends Controller
                 'created_at' => $posin->posin_dt ? date('Y/n/j', strtotime($posin->posin_dt)) : '',
                 'status' => $posin->posin_log ? '已完成' : '進行中',
                 'items_count' => $posin->posinItems->count(),
-                'total_amount' => $posin->posinItems->sum('item_price'),
                 'notes' => $posin->posin_note,
+                'us_purchase_order_status' => $posin->us_purchase_order_status ?? 'pending',
                 'posin_items' => $posin->posinItems
             ];
         }
@@ -269,6 +269,53 @@ class PosinController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Error updating posin record', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/v1/posin/{id}/generate-us-purchase-order",
+     *     summary="Generate US purchase order for a posin record",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200", description="US purchase order generated successfully"),
+     *     @OA\Response(response="404", description="Posin record not found"),
+     *     @OA\Response(response="422", description="Validation error")
+     * )
+     */
+    public function generateUsPurchaseOrder($id)
+    {
+        $posin = Posin::find($id);
+        if (!$posin) {
+            return response()->json(['message' => 'Posin record not found'], 404);
+        }
+
+        // 檢查是否已經產生過美國進貨單
+        if ($posin->us_purchase_order_status !== 'pending') {
+            return response()->json([
+                'message' => 'US purchase order has already been generated for this record',
+                'status' => $posin->us_purchase_order_status
+            ], 422);
+        }
+
+        try {
+            $posin->update([
+                'us_purchase_order_status' => 'generated'
+            ]);
+
+            return response()->json([
+                'message' => 'US purchase order generated successfully',
+                'status' => 'generated'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error generating US purchase order',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 

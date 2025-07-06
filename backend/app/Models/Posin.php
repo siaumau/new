@@ -22,6 +22,7 @@ class Posin extends Model
         'posin_dt',
         'posin_log',
         'posin_note',
+        'us_purchase_order_status',
     ];
 
     public function posinItems()
