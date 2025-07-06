@@ -84,5 +84,44 @@ export default {
     },
     edit: '編輯',
     delete: '刪除'
+  },
+  posinItems: {
+    title: '進貨單商品項目',
+    table: {
+      itemSN: '商品序號',
+      itemName: '商品名稱',
+      spec: '規格',
+      quantity: '數量',
+      packageSpec: '包裝規格',
+      boxCount: '箱數',
+      unitPrice: '單價',
+      subtotal: '小計',
+      expiryDate: '有效期限',
+      actions: '操作',
+      generateQR: '生成QR',
+      unit: '個/箱',
+      box: '箱'
+    },
+    qrCode: {
+      title: '商品QR Code生成',
+      itemSN: '商品序號:',
+      batch: '批號:',
+      spec: '規格:',
+      quantity: '總數量:',
+      packageSpec: '包裝規格:',
+      boxCount: '需要箱數:',
+      purchaseDate: '進貨日期:',
+      expiryDate: '有效期限:',
+      boxQRTitle: '品 外箱 QR Code 標籤生成',
+      description: '此商品需要 {count} 張外箱 QR Code 標籤 (每箱一張)',
+      labelInfo: '每張標籤包含：QR Code + 編碼資訊 + 商品詳情',
+      codeFormat: '編碼格式：SKU + 批號 + 效期 + 流水號 (如：{example})',
+      generateCount: '生成數量:',
+      generateCountUnit: '張',
+      download: '下載 {count} 張外箱標籤',
+      preview: '預覽標籤樣式',
+      cancel: '取消',
+      close: '關閉'
+    }
   }
 }

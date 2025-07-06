@@ -84,5 +84,44 @@ export default {
     },
     edit: 'Edit',
     delete: 'Delete'
+  },
+  posinItems: {
+    title: 'Purchase Order Items',
+    table: {
+      itemSN: 'Item SN',
+      itemName: 'Item Name',
+      spec: 'Specification',
+      quantity: 'Quantity',
+      packageSpec: 'Package Spec',
+      boxCount: 'Box Count',
+      unitPrice: 'Unit Price',
+      subtotal: 'Subtotal',
+      expiryDate: 'Expiry Date',
+      actions: 'Actions',
+      generateQR: 'Generate QR',
+      unit: 'pcs/box',
+      box: 'box'
+    },
+    qrCode: {
+      title: 'Item QR Code Generation',
+      itemSN: 'Item SN:',
+      batch: 'Batch:',
+      spec: 'Specification:',
+      quantity: 'Total Quantity:',
+      packageSpec: 'Package Spec:',
+      boxCount: 'Box Count Required:',
+      purchaseDate: 'Purchase Date:',
+      expiryDate: 'Expiry Date:',
+      boxQRTitle: 'Box QR Code Label Generation',
+      description: 'This item requires {count} box QR code labels (one per box)',
+      labelInfo: 'Each label contains: QR Code + Coding Info + Item Details',
+      codeFormat: 'Code Format: SKU + Batch + Expiry Date + Serial Number (e.g., {example})',
+      generateCount: 'Generate Count:',
+      generateCountUnit: 'labels',
+      download: 'Download {count} Box Labels',
+      preview: 'Preview Label Style',
+      cancel: 'Cancel',
+      close: 'Close'
+    }
   }
 }

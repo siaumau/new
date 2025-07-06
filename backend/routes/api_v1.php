@@ -29,6 +29,12 @@ Route::prefix('api/v1')->group(function () {
     // 美國進貨單生成路由
     Route::patch('posin/{id}/generate-us-purchase-order', [PosinController::class, 'generateUsPurchaseOrder']);
 
+    // 進貨單商品項目相關路由
+    Route::get('posin/{id}/items', [PosinController::class, 'getPosinItems']);
+
+    // QR Code生成路由
+    Route::post('generate-qr-labels', [PosinController::class, 'generateQRLabels']);
+
     /**
      * @OA\Get(
      *     path="/api/v1/test",
