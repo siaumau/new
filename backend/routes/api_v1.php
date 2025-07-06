@@ -21,17 +21,19 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::apiResource('items', ItemController::class);
-Route::apiResource('locations', LocationController::class);
-Route::apiResource('posin', PosinController::class);
+Route::prefix('api/v1')->group(function () {
+    Route::apiResource('items', ItemController::class);
+    Route::apiResource('locations', LocationController::class);
+    Route::apiResource('posin', PosinController::class);
 
-/**
- * @OA\Get(
- *     path="/test",
- *     summary="Test API endpoint",
- *     @OA\Response(response="200", description="Successful operation")
- * )
- */
-Route::get('/test', function () {
-    return response()->json(['message' => 'Test successful']);
+    /**
+     * @OA\Get(
+     *     path="/api/v1/test",
+     *     summary="Test API endpoint",
+     *     @OA\Response(response="200", description="Successful operation")
+     * )
+     */
+    Route::get('/test', function () {
+        return response()->json(['message' => 'Test successful']);
+    });
 });

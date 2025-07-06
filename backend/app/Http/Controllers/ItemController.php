@@ -9,7 +9,7 @@ class ItemController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/items",
+     *     path="/api/v1/items",
      *     summary="Get all items",
      *     @OA\Response(response="200", description="List of items")
      * )
@@ -22,7 +22,7 @@ class ItemController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/items",
+     *     path="/api/v1/items",
      *     summary="Create a new item",
      *     @OA\RequestBody(
      *         required=true,
@@ -90,7 +90,7 @@ class ItemController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/items/{id}",
+     *     path="/api/v1/items/{id}",
      *     summary="Get a specific item",
      *     @OA\Parameter(
      *         name="id",
@@ -113,7 +113,7 @@ class ItemController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/items/{id}",
+     *     path="/api/v1/items/{id}",
      *     summary="Update an item",
      *     @OA\Parameter(
      *         name="id",
@@ -193,7 +193,7 @@ class ItemController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/items/{id}",
+     *     path="/api/v1/items/{id}",
      *     summary="Delete an item",
      *     @OA\Parameter(
      *         name="id",

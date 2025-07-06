@@ -68,7 +68,7 @@ const fetchPurchaseOrders = async () => {
 
   try {
     // 呼叫真實的 API
-    const response = await axios.get('/posin', {
+    const response = await axios.get('/api/v1/posin', {
       params: {
         page: currentPage.value,
         per_page: itemsPerPage.value,
@@ -101,7 +101,7 @@ const handleDelete = async (id) => {
 
   try {
     // 呼叫真實的 API
-    await axios.delete(`/posin/${id}`);
+    await axios.delete(`/api/v1/posin/${id}`);
 
     // 重新載入資料
     await fetchPurchaseOrders();

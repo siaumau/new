@@ -11,7 +11,7 @@ class PosinController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/posin",
+     *     path="/api/v1/posin",
      *     summary="Get all posin records with pagination and search",
      *     @OA\Parameter(
      *         name="page",
@@ -101,7 +101,7 @@ class PosinController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/posin",
+     *     path="/api/v1/posin",
      *     summary="Create a new posin record",
      *     @OA\RequestBody(
      *         required=true,
@@ -168,7 +168,7 @@ class PosinController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/posin/{id}",
+     *     path="/api/v1/posin/{id}",
      *     summary="Get a specific posin record",
      *     @OA\Parameter(
      *         name="id",
@@ -191,7 +191,7 @@ class PosinController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/posin/{id}",
+     *     path="/api/v1/posin/{id}",
      *     summary="Update a posin record",
      *     @OA\Parameter(
      *         name="id",
@@ -274,7 +274,7 @@ class PosinController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/posin/{id}",
+     *     path="/api/v1/posin/{id}",
      *     summary="Delete a posin record",
      *     @OA\Parameter(
      *         name="id",

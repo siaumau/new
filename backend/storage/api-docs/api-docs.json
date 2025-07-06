@@ -20,10 +20,10 @@
                 }
             }
         },
-        "/items": {
+        "/api/v1/items": {
             "get": {
                 "summary": "Get all items",
-                "operationId": "38f04083708efa13b19c689b47445d64",
+                "operationId": "5561acef6e4aef27354515aca3069b72",
                 "responses": {
                     "200": {
                         "description": "List of items"
@@ -32,7 +32,7 @@
             },
             "post": {
                 "summary": "Create a new item",
-                "operationId": "5303a71efd2a2fd638dc3ce2bdda9997",
+                "operationId": "a4fb16eb9970fcb06a5d70ace3026f4f",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -126,10 +126,10 @@
                 }
             }
         },
-        "/items/{id}": {
+        "/api/v1/items/{id}": {
             "get": {
                 "summary": "Get a specific item",
-                "operationId": "3e662703a702b80e7f3dc6dd432f9128",
+                "operationId": "b7db156ef0b44edcbe062490557a9c94",
                 "parameters": [
                     {
                         "name": "id",
@@ -151,7 +151,7 @@
             },
             "put": {
                 "summary": "Update an item",
-                "operationId": "4a2d683f0a5edace6de8e8d0d12c2ee9",
+                "operationId": "e2ab699b2e667d8ff094e4c74997b89d",
                 "parameters": [
                     {
                         "name": "id",
@@ -259,7 +259,7 @@
             },
             "delete": {
                 "summary": "Delete an item",
-                "operationId": "f7d8019e7a58101f594ab509931e3bb2",
+                "operationId": "7347ce3700a930babdf9ff7a41ea347d",
                 "parameters": [
                     {
                         "name": "id",
@@ -280,10 +280,10 @@
                 }
             }
         },
-        "/locations": {
+        "/api/v1/locations": {
             "get": {
                 "summary": "Get all locations",
-                "operationId": "3bad728e786474a24578b9579ee37a1a",
+                "operationId": "9bbe66ccd9a8de4d94275b1f6c4be2b9",
                 "responses": {
                     "200": {
                         "description": "List of locations"
@@ -292,7 +292,7 @@
             },
             "post": {
                 "summary": "Create a new location",
-                "operationId": "084543be926b0fda5932ccead19664a0",
+                "operationId": "3af24cfa81f4c045f6490e97e6653698",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -358,10 +358,10 @@
                 }
             }
         },
-        "/locations/{id}": {
+        "/api/v1/locations/{id}": {
             "get": {
                 "summary": "Get a specific location",
-                "operationId": "a47f6442ea1ed2ac63badaa117e6b2fd",
+                "operationId": "6bc92e1682723116be7ea8ff826b9f4c",
                 "parameters": [
                     {
                         "name": "id",
@@ -383,7 +383,7 @@
             },
             "put": {
                 "summary": "Update a location",
-                "operationId": "e442621fa159969379b067b60f5e2bf9",
+                "operationId": "57f14eec99aa037d5624561c548f8ad9",
                 "parameters": [
                     {
                         "name": "id",
@@ -463,7 +463,7 @@
             },
             "delete": {
                 "summary": "Delete a location",
-                "operationId": "7eb22475e1a756942731587375f27883",
+                "operationId": "d69677f30e8f588247d039bb36d50082",
                 "parameters": [
                     {
                         "name": "id",
@@ -484,19 +484,55 @@
                 }
             }
         },
-        "/posin": {
+        "/api/v1/posin": {
             "get": {
-                "summary": "Get all posin records",
-                "operationId": "440d24f78bad00ac94a4954476fad344",
+                "summary": "Get all posin records with pagination and search",
+                "operationId": "2e077300cd25930221f648435f20ddbe",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Status filter",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "List of posin records"
+                        "description": "Paginated list of posin records"
                     }
                 }
             },
             "post": {
                 "summary": "Create a new posin record",
-                "operationId": "1b2516193e06693077effc9a45bf3ecb",
+                "operationId": "6f587a50a9513d3715f0e50eeb695f82",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -574,10 +610,10 @@
                 }
             }
         },
-        "/posin/{id}": {
+        "/api/v1/posin/{id}": {
             "get": {
                 "summary": "Get a specific posin record",
-                "operationId": "93e71ce2e4908229877bf1d6e8dc0593",
+                "operationId": "f99f9fe2c9da296b7af016916ddd01fe",
                 "parameters": [
                     {
                         "name": "id",
@@ -599,7 +635,7 @@
             },
             "put": {
                 "summary": "Update a posin record",
-                "operationId": "6ca1f98fa66e097245983c9fc3a38204",
+                "operationId": "1fede1d766afde79ba78c49c0721de84",
                 "parameters": [
                     {
                         "name": "id",
@@ -695,7 +731,7 @@
             },
             "delete": {
                 "summary": "Delete a posin record",
-                "operationId": "c2b49f56fdd918e5b26d93cbaea8a216",
+                "operationId": "584472b17274172814bab5690aa04440",
                 "parameters": [
                     {
                         "name": "id",

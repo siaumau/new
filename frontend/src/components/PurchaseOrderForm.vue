@@ -42,20 +42,40 @@ const handleSubmit = async () => {
   error.value = null;
 
   try {
+    // 將表單數據轉換為後端需要的格式
     const formData = {
-      ...form.value,
-      purchase_date: form.value.purchase_date,
-      expected_delivery_date: form.value.expected_delivery_date,
+      _users_id: 1, // 假設當前用戶 ID
+      posin_sn: isEditing.value ? props.purchaseOrder.order_number : `${new Date().toISOString().split('T')[0]} [${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}]`,
+      posin_user: form.value.supplier,
+      posin_dt: form.value.purchase_date,
+      posin_note: form.value.notes || '',
+      posin_items: form.value.items.map(item => {
+        // 找到對應的商品
+        const selectedItem = availableItems.value.find(i => i.item_id == item.item_id);
+
+        return {
+          itemtype: selectedItem?.item_type || 1,
+          item_id: item.item_id,
+          item_name: selectedItem?.item_name || '',
+          item_sn: selectedItem?.item_sn || '',
+          item_spec: selectedItem?.item_spec || '',
+          item_batch: new Date().toISOString().split('T')[0].replace(/-/g, ''),
+          item_count: item.quantity,
+          item_price: item.price,
+          item_expireday: null,
+          item_validyear: null
+        };
+      })
     };
 
     let response;
 
     if (isEditing.value) {
       // 更新現有訂單
-      response = await axios.put(`/api/v1/purchase-orders/${props.purchaseOrder.id}`, formData);
+      response = await axios.put(`/api/v1/posin/${props.purchaseOrder.id}`, formData);
     } else {
       // 創建新訂單
-      response = await axios.post('/api/v1/purchase-orders', formData);
+      response = await axios.post('/api/v1/posin', formData);
     }
 
     emit('saved', response.data);
@@ -110,6 +130,7 @@ const validateForm = () => {
 // 添加新商品項目
 const addItem = () => {
   form.value.items.push({
+    posinitem_id: null,
     item_id: '',
     quantity: 1,
     price: 0,
@@ -161,21 +182,38 @@ const loadEditData = () => {
       expected_delivery_date: props.purchaseOrder.expected_delivery_date || '',
       status: props.purchaseOrder.status,
       notes: props.purchaseOrder.notes || '',
-      items: (props.purchaseOrder.items || []).map(item => ({
+      items: []
+    };
+
+    // 處理商品項目
+    if (props.purchaseOrder.posin_items && props.purchaseOrder.posin_items.length > 0) {
+      form.value.items = props.purchaseOrder.posin_items.map(item => ({
+        posinitem_id: item.posinitem_id,
+        item_id: item.item_id,
+        quantity: item.item_count,
+        price: item.item_price,
+        subtotal: item.item_count * item.item_price
+      }));
+    } else if (props.purchaseOrder.items && props.purchaseOrder.items.length > 0) {
+      form.value.items = props.purchaseOrder.items.map(item => ({
         item_id: item.item_id,
         quantity: item.quantity,
         price: item.price,
         subtotal: item.subtotal || calculateSubtotal(item)
-      }))
-    };
+      }));
+    } else {
+      // 如果沒有項目，添加一個空白項目
+      addItem();
+    }
   }
 };
 
 // 載入商品和供應商列表
 const fetchItems = async () => {
   try {
-    const response = await axios.get('/items');
+    const response = await axios.get('/api/v1/items');
     availableItems.value = response.data.data || response.data;
+    console.log('Available items:', availableItems.value);
   } catch (err) {
     console.error('Error fetching items:', err);
   }
@@ -185,7 +223,7 @@ const fetchSuppliers = async () => {
   try {
     // 暫時使用模擬資料，因為後端沒有 suppliers 表
     // 從 posin 表中獲取唯一的用戶作為供應商
-    const response = await axios.get('/posin');
+    const response = await axios.get('/api/v1/posin');
     const uniqueSuppliers = [...new Set(response.data.data.map(order => order.supplier))];
     suppliers.value = uniqueSuppliers.map((name, index) => ({ id: index + 1, name }));
   } catch (err) {
@@ -331,8 +369,8 @@ onMounted(() => {
                       required
                     >
                       <option value="" disabled>選擇商品</option>
-                      <option v-for="availableItem in availableItems" :key="availableItem.id" :value="availableItem.id">
-                        {{ availableItem.name }}
+                      <option v-for="availableItem in availableItems" :key="availableItem.item_id" :value="availableItem.item_id">
+                        {{ availableItem.item_name || availableItem.name }}
                       </option>
                     </select>
                   </td>
