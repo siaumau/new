@@ -67,6 +67,6 @@ class QrCode extends Model
     // 關聯到商品
     public function item()
     {
-        return $this->belongsTo(Item::class, 'item_code', 'item_barcode');
+        return $this->belongsTo(Item::class, 'item_id', 'item_id');
     }
 }

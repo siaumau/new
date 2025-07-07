@@ -118,9 +118,9 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
                   <div class="flex justify-center space-x-2">
-                    <!-- QR生成按鈕 - 美國進貨單轉換後才能生成QR -->
+                    <!-- QR生成按鈕 - 無論是否轉換都可以生成QR -->
                     <button
-                      v-if="isConvertedToUS && !isQRGenerated(item)"
+                      v-if="!isQRGenerated(item)"
                       @click="openQRModal(item)"
                       class="bg-green-500 hover:bg-green-600 text-white font-medium py-1.5 px-3 rounded text-xs transition-colors shadow-sm"
                       :title="$t('posinItems.actions.generateQR')"
@@ -136,16 +136,6 @@
                       :title="'QR Code 已生成'"
                     >
                       已生成QR
-                    </button>
-
-                    <!-- 未轉換美國進貨單時的提示 -->
-                    <button
-                      v-if="canEdit && !isQRGenerated(item)"
-                      disabled
-                      class="bg-gray-300 text-gray-500 font-medium py-1.5 px-3 rounded text-xs cursor-not-allowed"
-                      :title="'需轉換為美國進貨單後才能生成QR'"
-                    >
-                      未轉換
                     </button>
 
                     <!-- 刪除按鈕 - 只在未轉換且未生成QR時顯示 -->

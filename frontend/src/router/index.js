@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import PurchaseOrdersView from '../views/PurchaseOrdersView.vue'
 import PosinItemsView from '../views/PosinItemsView.vue'
 import LocationsView from '../views/LocationsView.vue'
+import QrCodeView from '../views/QrCodeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,6 +26,11 @@ const router = createRouter({
       path: '/locations',
       name: 'locations',
       component: LocationsView
+    },
+    {
+      path: '/qrcode',
+      name: 'qrcode',
+      component: QrCodeView
     }
   ]
 })

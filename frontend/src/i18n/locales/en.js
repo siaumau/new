@@ -214,6 +214,93 @@ export default {
       close: 'Close'
     }
   },
+  qrCodes: {
+    title: 'QR Code Label Management',
+    description: 'Manage generated QR code labels, including print status and location assignment',
+    stats: {
+      total: 'Total Labels',
+      withLocation: 'With Location',
+      withoutLocation: 'Without Location',
+      recentGenerated: 'Recent 7 Days'
+    },
+    search: {
+      placeholder: 'Search item code, name, batch...',
+      button: 'Search'
+    },
+    filters: {
+      status: 'Status',
+      location: 'Location',
+      inboxStatus: 'Inbox Status',
+      allStatus: 'All Status',
+      allLocations: 'All Locations',
+      allInboxStatus: 'All Inbox Status'
+    },
+    status: {
+      generated: 'Generated',
+      printed: 'Printed',
+      used: 'Used'
+    },
+    inboxStatus: {
+      pending: 'Pending',
+      completed: 'Completed'
+    },
+    table: {
+      itemCode: 'Item Code',
+      itemName: 'Item Name',
+      batch: 'Batch',
+      boxNumber: 'Box Number',
+      location: 'Location',
+      status: 'Status',
+      inboxStatus: 'Inbox Status',
+      generatedAt: 'Generated At',
+      actions: 'Actions',
+      noLocation: 'Not Assigned'
+    },
+    actions: {
+      assignLocation: 'Assign Location',
+      updateStatus: 'Update Status'
+    },
+    batch: {
+      selected: 'Selected {count} items',
+      selectAction: 'Select batch action',
+      markAsPrinted: 'Mark as Printed',
+      markAsUsed: 'Mark as Used',
+      execute: 'Execute'
+    },
+    modals: {
+      assignLocation: {
+        title: 'Assign Location',
+        location: 'Location',
+        floorLevel: 'Floor Level',
+        selectLocation: 'Select Location',
+        floorLevelPlaceholder: 'Enter floor level (optional)'
+      },
+      updateStatus: {
+        title: 'Update Status',
+        status: 'Status'
+      },
+      cancel: 'Cancel',
+      assign: 'Assign',
+      update: 'Update'
+    },
+    pagination: {
+      showing: 'Showing',
+      to: 'to',
+      of: 'of',
+      results: 'results',
+      prev: 'Previous',
+      next: 'Next'
+    },
+    messages: {
+      loading: 'Loading...',
+      loadError: 'Failed to load QR code labels. Please try again later',
+      noData: 'No QR code labels found',
+      assignLocationError: 'Failed to assign location. Please try again later',
+      updateStatusError: 'Failed to update status. Please try again later',
+      batchActionConfirm: 'Are you sure you want to execute this action on {count} selected items?',
+      batchActionError: 'Batch action failed. Please try again later'
+    }
+  },
   common: {
     loading: 'Loading...',
     actions: 'Actions',

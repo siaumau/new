@@ -214,6 +214,93 @@ export default {
       close: '關閉'
     }
   },
+  qrCodes: {
+    title: 'QR Code 標籤管理',
+    description: '管理已生成的 QR Code 標籤，包含列印狀態、位置分配等功能',
+    stats: {
+      total: '總標籤數',
+      withLocation: '已分配位置',
+      withoutLocation: '未分配位置',
+      recentGenerated: '近7天生成'
+    },
+    search: {
+      placeholder: '搜尋商品代碼、名稱、批號...',
+      button: '搜尋'
+    },
+    filters: {
+      status: '狀態',
+      location: '位置',
+      inboxStatus: '入庫狀態',
+      allStatus: '所有狀態',
+      allLocations: '所有位置',
+      allInboxStatus: '所有入庫狀態'
+    },
+    status: {
+      generated: '已生成',
+      printed: '已列印',
+      used: '已使用'
+    },
+    inboxStatus: {
+      pending: '待入庫',
+      completed: '已入庫'
+    },
+    table: {
+      itemCode: '商品代碼',
+      itemName: '商品名稱',
+      batch: '批號',
+      boxNumber: '箱號',
+      location: '位置',
+      status: '狀態',
+      inboxStatus: '入庫狀態',
+      generatedAt: '生成時間',
+      actions: '操作',
+      noLocation: '未分配'
+    },
+    actions: {
+      assignLocation: '分配位置',
+      updateStatus: '更新狀態'
+    },
+    batch: {
+      selected: '已選擇 {count} 項',
+      selectAction: '選擇批次操作',
+      markAsPrinted: '標記為已列印',
+      markAsUsed: '標記為已使用',
+      execute: '執行'
+    },
+    modals: {
+      assignLocation: {
+        title: '分配位置',
+        location: '位置',
+        floorLevel: '層架',
+        selectLocation: '選擇位置',
+        floorLevelPlaceholder: '輸入層架編號（選填）'
+      },
+      updateStatus: {
+        title: '更新狀態',
+        status: '狀態'
+      },
+      cancel: '取消',
+      assign: '分配',
+      update: '更新'
+    },
+    pagination: {
+      showing: '顯示',
+      to: '至',
+      of: '項，共',
+      results: '筆結果',
+      prev: '上一頁',
+      next: '下一頁'
+    },
+    messages: {
+      loading: '載入中...',
+      loadError: '載入 QR Code 標籤失敗，請稍後再試',
+      noData: '沒有找到任何 QR Code 標籤',
+      assignLocationError: '分配位置失敗，請稍後再試',
+      updateStatusError: '更新狀態失敗，請稍後再試',
+      batchActionConfirm: '確定要對選中的 {count} 項執行此操作嗎？',
+      batchActionError: '批次操作失敗，請稍後再試'
+    }
+  },
   common: {
     loading: '載入中...',
     actions: '操作',
