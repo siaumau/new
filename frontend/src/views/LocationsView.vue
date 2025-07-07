@@ -1,0 +1,902 @@
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
+// 響應式資料
+const locations = ref([]);
+const loading = ref(false);
+const searchText = ref('');
+const selectedBuilding = ref('');
+const selectedCategory = ref('');
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+const showEditModal = ref(false);
+const showQRModal = ref(false);
+const showDetailsModal = ref(false);
+const selectedLocation = ref(null);
+const qrCodeUrl = ref('');
+const error = ref('');
+const locationItems = ref([]);
+const floorDistribution = ref([]);
+
+// 篩選後的位置資料
+const filteredLocations = computed(() => {
+  let filtered = locations.value;
+
+  // 搜尋篩選
+  if (searchText.value) {
+    filtered = filtered.filter(location =>
+      location.code.toLowerCase().includes(searchText.value.toLowerCase()) ||
+      location.name.toLowerCase().includes(searchText.value.toLowerCase())
+    );
+  }
+
+  // 建築篩選
+  if (selectedBuilding.value) {
+    filtered = filtered.filter(location => location.building === selectedBuilding.value);
+  }
+
+  // 類別篩選
+  if (selectedCategory.value) {
+    filtered = filtered.filter(location => location.storageType === selectedCategory.value);
+  }
+
+  return filtered;
+});
+
+// 分頁資料
+const paginatedLocations = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredLocations.value.slice(start, end);
+});
+
+// 總頁數
+const totalPages = computed(() => {
+  return Math.ceil(filteredLocations.value.length / itemsPerPage.value);
+});
+
+// 資料轉換函數：將 API 回應轉換為前端格式
+const transformApiDataToFrontend = (apiData) => {
+  return {
+    id: apiData.id,
+    code: apiData.location_code,
+    name: apiData.location_name,
+    building: apiData.building_code,
+    storageType: apiData.storage_type_code,
+    storageCode: apiData.position_code,
+    capacity: apiData.capacity,
+    stock: apiData.current_stock,
+    utilization: apiData.capacity > 0 ? Math.round((apiData.current_stock / apiData.capacity) * 100) : 0,
+    notes: apiData.notes,
+    enabled: apiData.is_active === 1,
+    qrData: apiData.qr_code_data || apiData.location_code,
+    // 額外的 API 欄位
+    floorNumber: apiData.floor_number,
+    floorAreaCode: apiData.floor_area_code,
+    subAreaCode: apiData.sub_area_code,
+    createdAt: apiData.created_at,
+    updatedAt: apiData.updated_at
+  };
+};
+
+// 資料轉換函數：將前端格式轉換為 API 格式
+const transformFrontendDataToApi = (frontendData) => {
+  return {
+    id: frontendData.id,
+    location_code: frontendData.code,
+    location_name: frontendData.name,
+    building_code: frontendData.building,
+    floor_number: frontendData.floorNumber || "1",
+    floor_area_code: frontendData.floorAreaCode || "01",
+    storage_type_code: frontendData.storageType,
+    sub_area_code: frontendData.subAreaCode || "01",
+    position_code: frontendData.storageCode,
+    capacity: frontendData.capacity,
+    current_stock: frontendData.stock,
+    qr_code_data: frontendData.qrData,
+    notes: frontendData.notes,
+    is_active: frontendData.enabled ? 1 : 0
+  };
+};
+
+// 載入位置資料
+const loadLocations = async () => {
+  loading.value = true;
+  error.value = '';
+  try {
+    const response = await fetch('http://localhost:8000/api/v1/locations', {
+      method: 'GET',
+      headers: {
+        'accept': '*/*',
+        'X-CSRF-TOKEN': ''
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const apiData = data.data || data;
+
+    // 轉換 API 資料格式到前端格式
+    locations.value = Array.isArray(apiData)
+      ? apiData.map(transformApiDataToFrontend)
+      : [];
+  } catch (err) {
+    console.error('載入位置資料失敗:', err);
+    error.value = err.message || '載入位置資料失敗';
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 搜尋功能
+const handleSearch = () => {
+  currentPage.value = 1;
+};
+
+// 載入位置詳細資訊
+const loadLocationDetails = async (locationId) => {
+  try {
+    // 載入位置商品清單
+    const itemsResponse = await fetch(`http://localhost:8000/api/v1/locations/${locationId}/items`, {
+      method: 'GET',
+      headers: {
+        'accept': '*/*',
+        'X-CSRF-TOKEN': ''
+      }
+    });
+
+    if (itemsResponse.ok) {
+      const itemsData = await itemsResponse.json();
+      locationItems.value = itemsData.data || itemsData || [];
+    } else {
+      locationItems.value = [];
+    }
+
+    // 模擬樓層分佈資料（如果有對應的API可以替換）
+    floorDistribution.value = [
+      { floor: 1, itemCount: 1, totalValue: 1380, items: ['SA202G1'] },
+      { floor: 2, itemCount: 2, totalValue: 1510, items: ['S106E1A'] },
+      { floor: 4, itemCount: 1, totalValue: 1510, items: ['S106E1A'] }
+    ];
+  } catch (err) {
+    console.error('載入位置詳細資訊失敗:', err);
+    locationItems.value = [];
+    floorDistribution.value = [];
+  }
+};
+
+// 顯示詳細資訊
+const showDetails = async (location) => {
+  selectedLocation.value = {
+    ...location,
+    // 確保所有必要的欄位都存在
+    floorNumber: location.floorNumber || "1",
+    floorAreaCode: location.floorAreaCode || "01",
+    subAreaCode: location.subAreaCode || "01"
+  };
+
+  // 載入詳細資訊
+  await loadLocationDetails(location.id);
+  showDetailsModal.value = true;
+};
+
+// 顯示 QR Code
+const showQRCode = (location) => {
+  selectedLocation.value = location;
+  // 生成 QR Code URL (這裡使用 qr-server.com 作為示例)
+  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(location.qrData)}`;
+  showQRModal.value = true;
+};
+
+// 編輯位置
+const editLocation = (location) => {
+  selectedLocation.value = {
+    ...location,
+    // 確保所有必要的欄位都存在
+    floorNumber: location.floorNumber || "1",
+    floorAreaCode: location.floorAreaCode || "01",
+    subAreaCode: location.subAreaCode || "01"
+  };
+  showEditModal.value = true;
+};
+
+// 刪除位置
+const deleteLocation = async (location) => {
+  if (confirm(`確定要刪除位置「${location.name}」嗎？`)) {
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/locations/${location.id}`, {
+        method: 'DELETE',
+        headers: {
+          'accept': '*/*',
+          'X-CSRF-TOKEN': ''
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // 刪除成功後重新載入資料
+      await loadLocations();
+    } catch (err) {
+      console.error('刪除位置失敗:', err);
+      alert('刪除位置失敗: ' + (err.message || '未知錯誤'));
+    }
+  }
+};
+
+// 儲存位置
+const saveLocation = async () => {
+  if (!selectedLocation.value) return;
+
+  try {
+    const isEdit = selectedLocation.value.id;
+    const url = isEdit
+      ? `http://localhost:8000/api/v1/locations/${selectedLocation.value.id}`
+      : 'http://localhost:8000/api/v1/locations';
+
+    const method = isEdit ? 'PUT' : 'POST';
+
+    // 轉換前端資料格式為 API 格式
+    const apiData = transformFrontendDataToApi(selectedLocation.value);
+
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        'accept': '*/*',
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': ''
+      },
+      body: JSON.stringify(apiData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // 儲存成功後重新載入資料
+    await loadLocations();
+    showEditModal.value = false;
+    selectedLocation.value = null;
+  } catch (err) {
+    console.error('儲存位置失敗:', err);
+    alert('儲存位置失敗: ' + (err.message || '未知錯誤'));
+  }
+};
+
+// 關閉 Modal
+const closeModal = () => {
+  showEditModal.value = false;
+  showQRModal.value = false;
+  showDetailsModal.value = false;
+  selectedLocation.value = null;
+  locationItems.value = [];
+  floorDistribution.value = [];
+};
+
+// 分頁切換
+const changePage = (page) => {
+  currentPage.value = page;
+};
+
+// 格式化使用率
+const formatUtilization = (utilization) => {
+  return utilization + '%';
+};
+
+onMounted(() => {
+  loadLocations();
+});
+</script>
+
+<template>
+  <div class="min-h-screen bg-gray-50">
+    <!-- 頁面標題 -->
+    <div class="bg-white shadow-sm border-b">
+      <div class="px-6 py-4">
+        <h1 class="text-2xl font-bold text-teal-600">{{ t('locations.title') }}</h1>
+      </div>
+    </div>
+
+    <!-- 搜尋和篩選區域 -->
+    <div class="bg-white shadow-sm border-b">
+      <div class="px-6 py-4">
+        <div class="flex flex-wrap items-center gap-4">
+          <!-- 搜尋框 -->
+          <div class="flex-1 min-w-64">
+            <input
+              v-model="searchText"
+              type="text"
+              :placeholder="t('locations.search.placeholder')"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            />
+          </div>
+
+          <!-- 建築篩選 -->
+          <select
+            v-model="selectedBuilding"
+            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          >
+            <option value="">{{ t('locations.search.allBuildings') }}</option>
+            <option value="TP">{{ t('locations.buildings.taipei') }}</option>
+            <option value="CH">{{ t('locations.buildings.changhua') }}</option>
+          </select>
+
+          <!-- 類別篩選 -->
+          <select
+            v-model="selectedCategory"
+            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          >
+            <option value="">{{ t('locations.search.allCategories') }}</option>
+            <option value="Area">{{ t('locations.categories.area') }}</option>
+            <option value="Shelf">{{ t('locations.categories.shelf') }}</option>
+          </select>
+
+          <!-- 搜尋按鈕 -->
+          <button
+            @click="handleSearch"
+            class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
+          >
+            {{ t('locations.search.button') }}
+          </button>
+
+          <!-- 操作按鈕 -->
+          <button class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+            {{ t('locations.search.downloadTemplate') }}
+          </button>
+          <button class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+            {{ t('locations.search.import') }}
+          </button>
+          <button class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors">
+            {{ t('locations.addNew') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 載入中狀態 -->
+    <div v-if="loading" class="flex justify-center items-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+      <span class="ml-2 text-gray-600">{{ t('common.loading') }}</span>
+    </div>
+
+    <!-- 錯誤訊息 -->
+    <div v-else-if="error" class="px-6 py-4">
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <strong>錯誤:</strong> {{ error }}
+        <button @click="loadLocations" class="ml-4 text-red-600 hover:text-red-800 underline">
+          重試
+        </button>
+      </div>
+    </div>
+
+    <!-- 資料表格 -->
+    <div v-else class="px-6 py-4">
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-teal-600 text-white">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.locationCode') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.locationName') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.building') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.storageType') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.storageCode') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.capacity') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.stock') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.utilization') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.notes') }}
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.actions') }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="location in paginatedLocations" :key="location.id" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <a href="#" @click.prevent="showDetails(location)" class="text-teal-600 hover:text-teal-900 font-medium">
+                    {{ location.code }}
+                  </a>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ location.name }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ location.building }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ location.storageType }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ location.storageCode }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ location.capacity }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ location.stock }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <span class="text-teal-600 font-medium">{{ formatUtilization(location.utilization) }}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ location.notes }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div class="flex space-x-2">
+                    <button
+                      @click="showDetails(location)"
+                      class="bg-teal-600 text-white px-3 py-1 rounded text-xs hover:bg-teal-700 transition-colors"
+                    >
+                      {{ t('locations.actions.details') }}
+                    </button>
+                    <button
+                      @click="showQRCode(location)"
+                      class="bg-gray-600 text-white px-3 py-1 rounded text-xs hover:bg-gray-700 transition-colors"
+                    >
+                      {{ t('locations.actions.qrCode') }}
+                    </button>
+                    <button
+                      @click="editLocation(location)"
+                      class="bg-teal-600 text-white px-3 py-1 rounded text-xs hover:bg-teal-700 transition-colors"
+                    >
+                      {{ t('locations.actions.edit') }}
+                    </button>
+                    <button
+                      @click="deleteLocation(location)"
+                      class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition-colors"
+                    >
+                      {{ t('locations.actions.delete') }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 分頁 -->
+        <div class="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+          <div class="flex items-center">
+            <span class="text-sm text-gray-700">{{ t('locations.pagination.itemsPerPage') }}</span>
+            <select
+              v-model="itemsPerPage"
+              class="ml-2 px-2 py-1 border border-gray-300 rounded text-sm"
+            >
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+            <span class="ml-4 text-sm text-gray-700">
+              {{ t('locations.pagination.page') }} {{ currentPage }} {{ t('locations.pagination.totalPages') }} {{ totalPages }} {{ t('locations.pagination.pages') }}
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button
+              @click="changePage(currentPage - 1)"
+              :disabled="currentPage === 1"
+              class="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ t('locations.pagination.prev') }}
+            </button>
+            <span class="text-sm text-gray-700">{{ currentPage }}</span>
+            <button
+              @click="changePage(currentPage + 1)"
+              :disabled="currentPage === totalPages"
+              class="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ t('locations.pagination.next') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 編輯 Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">{{ t('locations.modal.editTitle') }}</h3>
+          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div v-if="selectedLocation" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('locations.modal.locationCode') }}
+              </label>
+              <input
+                v-model="selectedLocation.code"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('locations.modal.locationName') }}
+              </label>
+              <input
+                v-model="selectedLocation.name"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('locations.modal.building') }}
+              </label>
+              <select
+                v-model="selectedLocation.building"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              >
+                <option value="TP">{{ t('locations.buildings.taipei') }}</option>
+                <option value="CH">{{ t('locations.buildings.changhua') }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('locations.modal.storageType') }}
+              </label>
+              <select
+                v-model="selectedLocation.storageType"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              >
+                <option value="Area">{{ t('locations.categories.area') }}</option>
+                <option value="Shelf">{{ t('locations.categories.shelf') }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                樓層編號
+              </label>
+              <input
+                v-model="selectedLocation.floorNumber"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                樓層區域代號
+              </label>
+              <input
+                v-model="selectedLocation.floorAreaCode"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                子區域代號
+              </label>
+              <input
+                v-model="selectedLocation.subAreaCode"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('locations.modal.storageCode') }}
+              </label>
+              <input
+                v-model="selectedLocation.storageCode"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('locations.modal.capacity') }}
+              </label>
+              <input
+                v-model="selectedLocation.capacity"
+                type="number"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('locations.modal.currentStock') }}
+              </label>
+              <input
+                v-model="selectedLocation.stock"
+                type="number"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('locations.modal.qrCodeData') }}
+              </label>
+              <input
+                v-model="selectedLocation.qrData"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              {{ t('locations.modal.notes') }}
+            </label>
+            <textarea
+              v-model="selectedLocation.notes"
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              {{ t('locations.modal.enabled') }}
+            </label>
+            <select
+              v-model="selectedLocation.enabled"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            >
+              <option :value="true">{{ t('common.yes') }}</option>
+              <option :value="false">{{ t('common.no') }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-6">
+          <button
+            @click="closeModal"
+            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+          >
+            {{ t('locations.modal.cancel') }}
+          </button>
+          <button
+            @click="saveLocation"
+            class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
+          >
+            {{ t('locations.modal.save') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div v-if="showQRModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">{{ t('locations.qrModal.title') }}</h3>
+          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="text-center">
+          <div class="mb-4">
+            <img :src="qrCodeUrl" alt="QR Code" class="mx-auto border" />
+          </div>
+          <p class="text-sm text-gray-600 mb-2">{{ selectedLocation?.code }}</p>
+          <p class="text-sm text-gray-500">{{ selectedLocation?.name }}</p>
+        </div>
+
+        <div class="flex justify-center mt-6">
+          <button
+            @click="closeModal"
+            class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
+          >
+            {{ t('locations.qrModal.close') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 詳細資訊 Modal -->
+    <div v-if="showDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center p-6 border-b">
+          <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">
+              位置歸位資訊 - {{ selectedLocation?.code }}
+            </h3>
+          </div>
+          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="p-6">
+          <!-- 位置基本資訊 -->
+          <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="space-y-2">
+              <div class="flex">
+                <span class="text-gray-600 w-24">位置名稱：</span>
+                <span class="text-gray-900">{{ selectedLocation?.name }}</span>
+              </div>
+              <div class="flex">
+                <span class="text-gray-600 w-24">存放類別：</span>
+                <span class="text-gray-900">{{ selectedLocation?.storageType }}</span>
+              </div>
+              <div class="flex">
+                <span class="text-gray-600 w-24">容量：</span>
+                <span class="text-gray-900">{{ selectedLocation?.capacity }}</span>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="flex">
+                <span class="text-gray-600 w-24">建築：</span>
+                <span class="text-gray-900">{{ selectedLocation?.building }}</span>
+              </div>
+              <div class="flex">
+                <span class="text-gray-600 w-24">存放代碼：</span>
+                <span class="text-gray-900">{{ selectedLocation?.storageCode }}</span>
+              </div>
+              <div class="flex">
+                <span class="text-gray-600 w-24">目前庫存：</span>
+                <span class="text-gray-900">{{ selectedLocation?.stock }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 樓層分佈 -->
+          <div class="mb-6">
+            <div class="flex items-center space-x-2 mb-4">
+              <div class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                </svg>
+              </div>
+              <h4 class="text-lg font-semibold text-gray-900">樓層分佈</h4>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+              <div v-for="floor in floorDistribution" :key="floor.floor" class="bg-gray-50 p-4 rounded-lg">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-teal-500 rounded-full"></div>
+                    <span class="font-medium text-gray-900">第 {{ floor.floor }} 層</span>
+                  </div>
+                </div>
+                <div class="text-sm text-gray-600 mb-1">{{ floor.itemCount }} 個商品</div>
+                <div class="text-lg font-bold text-teal-600">{{ floor.totalValue }}</div>
+                <div class="text-xs text-gray-500">
+                  商品: {{ floor.items.join(', ') }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 該位置商品清單 -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                  <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                  </svg>
+                </div>
+                <h4 class="text-lg font-semibold text-gray-900">該位置商品清單 ({{ locationItems.length }} 項)</h4>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="min-w-full bg-white border border-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">商品貨號</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">批號</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">箱號</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">樓層</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">外箱編號</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">到期日</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">生成時間</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">生成者</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <tr v-if="locationItems.length === 0">
+                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                      目前此位置沒有商品
+                    </td>
+                  </tr>
+                  <tr v-for="item in locationItems" :key="item.id" class="hover:bg-gray-50">
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {{ item.product_code || item.code }}
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {{ item.batch_number || item.batch }}
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {{ item.box_number || item.box }}
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      <span class="px-2 py-1 text-xs font-medium bg-teal-100 text-teal-800 rounded">
+                        第{{ item.floor || '1' }}層
+                      </span>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-blue-600 hover:text-blue-800">
+                      <a href="#" class="hover:underline">{{ item.outer_box_code || item.external_code }}</a>
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {{ item.expiry_date || item.expire_date }}
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {{ item.created_at ? new Date(item.created_at).toLocaleDateString() : '' }}
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {{ item.created_by || item.user }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex justify-end space-x-3 p-6 border-t">
+          <button
+            @click="closeModal"
+            class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+          >
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+/* 自訂樣式 */
+</style>

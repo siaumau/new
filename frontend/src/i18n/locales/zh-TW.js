@@ -143,5 +143,83 @@ export default {
       cancel: '取消',
       close: '關閉'
     }
+  },
+  locations: {
+    title: '位置管理',
+    description: '管理庫存位置和倉庫資訊',
+    list: '位置列表',
+    addNew: '新增',
+    search: {
+      placeholder: '搜尋位置代碼或名稱...',
+      button: '商品搜尋',
+      allBuildings: '全部建築',
+      allCategories: '全部類別',
+      downloadTemplate: '下載模板',
+      import: '匯入'
+    },
+    table: {
+      locationCode: '位置代碼',
+      locationName: '位置名稱',
+      building: '建築',
+      storageType: '存放類別',
+      storageCode: '存放代碼',
+      capacity: '容量',
+      stock: '庫存',
+      utilization: '使用率',
+      notes: '備註',
+      actions: '操作'
+    },
+    actions: {
+      details: '明細',
+      qrCode: 'QR Code',
+      edit: '編輯',
+      delete: '刪除'
+    },
+    buildings: {
+      taipei: '台北',
+      changhua: '彰化'
+    },
+    categories: {
+      area: '區域',
+      shelf: '層架'
+    },
+    pagination: {
+      itemsPerPage: '每頁顯示',
+      page: '第',
+      totalPages: '共',
+      pages: '頁',
+      prev: '上一頁',
+      next: '下一頁'
+    },
+    modal: {
+      editTitle: '編輯位置',
+      locationCode: '位置代碼',
+      locationName: '位置名稱',
+      building: '建築',
+      storageType: '存放類別',
+      floor: '樓層區碼',
+      storageSmallCode: '存放小區/層代碼',
+      storageCode: '存放代碼',
+      capacity: '容量',
+      currentStock: '目前庫存',
+      qrCodeData: 'QR Code資料',
+      notes: '備註',
+      enabled: '是否啟用',
+      cancel: '取消',
+      save: '儲存',
+      close: '關閉'
+    },
+    qrModal: {
+      title: '位置 QR Code',
+      close: '關閉'
+    }
+  },
+  common: {
+    loading: '載入中...',
+    actions: '操作',
+    edit: '編輯',
+    delete: '刪除',
+    yes: '啟用',
+    no: '停用'
   }
 }

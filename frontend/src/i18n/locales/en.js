@@ -143,5 +143,83 @@ export default {
       cancel: 'Cancel',
       close: 'Close'
     }
+  },
+  locations: {
+    title: 'Location Management',
+    description: 'Manage inventory locations and warehouse information',
+    list: 'Location List',
+    addNew: 'Add New',
+    search: {
+      placeholder: 'Search location code or name...',
+      button: 'Product Search',
+      allBuildings: 'All Buildings',
+      allCategories: 'All Categories',
+      downloadTemplate: 'Download Template',
+      import: 'Import'
+    },
+    table: {
+      locationCode: 'Location Code',
+      locationName: 'Location Name',
+      building: 'Building',
+      storageType: 'Storage Type',
+      storageCode: 'Storage Code',
+      capacity: 'Capacity',
+      stock: 'Stock',
+      utilization: 'Utilization',
+      notes: 'Notes',
+      actions: 'Actions'
+    },
+    actions: {
+      details: 'Details',
+      qrCode: 'QR Code',
+      edit: 'Edit',
+      delete: 'Delete'
+    },
+    buildings: {
+      taipei: 'Taipei',
+      changhua: 'Changhua'
+    },
+    categories: {
+      area: 'Area',
+      shelf: 'Shelf'
+    },
+    pagination: {
+      itemsPerPage: 'Items per page',
+      page: 'Page',
+      totalPages: 'of',
+      pages: 'pages',
+      prev: 'Previous',
+      next: 'Next'
+    },
+    modal: {
+      editTitle: 'Edit Location',
+      locationCode: 'Location Code',
+      locationName: 'Location Name',
+      building: 'Building',
+      storageType: 'Storage Type',
+      floor: 'Floor Code',
+      storageSmallCode: 'Storage Small Area/Layer Code',
+      storageCode: 'Storage Code',
+      capacity: 'Capacity',
+      currentStock: 'Current Stock',
+      qrCodeData: 'QR Code Data',
+      notes: 'Notes',
+      enabled: 'Enabled',
+      cancel: 'Cancel',
+      save: 'Save',
+      close: 'Close'
+    },
+    qrModal: {
+      title: 'Location QR Code',
+      close: 'Close'
+    }
+  },
+  common: {
+    loading: 'Loading...',
+    actions: 'Actions',
+    edit: 'Edit',
+    delete: 'Delete',
+    yes: 'Enabled',
+    no: 'Disabled'
   }
 }
