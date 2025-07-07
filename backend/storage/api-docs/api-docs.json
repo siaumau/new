@@ -751,6 +751,113 @@
                     }
                 }
             }
+        },
+        "/api/v1/posin/{id}/generate-us-purchase-order": {
+            "patch": {
+                "summary": "Generate US purchase order for a posin record",
+                "operationId": "63ce20c1d88a80cb4b98d464c8b6f07e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "US purchase order generated successfully"
+                    },
+                    "404": {
+                        "description": "Posin record not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/posin/{id}/items": {
+            "get": {
+                "summary": "Get posin items for a specific posin record",
+                "operationId": "98c7fb4fb5724c0c7ebc75d309e0f21c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of posin items"
+                    },
+                    "404": {
+                        "description": "Posin record not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/posin-items/{id}": {
+            "delete": {
+                "summary": "Delete a posin item",
+                "operationId": "909e4b89f17424529b98e238676bb779",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Posin item deleted successfully"
+                    },
+                    "404": {
+                        "description": "Posin item not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/generate-qr-labels": {
+            "post": {
+                "summary": "Generate QR code labels for a posin item",
+                "operationId": "9e0650e8ed9cc8dd47eddd5fdf7f66e4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "item": {
+                                        "type": "object"
+                                    },
+                                    "count": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "QR labels generated successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
         }
     }
 }

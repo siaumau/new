@@ -61,3 +61,6 @@
 
    1. 啟動後端： 使用 php artisan serve --host=0.0.0.0 --port=8000 (或您的實際 IP) 啟動 Laravel 伺服器。
    2. 啟動前端： 執行 npm run dev 啟動 Vue 應用程式。
+
+
+php artisan l5-swagger:generate  更新swagger使用
