@@ -547,7 +547,9 @@ class PosinController extends Controller
                     'generated_at' => now(),
                     'generated_by' => 'user', // 這裡可以改為實際的使用者
                     'status' => 'generated',
-                    'notes' => "外箱標籤 {$i}/{$count}"
+                    'notes' => "外箱標籤 {$i}/{$count}",
+                    'item_inbox_status' => 0, // 預設為未入庫
+                    'item_inbox' => $itemInbox // 從item資料表獲取的每箱產品數量
                 ]);
 
                 $qrCodes[] = [

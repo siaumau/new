@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -233,15 +233,20 @@ const deleteLocation = async (location) => {
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.ok) {
+        alert('位置已成功刪除');
+        await loadLocations();
+      } else {
+        const errorData = await response.json();
+        if (response.status === 400) {
+          alert(`刪除失敗：${errorData.message}\n櫃位上有 ${errorData.item_count} 個商品，請先移除商品後再刪除位置。`);
+        } else {
+          alert('刪除失敗: ' + (errorData.message || '未知錯誤'));
+        }
       }
-
-      // 刪除成功後重新載入資料
-      await loadLocations();
-    } catch (err) {
-      console.error('刪除位置失敗:', err);
-      alert('刪除位置失敗: ' + (err.message || '未知錯誤'));
+    } catch (error) {
+      console.error('刪除位置失敗:', error);
+      alert('刪除失敗: ' + error.message);
     }
   }
 };
@@ -285,13 +290,15 @@ const saveLocation = async () => {
   }
 };
 
+//
+
 // 下載CSV模板
 const downloadTemplate = () => {
   // CSV模板內容（簡約版）
   const csvContent = [
-    'building_code,storage_type_code,sub_area_code,position_code,notes',
-    'CH,S,C201,120,彰化層架區',
-    'TP,A,S101,80,台北區域'
+    'building_code,storage_type_code,sub_area_code,notes',
+    'CH,S,C201,彰化層架區',
+    'TP,A,S101,台北區域'
   ].join('\n');
 
   // 添加BOM以支援Excel正確顯示繁體中文
@@ -338,10 +345,10 @@ const handleFileImport = async (event) => {
       const line = dataLines[i].trim();
       if (!line) continue;
 
-            // 解析CSV行（處理可能包含逗號的欄位）
+                  // 解析CSV行（處理可能包含逗號的欄位）
       const columns = parseCSVLine(line);
 
-      if (columns.length < 5) {
+      if (columns.length < 4) {
         alert(`第 ${i + 2} 行資料格式錯誤，請檢查CSV格式`);
         return;
       }
@@ -350,12 +357,11 @@ const handleFileImport = async (event) => {
       const building_code = columns[0].trim();
       const storage_type_code = columns[1].trim();
       const sub_area_code = columns[2].trim();
-      const position_code = columns[3].trim();
-      const notes = columns[4].trim() || null;
+      const notes = columns[3].trim() || null;
 
-      // 生成位置代碼和名稱
+            // 生成位置代碼和名稱
       const location_code = `${building_code}-${storage_type_code === 'S' ? 'Shelf' : 'Area'}-${sub_area_code}`;
-      const location_name = `${building_code}之1-${storage_type_code === 'S' ? '層架' : '區域'}類型1層-存放代號${sub_area_code}`;
+      const location_name = `${building_code}-${storage_type_code === 'S' ? '層架' : '區域'}類型1層-存放代號${sub_area_code}`;
 
       const locationData = {
         location_code: location_code,
@@ -365,13 +371,15 @@ const handleFileImport = async (event) => {
         floor_area_code: '01',
         storage_type_code: storage_type_code === 'S' ? 'Shelf' : 'Area',
         sub_area_code: sub_area_code,
-        position_code: position_code,
-        capacity: parseInt(position_code) || 0,
+        position_code: sub_area_code, // 使用sub_area_code作為position_code
+        capacity: 100, // 預設容量
         current_stock: 0,
         qr_code_data: location_code,
         notes: notes,
         is_active: true
       };
+
+      console.log(`第 ${i + 1} 筆資料:`, locationData);
 
       locations.push(locationData);
     }
@@ -415,20 +423,31 @@ const parseCSVLine = (line) => {
 const importLocations = async (locations) => {
   loading.value = true;
 
-      try {
-      const response = await fetch('http://192.168.0.234:8000/api/v1/locations/batch', {
-        method: 'POST',
-        headers: {
-          'accept': '*/*',
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': ''
-        },
-        body: JSON.stringify({ locations })
-      });
+  try {
+    console.log('發送請求到:', 'http://192.168.0.234:8000/api/v1/locations/batch');
+    console.log('請求資料:', { locations });
+
+    const response = await fetch('http://192.168.0.234:8000/api/v1/locations/batch', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ locations })
+    });
+
+        console.log('回應狀態:', response.status);
+    console.log('回應URL:', response.url);
 
     const result = await response.json();
+    console.log('回應資料:', result);
 
-    if (response.ok) {
+    if (!response.ok) {
+      console.error('API錯誤詳情:', result);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${result.message || '未知錯誤'}`);
+    }
+
+        if (response.ok) {
       const { created_count, error_count, errors } = result;
 
       // 顯示匯入結果
@@ -453,11 +472,69 @@ const importLocations = async (locations) => {
     } else {
       // 處理驗證錯誤
       if (result.errors) {
-        let errorMessage = '資料驗證失敗：\n';
+        // 檢查是否有重複的位置代碼
+        const duplicateErrors = [];
         Object.keys(result.errors).forEach(key => {
-          errorMessage += `${key}: ${result.errors[key].join(', ')}\n`;
+          if (key.includes('location_code') && result.errors[key].some(msg => msg.includes('already been taken'))) {
+            const index = key.match(/locations\.(\d+)\./)?.[1];
+            if (index !== undefined) {
+              duplicateErrors.push({
+                index: parseInt(index),
+                locationCode: locations[parseInt(index)]?.location_code || '未知'
+              });
+            }
+          }
         });
-        alert(errorMessage);
+
+        if (duplicateErrors.length > 0) {
+          // 生成重複清單的txt文件
+          const duplicateList = duplicateErrors.map(item =>
+            `第 ${item.index + 1} 筆資料: ${item.locationCode} (已存在)`
+          ).join('\n');
+
+          const txtContent = `位置代碼重複清單\n生成時間: ${new Date().toLocaleString('zh-TW')}\n\n${duplicateList}`;
+
+          // 下載txt文件
+          const blob = new Blob(['\uFEFF' + txtContent], { type: 'text/plain;charset=utf-8;' });
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          link.setAttribute('href', url);
+          link.setAttribute('download', `重複位置代碼清單_${new Date().toISOString().slice(0,10)}.txt`);
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+
+          // 詢問用戶是否要跳過重複項目並繼續匯入
+          const skipDuplicates = confirm(
+            `發現 ${duplicateErrors.length} 個重複的位置代碼！\n\n` +
+            `重複清單已下載為txt文件。\n\n` +
+            `點擊「確定」跳過重複項目並匯入其他資料\n` +
+            `點擊「取消」停止匯入`
+          );
+
+          if (skipDuplicates) {
+            // 移除重複的項目，重新匯入
+            const validLocations = locations.filter((_, index) =>
+              !duplicateErrors.some(dup => dup.index === index)
+            );
+
+            if (validLocations.length > 0) {
+              await importLocations(validLocations);
+            } else {
+              alert('所有位置代碼都重複，沒有資料可以匯入。');
+            }
+          }
+        } else {
+          // 其他驗證錯誤
+          let errorMessage = '資料驗證失敗：\n';
+          Object.keys(result.errors).forEach(key => {
+            const fieldName = key.replace('locations.', '').replace('.location_code', '');
+            errorMessage += `第 ${parseInt(fieldName) + 1} 筆資料: ${result.errors[key].join(', ')}\n`;
+          });
+          alert(errorMessage);
+        }
       } else {
         alert('匯入失敗: ' + (result.message || '未知錯誤'));
       }
@@ -573,6 +650,31 @@ const formatUtilization = (utilization) => {
   return utilization + '%';
 };
 
+// 自動生成位置代碼和名稱
+const generateLocationCode = () => {
+  if (selectedLocation.value &&
+      selectedLocation.value.building &&
+      selectedLocation.value.storageType &&
+      selectedLocation.value.storageCode) {
+
+    const building = selectedLocation.value.building;
+    const storageType = selectedLocation.value.storageType;
+    const positionCode = selectedLocation.value.storageCode;
+
+    // 生成位置代碼
+    selectedLocation.value.code = `${building}-${storageType}-${positionCode}`;
+
+    // 生成位置名稱
+    const storageTypeText = storageType === 'Shelf' ? '層架' : '區域';
+    selectedLocation.value.name = `${building}-${storageTypeText}類型1層-存放代號${positionCode}`;
+  }
+};
+
+// 監聽位置相關欄位的變化
+watch(() => selectedLocation.value?.building, generateLocationCode);
+watch(() => selectedLocation.value?.storageType, generateLocationCode);
+watch(() => selectedLocation.value?.storageCode, generateLocationCode);
+
 onMounted(() => {
   loadLocations();
 });
@@ -630,6 +732,7 @@ onMounted(() => {
           </button>
 
           <!-- 操作按鈕 -->
+
           <button
             @click="downloadTemplate"
             class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
@@ -686,15 +789,7 @@ onMounted(() => {
                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   {{ t('locations.table.storageCode') }}
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  {{ t('locations.table.capacity') }}
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  {{ t('locations.table.stock') }}
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  {{ t('locations.table.utilization') }}
-                </th>
+
                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   {{ t('locations.table.notes') }}
                 </th>
@@ -721,15 +816,6 @@ onMounted(() => {
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ location.storageCode }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ location.capacity }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ location.stock }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <span class="text-teal-600 font-medium">{{ formatUtilization(location.utilization) }}</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ location.notes }}
@@ -820,127 +906,63 @@ onMounted(() => {
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                {{ t('locations.modal.locationCode') }}
+                位置代碼 (自動生成)
               </label>
               <input
                 v-model="selectedLocation.code"
                 type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                readonly
+                class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
               />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                {{ t('locations.modal.locationName') }}
+                位置名稱 (自動生成)
               </label>
               <input
                 v-model="selectedLocation.name"
                 type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                readonly
+                class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
               />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                {{ t('locations.modal.building') }}
-              </label>
-              <select
-                v-model="selectedLocation.building"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              >
-                <option value="TP">{{ t('locations.buildings.taipei') }}</option>
-                <option value="CH">{{ t('locations.buildings.changhua') }}</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                {{ t('locations.modal.storageType') }}
-              </label>
-              <select
-                v-model="selectedLocation.storageType"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              >
-                <option value="Area">{{ t('locations.categories.area') }}</option>
-                <option value="Shelf">{{ t('locations.categories.shelf') }}</option>
-              </select>
             </div>
           </div>
 
           <div class="grid grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                層架編號
+                建築代碼 (Building_code)
               </label>
-              <input
-                v-model="selectedLocation.floorNumber"
-                type="text"
+              <select
+                v-model="selectedLocation.building"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              />
+              >
+                <option value="">請選擇建築</option>
+                <option value="TP">TP - 台北</option>
+                <option value="CH">CH - 彰化</option>
+              </select>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                層架區域代號
+                存放類別代碼 (Storage_type_code)
               </label>
-              <input
-                v-model="selectedLocation.floorAreaCode"
-                type="text"
+              <select
+                v-model="selectedLocation.storageType"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              />
+              >
+                <option value="">請選擇存放類別</option>
+                <option value="Area">Area - 區域</option>
+                <option value="Shelf">Shelf - 層架</option>
+              </select>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                子區域代號
-              </label>
-              <input
-                v-model="selectedLocation.subAreaCode"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                {{ t('locations.modal.storageCode') }}
+                位置代碼 (Position_code)
               </label>
               <input
                 v-model="selectedLocation.storageCode"
                 type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                {{ t('locations.modal.capacity') }}
-              </label>
-              <input
-                v-model="selectedLocation.capacity"
-                type="number"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                {{ t('locations.modal.currentStock') }}
-              </label>
-              <input
-                v-model="selectedLocation.stock"
-                type="number"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                {{ t('locations.modal.qrCodeData') }}
-              </label>
-              <input
-                v-model="selectedLocation.qrData"
-                type="text"
+                placeholder="如: C201, S101"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               />
             </div>
@@ -948,26 +970,14 @@ onMounted(() => {
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
-              {{ t('locations.modal.notes') }}
+              備註
             </label>
             <textarea
               v-model="selectedLocation.notes"
               rows="3"
+              placeholder="輸入備註資訊..."
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
             ></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              {{ t('locations.modal.enabled') }}
-            </label>
-            <select
-              v-model="selectedLocation.enabled"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-            >
-              <option :value="true">{{ t('common.yes') }}</option>
-              <option :value="false">{{ t('common.no') }}</option>
-            </select>
           </div>
         </div>
 
@@ -1054,30 +1064,30 @@ onMounted(() => {
           <div class="grid grid-cols-2 gap-6 mb-6">
             <div class="space-y-2">
               <div class="flex">
-                <span class="text-gray-600 w-24">位置名稱：</span>
+                <span class="text-gray-600 w-32">位置代碼：</span>
+                <span class="text-gray-900">{{ selectedLocation?.code }}</span>
+              </div>
+              <div class="flex">
+                <span class="text-gray-600 w-32">位置名稱：</span>
                 <span class="text-gray-900">{{ selectedLocation?.name }}</span>
               </div>
               <div class="flex">
-                <span class="text-gray-600 w-24">存放類別：</span>
-                <span class="text-gray-900">{{ selectedLocation?.storageType }}</span>
-              </div>
-              <div class="flex">
-                <span class="text-gray-600 w-24">容量：</span>
-                <span class="text-gray-900">{{ selectedLocation?.capacity }}</span>
+                <span class="text-gray-600 w-32">建築代碼：</span>
+                <span class="text-gray-900">{{ selectedLocation?.building }}</span>
               </div>
             </div>
             <div class="space-y-2">
               <div class="flex">
-                <span class="text-gray-600 w-24">建築：</span>
-                <span class="text-gray-900">{{ selectedLocation?.building }}</span>
+                <span class="text-gray-600 w-32">存放類別代碼：</span>
+                <span class="text-gray-900">{{ selectedLocation?.storageType }}</span>
               </div>
               <div class="flex">
-                <span class="text-gray-600 w-24">存放代碼：</span>
+                <span class="text-gray-600 w-32">位置代碼：</span>
                 <span class="text-gray-900">{{ selectedLocation?.storageCode }}</span>
               </div>
               <div class="flex">
-                <span class="text-gray-600 w-24">目前庫存：</span>
-                <span class="text-gray-900">{{ selectedLocation?.stock }}</span>
+                <span class="text-gray-600 w-32">備註：</span>
+                <span class="text-gray-900">{{ selectedLocation?.notes || '-' }}</span>
               </div>
             </div>
           </div>

@@ -29,7 +29,9 @@ class QrCode extends Model
         'generated_at',
         'generated_by',
         'status',
-        'notes'
+        'notes',
+        'item_inbox_status',
+        'item_inbox'
     ];
 
     protected $casts = [
@@ -39,6 +41,7 @@ class QrCode extends Model
         'location_id' => 'integer',
         'posin_id' => 'integer',
         'posinitem_id' => 'integer',
+        'item_inbox_status' => 'integer',
     ];
 
     // 關聯到進貨單
@@ -57,5 +60,11 @@ class QrCode extends Model
     public function location()
     {
         return $this->belongsTo(Location::class, 'location_id', 'id');
+    }
+
+    // 關聯到商品
+    public function item()
+    {
+        return $this->belongsTo(Item::class, 'item_code', 'item_barcode');
     }
 }

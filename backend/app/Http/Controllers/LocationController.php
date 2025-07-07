@@ -126,7 +126,9 @@ class LocationController extends Controller
                 floor_level as floor,
                 COUNT(*) as item_count,
                 COUNT(DISTINCT item_code) as unique_items,
-                GROUP_CONCAT(DISTINCT item_code) as items
+                GROUP_CONCAT(DISTINCT item_code) as items,
+                SUM(CASE WHEN item_inbox_status = 1 THEN 1 ELSE 0 END) as inboxed_items,
+                SUM(CASE WHEN item_inbox_status = 0 THEN 1 ELSE 0 END) as pending_items
             ')
             ->groupBy('floor_level')
             ->orderBy('floor_level')
@@ -138,7 +140,9 @@ class LocationController extends Controller
                 'floor' => $item->floor,
                 'itemCount' => $item->item_count,
                 'uniqueItems' => $item->unique_items,
-                'items' => explode(',', $item->items)
+                'items' => explode(',', $item->items),
+                'inboxedItems' => $item->inboxed_items,
+                'pendingItems' => $item->pending_items
             ];
         });
 
@@ -172,8 +176,9 @@ class LocationController extends Controller
             return response()->json(['message' => 'Location not found'], 404);
         }
 
-        // 從qr_codes資料表中獲取該位置的商品資料
+        // 從qr_codes資料表中獲取該位置的商品資料，並關聯item資料表
         $items = QrCode::where('location_id', $id)
+            ->with('item:item_id,item_barcode,item_inbox') // 載入關聯的item資料
             ->select([
                 'qr_id',
                 'item_code',
@@ -185,11 +190,20 @@ class LocationController extends Controller
                 'qr_content',
                 'generated_at',
                 'generated_by',
-                'status'
+                'status',
+                'item_inbox_status',
+                'item_inbox'
             ])
             ->orderBy('floor_level')
             ->orderBy('item_code')
             ->get();
+
+        // 更新item_inbox欄位（從item資料表獲取）
+        $items->each(function ($qrCode) {
+            if ($qrCode->item && $qrCode->item_inbox !== $qrCode->item->item_inbox) {
+                $qrCode->update(['item_inbox' => $qrCode->item->item_inbox]);
+            }
+        });
 
         return response()->json([
             'location_id' => $id,
@@ -346,7 +360,8 @@ class LocationController extends Controller
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(response="204", description="Location deleted successfully"),
-     *     @OA\Response(response="404", description="Location not found")
+     *     @OA\Response(response="404", description="Location not found"),
+     *     @OA\Response(response="400", description="Cannot delete location with items")
      * )
      */
     public function destroy($id)
@@ -354,6 +369,15 @@ class LocationController extends Controller
         $location = Location::find($id);
         if (!$location) {
             return response()->json(['message' => 'Location not found'], 404);
+        }
+
+        // 檢查該位置是否有商品
+        $itemCount = QrCode::where('location_id', $id)->count();
+        if ($itemCount > 0) {
+            return response()->json([
+                'message' => '無法刪除此位置，因為櫃位上還有商品',
+                'item_count' => $itemCount
+            ], 400);
         }
 
         $location->delete();
