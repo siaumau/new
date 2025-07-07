@@ -136,6 +136,7 @@
                       已生成QR
                     </button>
                     <button
+                      v-if="!isQRGenerated(item)"
                       @click="deleteItem(item)"
                       class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 rounded text-xs transition-colors shadow-sm"
                       :title="$t('posinItems.actions.deleteItem')"
