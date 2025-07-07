@@ -322,8 +322,11 @@
                   <p>商品序號: {{ qrCode.item_info.item_sn }}</p>
                   <p>規格: {{ qrCode.item_info.item_spec }}</p>
                   <p>批號: {{ qrCode.item_info.item_batch }}</p>
+                  <p>每箱: {{ qrCode.item_info.item_inbox }}個</p>
+                  <p>有效期限: {{ formatDate(qrCode.item_info.item_expireday) }}</p>
                   <p>編碼: {{ qrCode.data }}</p>
-                  <p>標籤: {{ qrCode.serial }}/{{ qrGenerateCount }}</p>
+                  <p>標籤: {{ qrGenerateCount }}箱之{{ qrCode.serial }}</p>
+                  <p v-if="qrCode.item_info.posin_note">備註: {{ qrCode.item_info.posin_note }}</p>
                 </div>
               </div>
             </div>
@@ -375,6 +378,7 @@ const selectedItem = ref(null)
 const qrGenerateCount = ref(1)
 const loading = ref(false)
 const qrGeneratedStatus = ref({})
+const itemsCache = ref({}) // 新增：商品資料快取
 
 // Methods
 const fetchPosinItems = async () => {
@@ -385,6 +389,9 @@ const fetchPosinItems = async () => {
 
     // 檢查每個商品項目的 QR Code 生成狀態
     await checkQRGeneratedStatus()
+
+    // 獲取商品詳細資訊
+    await fetchItemsDetails()
   } catch (error) {
     console.error('Error fetching posin items:', error)
     // 如果 API 失敗，使用模擬數據
@@ -465,16 +472,50 @@ const convertToUsPurchaseOrder = async () => {
   }
 }
 
+// 新增：獲取商品詳細資訊
+const fetchItemsDetails = async () => {
+  try {
+    // 獲取所有商品的 item_id
+    const itemIds = posinItems.value.map(item => item.item_id)
+
+    // 批次獲取商品詳細資訊
+    for (const itemId of itemIds) {
+      if (!itemsCache.value[itemId]) {
+        try {
+          const response = await axios.get(`/api/v1/items/${itemId}`)
+          itemsCache.value[itemId] = response.data
+        } catch (error) {
+          console.error(`Error fetching item details for item_id ${itemId}:`, error)
+          // 如果無法獲取，使用預設值
+          itemsCache.value[itemId] = { item_inbox: 48 }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching items details:', error)
+  }
+}
+
 const getPackageSpec = (item) => {
   if (!item) return ''
-  // 根據截圖顯示的格式，包裝規格是固定的"48個/箱"
+
+  // 從快取中獲取商品詳細資訊
+  const itemDetails = itemsCache.value[item.item_id]
+  if (itemDetails && itemDetails.item_inbox) {
+    return `${itemDetails.item_inbox}個/箱`
+  }
+
+  // 如果沒有快取資料，使用預設值
   return '48個/箱'
 }
 
 const getBoxCount = (item) => {
   if (!item) return 0
-  // 假設每箱包裝48個/箱（可以從商品資料中獲取）
-  const itemsPerBox = 48
+
+  // 從快取中獲取商品詳細資訊
+  const itemDetails = itemsCache.value[item.item_id]
+  const itemsPerBox = itemDetails?.item_inbox || 48
+
   return Math.ceil(item.item_count / itemsPerBox)
 }
 
@@ -580,12 +621,12 @@ const downloadQRLabels = async () => {
     // 創建 ZIP 檔案
     const zip = new JSZip()
 
-    // 為每個 QR Code 生成圖片並加入 ZIP
+    // 為每個 QR Code 生成包含文字的完整標籤圖片
     for (const qrCode of qr_codes) {
-      const qrImageDataURL = await generateQRCodeImage(qrCode.data)
+      const completeLabelImage = await generateCompleteLabel(qrCode)
 
       // 將 base64 轉換為 blob
-      const base64Data = qrImageDataURL.split(',')[1]
+      const base64Data = completeLabelImage.split(',')[1]
       const byteCharacters = atob(base64Data)
       const byteNumbers = new Array(byteCharacters.length)
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -600,9 +641,6 @@ const downloadQRLabels = async () => {
     // 生成並下載 ZIP 檔案
     const zipBlob = await zip.generateAsync({ type: 'blob' })
     saveAs(zipBlob, zip_file_name)
-
-    // 同時儲存到 public/qr_codes 目錄（如果需要的話）
-    // 這裡可以加入將檔案儲存到本地目錄的邏輯
 
     // 更新 QR Code 生成狀態
     qrGeneratedStatus.value[selectedItem.value.posinitem_id] = true
@@ -620,6 +658,75 @@ const downloadQRLabels = async () => {
   }
 }
 
+// 生成包含 QR Code 和文字的完整標籤
+const generateCompleteLabel = async (qrCode) => {
+  try {
+    // 創建 canvas 元素
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    // 設定標籤尺寸
+    const labelWidth = 400
+    const labelHeight = 300
+    canvas.width = labelWidth
+    canvas.height = labelHeight
+
+    // 設定背景
+    ctx.fillStyle = '#FFFFFF'
+    ctx.fillRect(0, 0, labelWidth, labelHeight)
+
+    // 生成 QR Code 圖片
+    const qrImageDataURL = await generateQRCodeImage(qrCode.data)
+    const qrImage = new Image()
+
+    return new Promise((resolve) => {
+      qrImage.onload = () => {
+        // 繪製 QR Code
+        const qrSize = 120
+        const qrX = 20
+        const qrY = 20
+        ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize)
+
+        // 設定文字樣式
+        ctx.fillStyle = '#000000'
+        ctx.font = 'bold 14px Arial'
+
+        // 繪製商品名稱
+        ctx.fillText(qrCode.item_info.item_name, 160, 30)
+
+        // 繪製商品資訊
+        ctx.font = '12px Arial'
+        ctx.fillText(`商品序號: ${qrCode.item_info.item_sn}`, 160, 50)
+        ctx.fillText(`規格: ${qrCode.item_info.item_spec}`, 160, 70)
+        ctx.fillText(`批號: ${qrCode.item_info.item_batch}`, 160, 90)
+        ctx.fillText(`每箱: ${qrCode.item_info.item_inbox}個`, 160, 110)
+        ctx.fillText(`有效期限: ${formatDate(qrCode.item_info.item_expireday)}`, 160, 130)
+        ctx.fillText(`編碼: ${qrCode.data}`, 160, 150)
+        ctx.fillText(`標籤: ${qrGenerateCount.value}箱之${qrCode.serial}`, 160, 170)
+
+        // 如果有備註，也顯示
+        if (qrCode.item_info.posin_note) {
+          ctx.fillText(`備註: ${qrCode.item_info.posin_note}`, 160, 190)
+        }
+
+        // 繪製邊框
+        ctx.strokeStyle = '#000000'
+        ctx.lineWidth = 2
+        ctx.strokeRect(10, 10, labelWidth - 20, labelHeight - 20)
+
+        // 轉換為 base64
+        const dataURL = canvas.toDataURL('image/png')
+        resolve(dataURL)
+      }
+
+      qrImage.src = qrImageDataURL
+    })
+  } catch (error) {
+    console.error('Error generating complete label:', error)
+    throw error
+  }
+}
+
 // 預覽相關狀態
 const showPreviewModal = ref(false)
 const previewQRCodes = ref([])
@@ -628,6 +735,19 @@ const previewQRCodes = ref([])
 const previewLabels = async () => {
   try {
     loading.value = true
+
+    // 獲取商品詳細資訊
+    const itemDetails = itemsCache.value[selectedItem.value.item_id]
+    const itemInbox = itemDetails?.item_inbox || 48
+
+    // 獲取進貨單資訊
+    let posinNote = ''
+    try {
+      const posinResponse = await axios.get(`/api/v1/posin/${props.posinId}`)
+      posinNote = posinResponse.data.posin_note || ''
+    } catch (error) {
+      console.error('Error fetching posin details:', error)
+    }
 
     // 生成預覽用的 QR Code 資料
     const qrCodes = []
@@ -639,7 +759,11 @@ const previewLabels = async () => {
         data: qrData,
         serial: i,
         image: qrImageDataURL,
-        item_info: selectedItem.value
+        item_info: {
+          ...selectedItem.value,
+          item_inbox: itemInbox,
+          posin_note: posinNote
+        }
       })
     }
 

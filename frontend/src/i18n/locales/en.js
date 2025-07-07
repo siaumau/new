@@ -99,8 +99,30 @@ export default {
       expiryDate: 'Expiry Date',
       actions: 'Actions',
       generateQR: 'Generate QR',
+      delete: 'Delete',
       unit: 'pcs/box',
       box: 'box'
+    },
+    actions: {
+      convertToUsPurchaseOrder: 'Convert to US Purchase Order',
+      refresh: 'Refresh',
+      deleteItem: 'Delete Item',
+      generateQR: 'Generate QR Labels'
+    },
+    messages: {
+      loading: 'Loading...',
+      pageDescription: 'Manage purchase order items and generate QR labels',
+      itemList: 'Item List',
+      totalItems: 'Total {count} items',
+      noItems: 'No items found',
+      noItemsDescription: 'No items have been added to this purchase order',
+      deleteConfirm: 'Are you sure you want to delete item "{name}"?',
+      deleteSuccess: 'Item deleted successfully',
+      deleteError: 'Error deleting item. Please try again later',
+      convertConfirm: 'Are you sure you want to convert to US purchase order?\n\nAfter conversion, you cannot modify this purchase order.\nThe system will automatically generate a US purchase order for further processing.',
+      convertSuccess: 'US purchase order generated successfully!',
+      convertError: 'Error converting to US purchase order. Please try again later',
+      convertAlreadyGenerated: 'This purchase order has already been converted to US purchase order and cannot be converted again'
     },
     qrCode: {
       title: 'Item QR Code Generation',

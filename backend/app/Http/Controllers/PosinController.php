@@ -493,6 +493,7 @@ class PosinController extends Controller
             'item' => 'required|array',
             'item.posinitem_id' => 'required|integer',
             'item.posin_id' => 'required|integer',
+            'item.item_id' => 'required|integer',
             'item.item_sn' => 'required|string',
             'item.item_name' => 'required|string',
             'item.item_spec' => 'required|string',
@@ -511,6 +512,14 @@ class PosinController extends Controller
             if ($existingQRs > 0) {
                 return response()->json(['message' => 'QR codes already generated for this item'], 400);
             }
+
+            // 獲取商品詳細資訊（包括 item_inbox）
+            $itemDetails = \App\Models\Item::find($item['item_id']);
+            $itemInbox = $itemDetails ? $itemDetails->item_inbox : 48;
+
+            // 獲取進貨單資訊（包括 posin_note）
+            $posinDetails = \App\Models\Posin::find($item['posin_id']);
+            $posinNote = $posinDetails ? $posinDetails->posin_note : '';
 
             // 生成 ZIP 檔案名稱
             $zipFileName = $this->generateZipFileName($item, $count);
@@ -544,7 +553,10 @@ class PosinController extends Controller
                 $qrCodes[] = [
                     'data' => $qrData,
                     'serial' => str_pad($i, 3, '0', STR_PAD_LEFT),
-                    'item_info' => $item,
+                    'item_info' => array_merge($item, [
+                        'item_inbox' => $itemInbox,
+                        'posin_note' => $posinNote
+                    ]),
                     'file_name' => $fileName
                 ];
             }
@@ -642,7 +654,7 @@ class PosinController extends Controller
             $html .= '規格: ' . $qrCode['item_info']['item_spec'] . '<br>';
             $html .= '批號: ' . $qrCode['item_info']['item_batch'] . '<br>';
             $html .= '編碼: ' . $qrCode['data'] . '<br>';
-            $html .= '標籤: ' . $qrCode['serial'] . '/' . count($qrCodes);
+            $html .= '標籤: '  . count($qrCodes).'箱之'.$qrCode['serial'];
             $html .= '</div>';
             $html .= '</div>';
         }
