@@ -16,6 +16,7 @@ class QrCode extends Model
     protected $fillable = [
         'posin_id',
         'posinitem_id',
+        'item_id',
         'item_code',
         'item_name',
         'item_batch',
@@ -41,6 +42,7 @@ class QrCode extends Model
         'location_id' => 'integer',
         'posin_id' => 'integer',
         'posinitem_id' => 'integer',
+        'item_id' => 'integer',
         'item_inbox_status' => 'integer',
     ];
 

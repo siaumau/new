@@ -43,61 +43,95 @@ class PosinController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Posin::with('posinItems');
+        try {
+            $query = Posin::with('posinItems');
 
-        // 搜尋功能
-        if ($request->has('search') && !empty($request->search)) {
-            $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('posin_sn', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('posin_user', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('posin_note', 'LIKE', "%{$searchTerm}%");
-            });
-        }
-
-        // 狀態篩選（這裡我們用一個簡單的邏輯來判斷狀態）
-        if ($request->has('status') && !empty($request->status) && $request->status !== 'all') {
-            // 由於原始表格沒有狀態欄位，我們根據 posin_log 是否為空來判斷
-            if ($request->status === '已完成') {
-                $query->whereNotNull('posin_log');
-            } elseif ($request->status === '進行中') {
-                $query->whereNull('posin_log');
+            // 搜尋功能
+            if ($request->has('search') && !empty($request->search)) {
+                $searchTerm = $request->search;
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('posin_sn', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('posin_user', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('posin_note', 'LIKE', "%{$searchTerm}%");
+                });
             }
-        }
 
-        // 排序
-        $query->orderBy('posin_dt', 'desc');
+            // 狀態篩選（這裡我們用一個簡單的邏輯來判斷狀態）
+            if ($request->has('status') && !empty($request->status) && $request->status !== 'all') {
+                // 由於原始表格沒有狀態欄位，我們根據 posin_log 是否為空來判斷
+                if ($request->status === '已完成') {
+                    $query->whereNotNull('posin_log');
+                } elseif ($request->status === '進行中') {
+                    $query->whereNull('posin_log');
+                }
+            }
 
-        // 分頁
-        $perPage = $request->get('per_page', 10);
-        $posinRecords = $query->paginate($perPage);
+            // 排序
+            $query->orderBy('posin_dt', 'desc');
+
+            // 分頁
+            $perPage = $request->get('per_page', 10);
+            $posinRecords = $query->paginate($perPage);
 
                 // 格式化每個項目的資料以符合前端需求
         $formattedItems = [];
         foreach ($posinRecords->items() as $posin) {
-            $formattedItems[] = [
-                'id' => $posin->posin_id,
-                'order_number' => $posin->posin_sn,
-                'supplier' => $posin->posin_user,
-                'purchase_date' => $posin->posin_dt ? date('Y/n/j', strtotime($posin->posin_dt)) : '',
-                'created_at' => $posin->posin_dt ? date('Y/n/j', strtotime($posin->posin_dt)) : '',
-                'status' => $posin->posin_log ? '已完成' : '進行中',
-                'items_count' => $posin->posinItems->count(),
-                'notes' => $posin->posin_note,
-                'us_purchase_order_status' => $posin->us_purchase_order_status ?? 'pending',
-                'posin_items' => $posin->posinItems
-            ];
+            try {
+                $purchaseDate = '';
+                $createdAt = '';
+
+                if ($posin->posin_dt) {
+                    try {
+                        $purchaseDate = date('Y/n/j', strtotime($posin->posin_dt));
+                        $createdAt = date('Y/n/j', strtotime($posin->posin_dt));
+                    } catch (\Exception $e) {
+                        // 如果日期格式有問題，使用原始值
+                        $purchaseDate = $posin->posin_dt;
+                        $createdAt = $posin->posin_dt;
+                    }
+                }
+
+                $formattedItems[] = [
+                    'id' => $posin->posin_id,
+                    'order_number' => $posin->posin_sn ?? '',
+                    'supplier' => $posin->posin_user ?? '',
+                    'purchase_date' => $purchaseDate,
+                    'created_at' => $createdAt,
+                    'status' => $posin->posin_log ? '已完成' : '進行中',
+                    'items_count' => $posin->posinItems ? $posin->posinItems->count() : 0,
+                    'notes' => $posin->posin_note ?? '',
+                    'us_purchase_order_status' => $posin->us_purchase_order_status ?? 'pending',
+                    'posin_items' => $posin->posinItems ?? []
+                ];
+            } catch (\Exception $e) {
+                // 如果某個記錄有問題，記錄錯誤但繼續處理其他記錄
+                \Illuminate\Support\Facades\Log::error('Error formatting posin record: ' . $e->getMessage(), [
+                    'posin_id' => $posin->posin_id ?? 'unknown'
+                ]);
+                continue;
+            }
         }
 
-        return response()->json([
-            'data' => $formattedItems,
-            'current_page' => $posinRecords->currentPage(),
-            'last_page' => $posinRecords->lastPage(),
-            'per_page' => $posinRecords->perPage(),
-            'total' => $posinRecords->total(),
-            'from' => $posinRecords->firstItem(),
-            'to' => $posinRecords->lastItem(),
-        ]);
+            return response()->json([
+                'data' => $formattedItems,
+                'current_page' => $posinRecords->currentPage(),
+                'last_page' => $posinRecords->lastPage(),
+                'per_page' => $posinRecords->perPage(),
+                'total' => $posinRecords->total(),
+                'from' => $posinRecords->firstItem(),
+                'to' => $posinRecords->lastItem(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error in PosinController index: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Internal server error',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -536,10 +570,11 @@ class PosinController extends Controller
                 QrCode::create([
                     'posin_id' => $item['posin_id'],
                     'posinitem_id' => $item['posinitem_id'],
+                    'item_id' => $item['item_id'], // 添加item_id
                     'item_code' => $item['item_sn'],
                     'item_name' => $item['item_name'],
                     'item_batch' => $item['item_batch'],
-                    'expiry_date' => $item['item_expireday'],
+                    'expiry_date' => $item['item_expireday'], // 從posinitem獲取到期日
                     'box_number' => $i,
                     'qr_content' => $qrData,
                     'file_name' => $fileName,

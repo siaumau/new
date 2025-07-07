@@ -27,6 +27,16 @@ class PosinItem extends Model
         'item_validyear',
     ];
 
+    protected $casts = [
+        'item_expireday' => 'date',
+        'item_count' => 'integer',
+        'item_price' => 'decimal:2',
+        'item_id' => 'integer',
+        'posin_id' => 'integer',
+        'itemtype' => 'integer',
+    ];
+
+
     public function posin()
     {
         return $this->belongsTo(Posin::class, 'posin_id', 'posin_id');
