@@ -153,17 +153,32 @@ const loadLocationDetails = async (locationId) => {
 
     if (itemsResponse.ok) {
       const itemsData = await itemsResponse.json();
-      locationItems.value = itemsData.data || itemsData || [];
+      locationItems.value = itemsData.items || [];
     } else {
       locationItems.value = [];
     }
 
-    // 模擬層架分佈資料（如果有對應的API可以替換）
-    floorDistribution.value = [
-      { floor: 1, itemCount: 1, totalValue: 1380, items: ['SA202G1'] },
-      { floor: 2, itemCount: 2, totalValue: 1510, items: ['S106E1A'] },
-      { floor: 4, itemCount: 1, totalValue: 1510, items: ['S106E1A'] }
-    ];
+    // 載入層架分布資料（只有storage_type_code是'Shelf'時才載入）
+    const currentLocation = selectedLocation.value;
+    if (currentLocation && currentLocation.storageType === 'Shelf') {
+      const floorResponse = await fetch(`http://localhost:8000/api/v1/locations/${locationId}/floor-distribution`, {
+        method: 'GET',
+        headers: {
+          'accept': '*/*',
+          'X-CSRF-TOKEN': ''
+        }
+      });
+
+      if (floorResponse.ok) {
+        const floorData = await floorResponse.json();
+        floorDistribution.value = floorData.floor_distribution || [];
+      } else {
+        floorDistribution.value = [];
+      }
+    } else {
+      // 如果不是層架類型，清空層架分布資料
+      floorDistribution.value = [];
+    }
   } catch (err) {
     console.error('載入位置詳細資訊失敗:', err);
     locationItems.value = [];
@@ -788,8 +803,8 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- 層架分佈 -->
-          <div class="mb-6">
+          <!-- 層架分佈 (只有Shelf類型才顯示) -->
+          <div v-if="selectedLocation?.storageType === 'Shelf'" class="mb-6">
             <div class="flex items-center space-x-2 mb-4">
               <div class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
                 <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -799,7 +814,7 @@ onMounted(() => {
               <h4 class="text-lg font-semibold text-gray-900">層架分佈</h4>
             </div>
 
-            <div class="grid grid-cols-3 gap-4">
+            <div v-if="floorDistribution.length > 0" class="grid grid-cols-3 gap-4">
               <div v-for="floor in floorDistribution" :key="floor.floor" class="bg-gray-50 p-4 rounded-lg">
                 <div class="flex items-center justify-between mb-2">
                   <div class="flex items-center space-x-2">
@@ -808,11 +823,14 @@ onMounted(() => {
                   </div>
                 </div>
                 <div class="text-sm text-gray-600 mb-1">{{ floor.itemCount }} 個商品</div>
-                <div class="text-lg font-bold text-teal-600">{{ floor.totalValue }}</div>
+                <div class="text-sm text-gray-600 mb-1">{{ floor.uniqueItems }} 種不同商品</div>
                 <div class="text-xs text-gray-500">
                   商品: {{ floor.items.join(', ') }}
                 </div>
               </div>
+            </div>
+            <div v-else class="text-center py-8 text-gray-500">
+              此層架位置目前沒有商品分布資料
             </div>
           </div>
 
@@ -837,7 +855,7 @@ onMounted(() => {
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">批號</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">箱號</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">層架</th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">外箱編號</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">QR Code內容</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">到期日</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">生成時間</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">生成者</th>
@@ -849,32 +867,35 @@ onMounted(() => {
                       目前此位置沒有商品
                     </td>
                   </tr>
-                  <tr v-for="item in locationItems" :key="item.id" class="hover:bg-gray-50">
+                  <tr v-for="item in locationItems" :key="item.qr_id || item.id" class="hover:bg-gray-50">
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {{ item.product_code || item.code }}
+                      {{ item.item_code }}
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {{ item.batch_number || item.batch }}
+                      {{ item.item_batch }}
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {{ item.box_number || item.box }}
+                      {{ item.box_number }}
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      <span class="px-2 py-1 text-xs font-medium bg-teal-100 text-teal-800 rounded">
-                        第{{ item.floor || '1' }}層
+                      <span v-if="item.floor_level" class="px-2 py-1 text-xs font-medium bg-teal-100 text-teal-800 rounded">
+                        第{{ item.floor_level }}層
                       </span>
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-blue-600 hover:text-blue-800">
-                      <a href="#" class="hover:underline">{{ item.outer_box_code || item.external_code }}</a>
+                      <span v-else class="text-gray-400">-</span>
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {{ item.expiry_date || item.expire_date }}
+                      <div class="max-w-xs truncate" :title="item.qr_content">
+                        {{ item.qr_content || '-' }}
+                      </div>
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {{ item.created_at ? new Date(item.created_at).toLocaleDateString() : '' }}
+                      {{ item.expiry_date ? new Date(item.expiry_date).toLocaleDateString() : '-' }}
                     </td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {{ item.created_by || item.user }}
+                      {{ item.generated_at ? new Date(item.generated_at).toLocaleDateString() : '-' }}
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {{ item.generated_by || '-' }}
                     </td>
                   </tr>
                 </tbody>

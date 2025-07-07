@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use App\Models\QrCode;
 use Illuminate\Http\Request;
 
 class LocationController extends Controller
@@ -89,6 +90,113 @@ class LocationController extends Controller
             return response()->json(['message' => 'Location not found'], 404);
         }
         return response()->json($location);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/locations/{id}/floor-distribution",
+     *     summary="Get floor distribution for a specific location",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200", description="Floor distribution data"),
+     *     @OA\Response(response="404", description="Location not found"),
+     *     @OA\Response(response="400", description="Not a shelf type location")
+     * )
+     */
+    public function getFloorDistribution($id)
+    {
+        $location = Location::find($id);
+        if (!$location) {
+            return response()->json(['message' => 'Location not found'], 404);
+        }
+
+        // 只有當storage_type_code是'Shelf'時才顯示層架分布
+        if ($location->storage_type_code !== 'Shelf') {
+            return response()->json(['message' => 'This location is not a shelf type'], 400);
+        }
+
+        // 從qr_codes資料表中獲取該位置的層架分布資料
+        $floorDistribution = QrCode::where('location_id', $id)
+            ->whereNotNull('floor_level')
+            ->selectRaw('
+                floor_level as floor,
+                COUNT(*) as item_count,
+                COUNT(DISTINCT item_code) as unique_items,
+                GROUP_CONCAT(DISTINCT item_code) as items
+            ')
+            ->groupBy('floor_level')
+            ->orderBy('floor_level')
+            ->get();
+
+        // 轉換資料格式
+        $distributionData = $floorDistribution->map(function ($item) {
+            return [
+                'floor' => $item->floor,
+                'itemCount' => $item->item_count,
+                'uniqueItems' => $item->unique_items,
+                'items' => explode(',', $item->items)
+            ];
+        });
+
+        return response()->json([
+            'location_id' => $id,
+            'location_code' => $location->location_code,
+            'location_name' => $location->location_name,
+            'storage_type' => $location->storage_type_code,
+            'floor_distribution' => $distributionData
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/locations/{id}/items",
+     *     summary="Get items in a specific location",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200", description="Items in location"),
+     *     @OA\Response(response="404", description="Location not found")
+     * )
+     */
+    public function getLocationItems($id)
+    {
+        $location = Location::find($id);
+        if (!$location) {
+            return response()->json(['message' => 'Location not found'], 404);
+        }
+
+        // 從qr_codes資料表中獲取該位置的商品資料
+        $items = QrCode::where('location_id', $id)
+            ->select([
+                'qr_id',
+                'item_code',
+                'item_name',
+                'item_batch',
+                'expiry_date',
+                'box_number',
+                'floor_level',
+                'qr_content',
+                'generated_at',
+                'generated_by',
+                'status'
+            ])
+            ->orderBy('floor_level')
+            ->orderBy('item_code')
+            ->get();
+
+        return response()->json([
+            'location_id' => $id,
+            'location_code' => $location->location_code,
+            'location_name' => $location->location_name,
+            'items' => $items
+        ]);
     }
 
     /**

@@ -64,3 +64,5 @@
 
 
 php artisan l5-swagger:generate  更新swagger使用
+
+ php artisan route:list --path=api/v1/locations

@@ -26,6 +26,10 @@ Route::prefix('api/v1')->group(function () {
     Route::apiResource('locations', LocationController::class);
     Route::apiResource('posin', PosinController::class);
 
+    // 位置相關的額外路由
+    Route::get('locations/{id}/floor-distribution', [LocationController::class, 'getFloorDistribution']);
+    Route::get('locations/{id}/items', [LocationController::class, 'getLocationItems']);
+
     // 美國進貨單生成路由
     Route::patch('posin/{id}/generate-us-purchase-order', [PosinController::class, 'generateUsPurchaseOrder']);
 
