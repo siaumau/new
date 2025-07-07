@@ -36,6 +36,7 @@ Route::prefix('api/v1')->group(function () {
     // QR Code相關路由
     Route::get('check-qr-generated/{posinitem_id}', [PosinController::class, 'checkQRGenerated']);
     Route::post('generate-qr-labels', [PosinController::class, 'generateQRLabels']);
+    Route::post('save-qr-files', [PosinController::class, 'saveQRFiles']);
 
     /**
      * @OA\Get(

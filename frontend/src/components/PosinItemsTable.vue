@@ -72,12 +72,6 @@
                   {{ $t('posinItems.table.boxCount') }}
                 </th>
                 <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {{ $t('posinItems.table.unitPrice') }}
-                </th>
-                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {{ $t('posinItems.table.subtotal') }}
-                </th>
-                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {{ $t('posinItems.table.expiryDate') }}
                 </th>
                 <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -107,12 +101,6 @@
                   <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {{ getBoxCount(item) }} 箱
                   </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
-                  ${{ item.item_price }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-center">
-                  <span class="text-sm font-semibold text-gray-900">${{ getSubtotal(item) }}</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">
                   {{ formatDate(item.item_expireday) }}
@@ -519,10 +507,7 @@ const getBoxCount = (item) => {
   return Math.ceil(item.item_count / itemsPerBox)
 }
 
-const getSubtotal = (item) => {
-  if (!item) return 0
-  return (item.item_count * item.item_price).toFixed(0)
-}
+
 
 const formatDate = (dateString) => {
   if (!dateString) return ''
@@ -642,6 +627,9 @@ const downloadQRLabels = async () => {
     const zipBlob = await zip.generateAsync({ type: 'blob' })
     saveAs(zipBlob, zip_file_name)
 
+    // 同步儲存到 public/qr_codes 目錄
+    await saveToPublicDirectory(qr_codes, zip_file_name)
+
     // 更新 QR Code 生成狀態
     qrGeneratedStatus.value[selectedItem.value.posinitem_id] = true
 
@@ -655,6 +643,68 @@ const downloadQRLabels = async () => {
     alert('生成QR標籤時發生錯誤: ' + (error.response?.data?.message || error.message))
   } finally {
     loading.value = false
+  }
+}
+
+// 儲存檔案到 public/qr_codes 目錄
+const saveToPublicDirectory = async (qrCodes, zipFileName) => {
+  try {
+    // 創建 FormData 來傳送檔案
+    const formData = new FormData()
+
+    // 為每個 QR Code 生成圖片並加入 FormData
+    for (const qrCode of qrCodes) {
+      const completeLabelImage = await generateCompleteLabel(qrCode)
+
+      // 將 base64 轉換為 blob
+      const base64Data = completeLabelImage.split(',')[1]
+      const byteCharacters = atob(base64Data)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      const blob = new Blob([byteArray], { type: 'image/png' })
+
+      // 加入 FormData
+      formData.append('files[]', blob, qrCode.file_name)
+    }
+
+    // 加入 ZIP 檔案
+    const zip = new JSZip()
+    for (const qrCode of qrCodes) {
+      const completeLabelImage = await generateCompleteLabel(qrCode)
+      const base64Data = completeLabelImage.split(',')[1]
+      const byteCharacters = atob(base64Data)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      zip.file(qrCode.file_name, byteArray)
+    }
+    const zipBlob = await zip.generateAsync({ type: 'blob' })
+    formData.append('zip_file', zipBlob, zipFileName)
+
+    // 加入額外資訊
+    formData.append('item_info', JSON.stringify({
+      item_name: selectedItem.value.item_name,
+      item_sn: selectedItem.value.item_sn,
+      item_batch: selectedItem.value.item_batch,
+      count: qrCodes.length
+    }))
+
+    // 呼叫後端 API 儲存檔案
+    await axios.post('/api/v1/save-qr-files', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
+    console.log('QR Code 檔案已成功儲存到 public/qr_codes 目錄')
+  } catch (error) {
+    console.error('Error saving files to public directory:', error)
+    // 不中斷下載流程，只記錄錯誤
   }
 }
 

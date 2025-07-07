@@ -94,8 +94,6 @@ export default {
       quantity: '數量',
       packageSpec: '包裝規格',
       boxCount: '箱數',
-      unitPrice: '單價',
-      subtotal: '小計',
       expiryDate: '有效期限',
       actions: '操作',
       generateQR: '生成QR',

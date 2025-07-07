@@ -665,4 +665,84 @@ class PosinController extends Controller
         // In production, you should convert this to PDF
         return $html;
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/save-qr-files",
+     *     summary="Save QR code files to public directory",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="files[]", type="array", @OA\Items(type="string", format="binary")),
+     *                 @OA\Property(property="zip_file", type="string", format="binary"),
+     *                 @OA\Property(property="item_info", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="200", description="Files saved successfully"),
+     *     @OA\Response(response="500", description="Error saving files")
+     * )
+     */
+    public function saveQRFiles(Request $request)
+    {
+        try {
+            // 確保 qr_codes 目錄存在
+            $qrCodesPath = public_path('qr_codes');
+            if (!file_exists($qrCodesPath)) {
+                mkdir($qrCodesPath, 0755, true);
+            }
+
+            $savedFiles = [];
+
+            // 處理個別檔案
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    $fileName = $file->getClientOriginalName();
+                    $filePath = $qrCodesPath . '/' . $fileName;
+
+                    // 儲存檔案
+                    $file->move($qrCodesPath, $fileName);
+                    $savedFiles[] = $fileName;
+                }
+            }
+
+            // 處理 ZIP 檔案
+            if ($request->hasFile('zip_file')) {
+                $zipFile = $request->file('zip_file');
+                $zipFileName = $zipFile->getClientOriginalName();
+                $zipFilePath = $qrCodesPath . '/' . $zipFileName;
+
+                // 儲存 ZIP 檔案
+                $zipFile->move($qrCodesPath, $zipFileName);
+                $savedFiles[] = $zipFileName;
+            }
+
+            // 記錄儲存資訊
+            $itemInfo = json_decode($request->input('item_info'), true);
+            $logMessage = sprintf(
+                'QR Code 檔案已儲存到 public/qr_codes 目錄 - 商品: %s (SN: %s, 批號: %s, 數量: %d)',
+                $itemInfo['item_name'] ?? '未知',
+                $itemInfo['item_sn'] ?? '未知',
+                $itemInfo['item_batch'] ?? '未知',
+                $itemInfo['count'] ?? 0
+            );
+
+            \Illuminate\Support\Facades\Log::info($logMessage);
+
+            return response()->json([
+                'message' => 'Files saved successfully',
+                'saved_files' => $savedFiles,
+                'directory' => $qrCodesPath
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error saving QR files: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error saving files',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

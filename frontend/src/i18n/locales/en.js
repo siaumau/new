@@ -94,8 +94,6 @@ export default {
       quantity: 'Quantity',
       packageSpec: 'Package Spec',
       boxCount: 'Box Count',
-      unitPrice: 'Unit Price',
-      subtotal: 'Subtotal',
       expiryDate: 'Expiry Date',
       actions: 'Actions',
       generateQR: 'Generate QR',
