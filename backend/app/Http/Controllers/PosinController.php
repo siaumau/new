@@ -782,4 +782,236 @@ class PosinController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/posin/batch",
+     *     summary="Batch import purchase orders from CSV data",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="purchase_orders", type="array", @OA\Items(
+     *                 @OA\Property(property="order_number", type="string"),
+     *                 @OA\Property(property="user_name", type="string"),
+     *                 @OA\Property(property="order_date", type="string"),
+     *                 @OA\Property(property="expected_date", type="string"),
+     *                 @OA\Property(property="notes", type="string"),
+     *                 @OA\Property(property="item_id", type="integer"),
+     *                 @OA\Property(property="item_batch", type="string"),
+     *                 @OA\Property(property="item_count", type="integer"),
+     *                 @OA\Property(property="item_price", type="number"),
+     *                 @OA\Property(property="item_expireday", type="string"),
+     *                 @OA\Property(property="item_validyear", type="integer"),
+     *                 @OA\Property(property="itemtype", type="integer")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(response="200", description="Batch import completed"),
+     *     @OA\Response(response="422", description="Validation error")
+     * )
+     */
+    public function batchStore(Request $request)
+    {
+        $request->validate([
+            'purchase_orders' => 'required|array|min:1',
+            'purchase_orders.*.order_number' => 'required|string',
+            'purchase_orders.*.user_name' => 'required|string',
+            'purchase_orders.*.order_date' => 'required|date',
+            'purchase_orders.*.expected_date' => 'nullable|date',
+            'purchase_orders.*.notes' => 'nullable|string',
+            'purchase_orders.*.item_id' => 'required|integer',
+            'purchase_orders.*.item_batch' => 'required|string|max:20',
+            'purchase_orders.*.item_count' => 'required|integer|min:1',
+            'purchase_orders.*.item_price' => 'required|numeric|min:0',
+            'purchase_orders.*.item_expireday' => 'nullable|date',
+            'purchase_orders.*.item_validyear' => 'nullable|integer',
+            'purchase_orders.*.itemtype' => 'required|integer'
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $purchaseOrdersData = $request->input('purchase_orders');
+            $createdCount = 0;
+            $errorCount = 0;
+            $errors = [];
+
+            // 按進貨單號分組資料
+            $groupedOrders = [];
+            foreach ($purchaseOrdersData as $orderData) {
+                $orderNumber = $orderData['order_number'];
+                if (!isset($groupedOrders[$orderNumber])) {
+                    $groupedOrders[$orderNumber] = [
+                        'order_info' => [
+                            'order_number' => $orderData['order_number'],
+                            'user_name' => $orderData['user_name'],
+                            'order_date' => $orderData['order_date'],
+                            'expected_date' => $orderData['expected_date'] ?? null,
+                            'notes' => $orderData['notes'] ?? null,
+                        ],
+                        'items' => []
+                    ];
+                }
+
+                // 添加商品項目
+                $groupedOrders[$orderNumber]['items'][] = [
+                    'item_id' => $orderData['item_id'],
+                    'item_batch' => $orderData['item_batch'],
+                    'item_count' => $orderData['item_count'],
+                    'item_price' => $orderData['item_price'],
+                    'item_expireday' => $orderData['item_expireday'] ?? null,
+                    'item_validyear' => $orderData['item_validyear'] ?? null,
+                    'itemtype' => $orderData['itemtype']
+                ];
+            }
+
+                                    // 處理每個進貨單
+            foreach ($groupedOrders as $orderNumber => $orderGroup) {
+                try {
+                    $orderInfo = $orderGroup['order_info'];
+                    $hasErrors = false;
+                    $itemErrors = [];
+
+                    // 先驗證所有商品是否存在，如果有任何商品不存在就不創建進貨單
+                    foreach ($orderGroup['items'] as $itemData) {
+                        $item = \App\Models\Item::find($itemData['item_id']);
+                        if (!$item) {
+                            $hasErrors = true;
+                            $itemErrors[] = "商品ID {$itemData['item_id']} 不存在";
+                        }
+                    }
+
+                    // 如果有商品不存在，跳過整個進貨單
+                    if ($hasErrors) {
+                        $errorCount++;
+                        $errors[] = [
+                            'order_number' => $orderNumber,
+                            'error' => implode('; ', $itemErrors)
+                        ];
+                        continue;
+                    }
+
+                    // 檢查進貨單是否已存在
+                    $existingPosin = Posin::where('posin_sn', $orderNumber)->first();
+
+                    if ($existingPosin) {
+                        // 檢查美國進貨單狀態，如果已經提交則不允許重複匯入
+                        if ($existingPosin->us_purchase_order_status === 'generated' ||
+                            $existingPosin->us_purchase_order_status === 'reviewed' ||
+                            $existingPosin->us_purchase_order_status === 'completed') {
+                            $errorCount++;
+                            $errors[] = [
+                                'order_number' => $orderNumber,
+                                'error' => '進貨單已提交為美國進貨單，無法重複匯入'
+                            ];
+                            continue;
+                        }
+
+                        // 更新進貨單資訊
+                        $existingPosin->update([
+                            'posin_user' => $orderInfo['user_name'],
+                            'posin_dt' => $orderInfo['order_date'],
+                            'posin_note' => $orderInfo['notes'],
+                        ]);
+
+                        $posin = $existingPosin;
+                    } else {
+                        // 創建新的進貨單
+                        $posin = Posin::create([
+                            '_users_id' => 1, // 預設用戶ID，可以根據需要調整
+                            'posin_sn' => $orderInfo['order_number'],
+                            'posin_user' => $orderInfo['user_name'],
+                            'posin_dt' => $orderInfo['order_date'],
+                            'posin_note' => $orderInfo['notes'],
+                            'us_purchase_order_status' => 'pending'
+                        ]);
+                        $createdCount++;
+                    }
+
+                    // 創建進貨單項目，檢查重複項目
+                    $addedItemsCount = 0;
+                    foreach ($orderGroup['items'] as $itemData) {
+                        // 獲取商品資訊（已經驗證過存在）
+                        $item = \App\Models\Item::find($itemData['item_id']);
+
+                        // 檢查是否已存在相同的項目 (posin_id + item_id + item_batch + item_expireday)
+                        $existingItem = PosinItem::where('posin_id', $posin->posin_id)
+                            ->where('item_id', $itemData['item_id'])
+                            ->where('item_batch', $itemData['item_batch'])
+                            ->where('item_expireday', $itemData['item_expireday'])
+                            ->first();
+
+                        if ($existingItem) {
+                            // 重複項目，記錄錯誤但不影響其他項目
+                            $itemErrors[] = "商品ID {$itemData['item_id']} 批次 {$itemData['item_batch']} 到期日 {$itemData['item_expireday']} 已存在";
+                            continue;
+                        }
+
+                        // 創建新的進貨單項目
+                        PosinItem::create([
+                            'posin_id' => $posin->posin_id,
+                            'itemtype' => $itemData['itemtype'],
+                            'item_id' => $itemData['item_id'],
+                            'item_name' => $item->item_name,
+                            'item_sn' => $item->item_sn,
+                            'item_spec' => $item->item_spec,
+                            'item_batch' => $itemData['item_batch'],
+                            'item_count' => $itemData['item_count'],
+                            'item_price' => $itemData['item_price'],
+                            'item_expireday' => $itemData['item_expireday'],
+                            'item_validyear' => $itemData['item_validyear']
+                        ]);
+                        $addedItemsCount++;
+                    }
+
+                    // 如果進貨單已存在且有新增項目，也算作成功
+                    if ($existingPosin && $addedItemsCount > 0) {
+                        $createdCount++;
+                    }
+
+                    // 如果有項目重複錯誤，記錄但不影響整個進貨單
+                    if (!empty($itemErrors)) {
+                        $errors[] = [
+                            'order_number' => $orderNumber,
+                            'error' => '部分項目重複: ' . implode('; ', $itemErrors)
+                        ];
+                    }
+
+                } catch (\Exception $e) {
+                    $errorCount++;
+                    $errors[] = [
+                        'order_number' => $orderNumber,
+                        'error' => $e->getMessage()
+                    ];
+
+                    // 記錄錯誤
+                    \Illuminate\Support\Facades\Log::error("批量匯入進貨單失敗: {$orderNumber}", [
+                        'error' => $e->getMessage(),
+                        'order_data' => $orderGroup
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => '批量匯入完成',
+                'created_count' => $createdCount,
+                'error_count' => $errorCount,
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('批量匯入進貨單失敗: ' . $e->getMessage(), [
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => '批量匯入失敗',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

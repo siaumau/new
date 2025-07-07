@@ -31,6 +31,9 @@ Route::prefix('api/v1')->group(function () {
     Route::get('locations/{id}/floor-distribution', [LocationController::class, 'getFloorDistribution']);
     Route::get('locations/{id}/items', [LocationController::class, 'getLocationItems']);
 
+    // 進貨單相關的額外路由
+    Route::post('posin/batch', [PosinController::class, 'batchStore']);
+
     // 美國進貨單生成路由
     Route::patch('posin/{id}/generate-us-purchase-order', [PosinController::class, 'generateUsPurchaseOrder']);
 

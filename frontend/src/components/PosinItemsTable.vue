@@ -9,7 +9,9 @@
             <p class="mt-1 text-sm text-gray-600">{{ $t('posinItems.messages.pageDescription') }}</p>
           </div>
           <div class="flex space-x-3">
+            <!-- 轉美國進貨單按鈕 - 只在未轉換時顯示 -->
             <button
+              v-if="canEdit"
               @click="convertToUsPurchaseOrder"
               class="bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg flex items-center space-x-2 transition-colors shadow-sm"
             >
@@ -18,6 +20,15 @@
               </svg>
               <span>{{ $t('posinItems.actions.convertToUsPurchaseOrder') }}</span>
             </button>
+
+            <!-- 美國進貨單狀態顯示 - 已轉換時顯示 -->
+            <div v-if="isConvertedToUS" class="bg-blue-100 text-blue-800 font-medium py-2 px-4 rounded-lg flex items-center space-x-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>美國進貨單已轉換</span>
+            </div>
+
             <button
               @click="refreshData"
               class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg flex items-center space-x-2 transition-colors"
@@ -107,24 +118,39 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
                   <div class="flex justify-center space-x-2">
+                    <!-- QR生成按鈕 - 美國進貨單轉換後才能生成QR -->
                     <button
-                      v-if="!isQRGenerated(item)"
+                      v-if="isConvertedToUS && !isQRGenerated(item)"
                       @click="openQRModal(item)"
                       class="bg-green-500 hover:bg-green-600 text-white font-medium py-1.5 px-3 rounded text-xs transition-colors shadow-sm"
                       :title="$t('posinItems.actions.generateQR')"
                     >
                       {{ $t('posinItems.table.generateQR') }}
                     </button>
+
+                    <!-- 已生成QR的狀態顯示 -->
                     <button
-                      v-else
+                      v-if="isQRGenerated(item)"
                       disabled
                       class="bg-gray-400 text-white font-medium py-1.5 px-3 rounded text-xs cursor-not-allowed"
                       :title="'QR Code 已生成'"
                     >
                       已生成QR
                     </button>
+
+                    <!-- 未轉換美國進貨單時的提示 -->
                     <button
-                      v-if="!isQRGenerated(item)"
+                      v-if="canEdit && !isQRGenerated(item)"
+                      disabled
+                      class="bg-gray-300 text-gray-500 font-medium py-1.5 px-3 rounded text-xs cursor-not-allowed"
+                      :title="'需轉換為美國進貨單後才能生成QR'"
+                    >
+                      未轉換
+                    </button>
+
+                    <!-- 刪除按鈕 - 只在未轉換且未生成QR時顯示 -->
+                    <button
+                      v-if="canEdit && !isQRGenerated(item)"
                       @click="deleteItem(item)"
                       class="bg-red-500 hover:bg-red-600 text-white font-medium py-1.5 px-3 rounded text-xs transition-colors shadow-sm"
                       :title="$t('posinItems.actions.deleteItem')"
@@ -367,6 +393,7 @@ const qrGenerateCount = ref(1)
 const loading = ref(false)
 const qrGeneratedStatus = ref({})
 const itemsCache = ref({}) // 新增：商品資料快取
+const posinInfo = ref(null) // 新增：進貨單資訊
 
 // Methods
 const fetchPosinItems = async () => {
@@ -374,6 +401,9 @@ const fetchPosinItems = async () => {
   try {
     const response = await axios.get(`/api/v1/posin/${props.posinId}/items`)
     posinItems.value = response.data.data || response.data
+
+    // 獲取進貨單資訊
+    await fetchPosinInfo()
 
     // 檢查每個商品項目的 QR Code 生成狀態
     await checkQRGeneratedStatus()
@@ -426,7 +456,39 @@ const refreshData = () => {
   fetchPosinItems()
 }
 
+// 新增：獲取進貨單資訊
+const fetchPosinInfo = async () => {
+  try {
+    const response = await axios.get(`/api/v1/posin/${props.posinId}`)
+    posinInfo.value = response.data.data || response.data
+  } catch (error) {
+    console.error('Error fetching posin info:', error)
+    // 如果 API 失敗，使用預設值
+    posinInfo.value = {
+      posin_id: props.posinId,
+      us_purchase_order_status: 'pending'
+    }
+  }
+}
+
+// 檢查是否可以編輯/刪除（美國進貨單未轉換時才可以）
+const canEdit = computed(() => {
+  return posinInfo.value?.us_purchase_order_status === 'pending'
+})
+
+// 檢查是否已轉換為美國進貨單
+const isConvertedToUS = computed(() => {
+  return posinInfo.value?.us_purchase_order_status === 'generated' ||
+         posinInfo.value?.us_purchase_order_status === 'reviewed'
+})
+
 const deleteItem = async (item) => {
+  // 檢查是否可以刪除
+  if (!canEdit.value) {
+    alert('美國進貨單已轉換，無法刪除商品項目')
+    return
+  }
+
   if (!confirm(t('posinItems.messages.deleteConfirm', { name: item.item_name }))) return
 
   try {
@@ -441,6 +503,12 @@ const deleteItem = async (item) => {
 }
 
 const convertToUsPurchaseOrder = async () => {
+  // 檢查是否可以轉換
+  if (!canEdit.value) {
+    alert('美國進貨單已轉換，無法重複轉換')
+    return
+  }
+
   const confirmed = confirm(t('posinItems.messages.convertConfirm'))
 
   if (!confirmed) return

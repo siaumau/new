@@ -14,7 +14,7 @@ const itemsPerPage = ref(10);
 const totalItems = ref(578);
 const totalPages = ref(58);
 
-const emit = defineEmits(['add-new', 'edit-purchase-order']);
+const emit = defineEmits(['edit-purchase-order']);
 
 // 為了模擬資料，暫時使用靜態數據
 const mockPurchaseOrders = [
@@ -90,12 +90,297 @@ const fetchPurchaseOrders = async () => {
   }
 };
 
-const handleAddNew = () => {
-  emit('add-new');
+// 下載進貨單模板
+const downloadTemplate = () => {
+  // 根據 purchase_order_template.csv 的格式創建模板
+  const csvContent = [
+    'order_number,user_name,order_date,expected_date,notes,item_id,item_batch,item_count,item_price,item_expireday,item_validyear,itemtype',
+    '2025-0703【0001】,eric,2025-06-15,2026-01-20,pct101,10,PAT001,100,25.50,2026-12-31,2,1',
+    '2025-0703【0001】,eric,2025-06-15,2026-01-20,pct102,22,PAT002,50,15.00,2026-06-30,1,1',
+    '2025-0703【0002】,eric,2025-06-16,2026-01-25,pct103,23,PAT003,200,30.00,2026-12-31,2,1'
+  ].join('\n');
+
+  // 添加BOM以支援Excel正確顯示繁體中文
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+  // 創建下載連結
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'purchase_order_template.csv');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+// 處理CSV文件匯入
+const handleFileImport = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // 檢查文件類型
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    alert('請選擇CSV格式的文件');
+    return;
+  }
+
+  try {
+    const text = await file.text();
+    const lines = text.split('\n').filter(line => line.trim());
+
+    if (lines.length < 2) {
+      alert('CSV文件格式錯誤或沒有資料');
+      return;
+    }
+
+    // 解析CSV數據（跳過標題行）
+    const dataLines = lines.slice(1);
+    const purchaseOrdersData = [];
+
+    for (let i = 0; i < dataLines.length; i++) {
+      const line = dataLines[i].trim();
+      if (!line) continue;
+
+      // 解析CSV行
+      const columns = parseCSVLine(line);
+
+      if (columns.length < 12) {
+        alert(`第 ${i + 2} 行資料格式錯誤，請檢查CSV格式`);
+        return;
+      }
+
+      // 根據模板格式解析資料
+      const purchaseOrderData = {
+        order_number: columns[0].trim(),
+        user_name: columns[1].trim(),
+        order_date: columns[2].trim(),
+        expected_date: columns[3].trim(),
+        notes: columns[4].trim() || null,
+        item_id: parseInt(columns[5].trim()),
+        item_batch: columns[6].trim(),
+        item_count: parseInt(columns[7].trim()),
+        item_price: parseFloat(columns[8].trim()),
+        item_expireday: columns[9].trim(),
+        item_validyear: parseInt(columns[10].trim()),
+        itemtype: parseInt(columns[11].trim())
+      };
+
+      purchaseOrdersData.push(purchaseOrderData);
+    }
+
+    // 批量匯入進貨單資料
+    await importPurchaseOrders(purchaseOrdersData);
+
+    // 清空文件輸入
+    event.target.value = '';
+
+  } catch (error) {
+    console.error('匯入文件失敗:', error);
+    alert('匯入文件失敗: ' + error.message);
+  }
+};
+
+// 解析CSV行（處理包含逗號的欄位）
+const parseCSVLine = (line) => {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
+};
+
+// 批量匯入進貨單資料
+const importPurchaseOrders = async (purchaseOrdersData) => {
+  loading.value = true;
+
+  try {
+    const response = await axios.post('/api/v1/posin/batch', {
+      purchase_orders: purchaseOrdersData
+    });
+
+    if (response.status === 200) {
+      const { created_count, error_count, errors } = response.data;
+
+      // 顯示匯入結果
+      let message = `匯入完成！\n成功: ${created_count} 筆\n失敗: ${error_count} 筆`;
+
+      if (errors && errors.length > 0) {
+        // 生成錯誤報告 TXT 文件
+        const errorReport = generateErrorReport(errors, created_count, error_count);
+        downloadErrorReport(errorReport);
+
+        message += '\n\n錯誤詳情:\n';
+        errors.slice(0, 5).forEach(error => {
+          message += `進貨單 ${error.order_number}: ${error.error}\n`;
+        });
+        if (errors.length > 5) {
+          message += `... 還有 ${errors.length - 5} 個錯誤`;
+        }
+        message += '\n\n錯誤詳細報告已下載為 TXT 文件，請查閱。';
+      }
+
+      alert(message);
+
+      // 重新載入進貨單資料
+      if (created_count > 0) {
+        await fetchPurchaseOrders();
+      }
+    }
+  } catch (error) {
+    console.error('匯入進貨單失敗:', error);
+
+    // 如果是伺服器回應的錯誤，也生成錯誤報告
+    if (error.response?.data) {
+      const errorReport = generateServerErrorReport(error.response.data);
+      downloadErrorReport(errorReport);
+      alert('匯入進貨單失敗，錯誤詳細報告已下載為 TXT 文件，請查閱。\n\n' + (error.response?.data?.message || error.message));
+    } else {
+      alert('匯入進貨單失敗: ' + error.message);
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 生成錯誤報告內容
+const generateErrorReport = (errors, createdCount, errorCount) => {
+  const now = new Date();
+  const timestamp = now.toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+
+  let report = `進貨單批量匯入錯誤報告\n`;
+  report += `生成時間: ${timestamp}\n`;
+  report += `${'='.repeat(50)}\n\n`;
+
+  report += `匯入統計:\n`;
+  report += `- 成功匯入: ${createdCount} 筆\n`;
+  report += `- 失敗: ${errorCount} 筆\n`;
+  report += `- 總計: ${createdCount + errorCount} 筆\n\n`;
+
+  if (errors && errors.length > 0) {
+    report += `錯誤詳情:\n`;
+    report += `${'='.repeat(50)}\n`;
+
+    errors.forEach((error, index) => {
+      report += `\n${index + 1}. 進貨單號: ${error.order_number}\n`;
+      report += `   錯誤原因: ${error.error}\n`;
+      report += `   ${'-'.repeat(30)}\n`;
+    });
+  }
+
+    report += `\n\n建議處理方式:\n`;
+  report += `1. 檢查進貨單是否已提交為美國進貨單（已提交的無法重複匯入）\n`;
+  report += `2. 確認商品ID是否存在於系統中（若不存在，整個進貨單都不會創建）\n`;
+  report += `3. 檢查是否有重複的項目（相同商品ID、批次、到期日）\n`;
+  report += `4. 檢查日期格式是否正確 (YYYY-MM-DD)\n`;
+  report += `5. 確認數值欄位格式是否正確\n`;
+  report += `6. 修正錯誤後重新匯入\n\n`;
+
+  report += `重複匯入說明:\n`;
+  report += `- 相同進貨單號可以重複匯入，會新增項目到現有進貨單\n`;
+  report += `- 只有當「商品ID + 批次 + 到期日」完全相同時才視為重複項目\n`;
+  report += `- 進貨單已提交為美國進貨單時，無法重複匯入\n`;
+  report += `- 如果商品ID不存在，整個進貨單都不會創建\n`;
+
+  return report;
+};
+
+// 生成伺服器錯誤報告內容
+const generateServerErrorReport = (errorData) => {
+  const now = new Date();
+  const timestamp = now.toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+
+  let report = `進貨單批量匯入系統錯誤報告\n`;
+  report += `生成時間: ${timestamp}\n`;
+  report += `${'='.repeat(50)}\n\n`;
+
+  report += `錯誤類型: 系統錯誤\n`;
+  report += `錯誤訊息: ${errorData.message || '未知錯誤'}\n\n`;
+
+  if (errorData.errors) {
+    report += `詳細錯誤:\n`;
+    report += `${'='.repeat(50)}\n`;
+
+    Object.keys(errorData.errors).forEach(key => {
+      report += `\n欄位: ${key}\n`;
+      if (Array.isArray(errorData.errors[key])) {
+        errorData.errors[key].forEach(error => {
+          report += `- ${error}\n`;
+        });
+      } else {
+        report += `- ${errorData.errors[key]}\n`;
+      }
+    });
+  }
+
+  report += `\n\n建議處理方式:\n`;
+  report += `1. 檢查 CSV 文件格式是否正確\n`;
+  report += `2. 確認所有必填欄位都有填寫\n`;
+  report += `3. 檢查資料格式是否符合系統要求\n`;
+  report += `4. 如問題持續，請聯繫系統管理員\n`;
+
+  return report;
+};
+
+// 下載錯誤報告 TXT 文件
+const downloadErrorReport = (reportContent) => {
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+  const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ''); // HHMMSS
+
+  // 添加 BOM 以支援 Excel 正確顯示繁體中文
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + reportContent], { type: 'text/plain;charset=utf-8;' });
+
+  // 創建下載連結
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `進貨單匯入錯誤報告_${dateStr}_${timeStr}.txt`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 const handleEdit = (purchaseOrder) => {
   // 導航到商品項目頁面
+  router.push(`/posin/${purchaseOrder.id}/items`);
+};
+
+const handleGenerateQR = (purchaseOrder) => {
+  // 導航到商品項目頁面進行QR碼生成
   router.push(`/posin/${purchaseOrder.id}/items`);
 };
 
@@ -140,17 +425,31 @@ onMounted(() => {
     <div class="header-section mb-6">
       <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-800">進貨產品建單</h1>
-        <div class="relative">
+        <div class="flex space-x-2">
+          <!-- 下載模板按鈕 -->
           <button
-            @click="handleAddNew"
-            class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            @click="downloadTemplate"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
           >
-            <span class="text-lg">+</span>
-            <span>新增進貨單</span>
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
+            <span>下載模板</span>
           </button>
+
+          <!-- 匯入按鈕 -->
+          <label class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+            </svg>
+            <span>匯入</span>
+            <input
+              type="file"
+              accept=".csv"
+              class="hidden"
+              @change="handleFileImport"
+            />
+          </label>
         </div>
       </div>
     </div>
@@ -290,13 +589,38 @@ onMounted(() => {
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <button
-                  @click="handleEdit(order)"
-                  class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                  :title="'查看商品項目'"
-                >
-                  編輯
-                </button>
+                <div class="flex space-x-2">
+                  <!-- 編輯按鈕 - 只在美國進貨單未轉換時顯示 -->
+                  <button
+                    v-if="order.us_purchase_order_status === 'pending'"
+                    @click="handleEdit(order)"
+                    class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                    :title="'編輯進貨單'"
+                  >
+                    編輯
+                  </button>
+
+                  <!-- 查看按鈕 - 美國進貨單已轉換時顯示 -->
+                  <button
+                    v-if="order.us_purchase_order_status === 'generated' || order.us_purchase_order_status === 'reviewed'"
+                    @click="handleEdit(order)"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                    :title="'查看商品項目'"
+                  >
+                    查看
+                  </button>
+
+                  <!-- 刪除按鈕 - 只在美國進貨單未轉換時顯示 -->
+                  <button
+                    v-if="order.us_purchase_order_status === 'pending'"
+                    @click="handleDelete(order.id)"
+                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                    :title="'刪除進貨單'"
+                  >
+                    刪除
+                  </button>
+
+                </div>
               </td>
               <td class="px-6 py-4 text-sm text-gray-900 max-w-xs">
                 {{ order.notes && order.notes.length > 10 ? order.notes.substring(0, 10) + '...' : order.notes }}
