@@ -55,6 +55,13 @@ const statusForm = ref({
 // 批次操作
 const batchAction = ref('');
 
+// 掃描歸位相關狀態
+const showScanModal = ref(false);
+const scanMode = ref(''); // 'box' 或 'location'
+const scannedBoxQR = ref('');
+const scannedLocationQR = ref('');
+const scanResult = ref('');
+
 // 計算屬性
 const filteredQrCodes = computed(() => {
   let filtered = qrCodes.value;
@@ -311,6 +318,68 @@ const formatDate = (date) => {
   return new Date(date).toLocaleString('zh-TW');
 };
 
+// 掃描歸位功能
+const openScanModal = (mode) => {
+  scanMode.value = mode;
+  showScanModal.value = true;
+  scannedBoxQR.value = '';
+  scannedLocationQR.value = '';
+  scanResult.value = '';
+};
+
+const handleScan = async () => {
+  try {
+    if (scanMode.value === 'box') {
+      // 掃描箱子QR Code
+      scannedBoxQR.value = '模擬掃描結果'; // 這裡應該整合實際的掃描器
+      scanResult.value = '已掃描箱子QR Code';
+    } else if (scanMode.value === 'location') {
+      // 掃描位置QR Code
+      scannedLocationQR.value = '模擬掃描結果'; // 這裡應該整合實際的掃描器
+      scanResult.value = '已掃描位置QR Code';
+    }
+  } catch (error) {
+    scanResult.value = '掃描失敗: ' + error.message;
+  }
+};
+
+const assignBoxToLocation = async () => {
+  if (!scannedBoxQR.value || !scannedLocationQR.value) {
+    scanResult.value = '請先掃描箱子和位置QR Code';
+    return;
+  }
+
+  try {
+    scanResult.value = '正在分配位置...';
+
+    const response = await fetch('/api/v1/qr-codes/scan-assign', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        box_qr_content: scannedBoxQR.value,
+        location_qr_content: scannedLocationQR.value
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      scanResult.value = `箱子已成功歸位到 ${data.location.location_code}！`;
+      showScanModal.value = false;
+
+      // 重新載入資料
+      await fetchQrCodes();
+      await fetchStatistics();
+    } else {
+      scanResult.value = '歸位失敗: ' + (data.message || '未知錯誤');
+    }
+  } catch (error) {
+    scanResult.value = '歸位失敗: ' + error.message;
+  }
+};
+
 // 生命週期
 onMounted(() => {
   fetchQrCodes();
@@ -458,12 +527,19 @@ onMounted(() => {
               </select>
             </div>
 
-            <div class="flex items-end">
+            <div class="flex items-end space-x-2">
               <button
                 @click="handleSearch"
-                class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {{ t('qrCodes.search.button') }}
+              </button>
+              <button
+                @click="openScanModal('box')"
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                title="掃描歸位"
+              >
+                📱
               </button>
             </div>
           </div>
@@ -793,6 +869,93 @@ onMounted(() => {
             class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
           >
             {{ t('qrCodes.modals.update') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 掃描歸位模態框 -->
+    <div v-if="showScanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">{{ t('qrCodes.modals.scan.title') }}</h3>
+        </div>
+        <div class="px-6 py-4">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('qrCodes.modals.scan.mode') }}
+              </label>
+              <select
+                v-model="scanMode"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="box">{{ t('qrCodes.modals.scan.box') }}</option>
+                <option value="location">{{ t('qrCodes.modals.scan.location') }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('qrCodes.modals.scan.qrCode') }}
+              </label>
+              <input
+                v-model="scannedBoxQR"
+                type="text"
+                :placeholder="t('qrCodes.modals.scan.boxPlaceholder')"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                {{ t('qrCodes.modals.scan.locationQRCode') }}
+              </label>
+              <input
+                v-model="scannedLocationQR"
+                type="text"
+                :placeholder="t('qrCodes.modals.scan.locationPlaceholder')"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+          <button
+            @click="showScanModal = false"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            {{ t('qrCodes.modals.cancel') }}
+          </button>
+          <button
+            @click="handleScan"
+            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+          >
+            {{ t('qrCodes.modals.scan.scan') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 掃描結果模態框 -->
+    <div v-if="scanResult" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">{{ t('qrCodes.modals.scanResult.title') }}</h3>
+        </div>
+        <div class="px-6 py-4">
+          <p class="text-sm text-gray-700">{{ scanResult }}</p>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+          <button
+            @click="showScanModal = false"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            {{ t('qrCodes.modals.close') }}
+          </button>
+          <button
+            @click="assignBoxToLocation"
+            class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
+          >
+            {{ t('qrCodes.modals.assign') }}
           </button>
         </div>
       </div>

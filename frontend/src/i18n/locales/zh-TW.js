@@ -258,7 +258,8 @@ export default {
     },
     actions: {
       assignLocation: '分配位置',
-      updateStatus: '更新狀態'
+      updateStatus: '更新狀態',
+      scanAssign: '掃描歸位'
     },
     batch: {
       selected: '已選擇 {count} 項',
@@ -279,9 +280,24 @@ export default {
         title: '更新狀態',
         status: '狀態'
       },
+      scan: {
+        title: '掃描歸位',
+        mode: '掃描模式',
+        box: '掃描箱子QR Code',
+        location: '掃描位置QR Code',
+        qrCode: '箱子QR Code',
+        locationQRCode: '位置QR Code',
+        boxPlaceholder: '請掃描或輸入箱子QR Code',
+        locationPlaceholder: '請掃描或輸入位置QR Code',
+        scan: '掃描'
+      },
+      scanResult: {
+        title: '掃描結果'
+      },
       cancel: '取消',
       assign: '分配',
-      update: '更新'
+      update: '更新',
+      close: '關閉'
     },
     pagination: {
       showing: '顯示',
@@ -295,8 +311,8 @@ export default {
       loading: '載入中...',
       loadError: '載入 QR Code 標籤失敗，請稍後再試',
       noData: '沒有找到任何 QR Code 標籤',
-      assignLocationError: '分配位置失敗，請稍後再試',
-      updateStatusError: '更新狀態失敗，請稍後再試',
+      assignLocationError: '分配位置失敗',
+      updateStatusError: '更新狀態失敗',
       batchActionConfirm: '確定要對選中的 {count} 項執行此操作嗎？',
       batchActionError: '批次操作失敗，請稍後再試'
     }
@@ -308,5 +324,160 @@ export default {
     delete: '刪除',
     yes: '啟用',
     no: '停用'
+  },
+  movementHistory: {
+    title: '移動歷史',
+    description: '查看所有箱子的移動記錄和歷史軌跡',
+    stats: {
+      total: '總移動次數',
+      assignments: '分配次數',
+      moves: '移動次數',
+      returns: '歸位次數'
+    },
+    search: {
+      itemCode: '商品代碼',
+      itemCodePlaceholder: '搜尋商品代碼或名稱...',
+      button: '搜尋'
+    },
+    filters: {
+      movementType: '移動類型',
+      dateRange: '日期範圍',
+      allTypes: '所有類型'
+    },
+    types: {
+      assign: '分配',
+      move: '移動',
+      return: '歸位'
+    },
+    table: {
+      itemCode: '商品代碼',
+      itemName: '商品名稱',
+      boxNumber: '箱號',
+      fromLocation: '原位置',
+      toLocation: '新位置',
+      movementType: '移動類型',
+      reason: '移動原因',
+      operator: '操作者',
+      movedAt: '移動時間'
+    },
+    pagination: {
+      showing: '顯示',
+      to: '到',
+      of: '共',
+      prev: '上一頁',
+      next: '下一頁'
+    },
+    loading: '載入中...',
+    noRecords: '沒有移動記錄',
+    errors: {
+      fetchFailed: '載入移動記錄失敗'
+    }
+  },
+  scanAndPlace: {
+    title: '掃描歸位',
+    description: '使用掃描功能快速進行商品歸位操作',
+    options: {
+      firstBinding: '01.商品歸位綁定（首次入庫）',
+      processShipping: '02.加工／出貨'
+    },
+    firstBinding: {
+      title: '商品歸位綁定（首次入庫）',
+      description: '將新進商品與櫃位進行綁定，並設定為已入庫狀態',
+      step: '步驟',
+      step1: '1. 掃描櫃位 QR Code',
+      step2: '2. 掃描商品箱子 QR Code',
+      scanLocation: '掃描櫃位 QR Code',
+      scanBox: '掃描商品箱子 QR Code',
+      locationCode: '櫃位代碼',
+      locationPlaceholder: '請掃描或輸入櫃位 QR Code',
+      boxCode: '箱子 QR Code',
+      boxPlaceholder: '請掃描或輸入箱子 QR Code',
+      bindingOptions: '綁定選項',
+      bindOnlyOption: '僅綁定不入庫',
+      bindAndInboxOption: '綁定並入庫（預設）',
+      confirm: '確認綁定',
+      reset: '重置',
+      status: {
+        waitingLocation: '等待掃描櫃位',
+        waitingBox: '等待掃描商品箱子',
+        ready: '準備綁定'
+      },
+      messages: {
+        locationScanned: '櫃位已掃描：{location}',
+        boxScanned: '商品箱子已掃描：{box}',
+        bindingSuccess: '綁定成功！',
+        bindingError: '綁定失敗，請重試',
+        invalidLocation: '無效的櫃位 QR Code',
+        invalidBox: '無效的商品箱子 QR Code',
+        alreadyBound: '該商品箱子已綁定其他櫃位'
+      }
+    },
+    processShipping: {
+      title: '加工／出貨',
+      description: '處理已歸位商品的出庫操作',
+      scanBox: '掃描商品箱子 QR Code',
+      boxCode: '箱子 QR Code',
+      boxPlaceholder: '請掃描或輸入箱子 QR Code',
+      outboundType: '出庫類型',
+      processing: '加工（預設）',
+      shipping: '出貨',
+      confirm: '確認出庫',
+      reset: '重置',
+      status: {
+        waitingBox: '等待掃描商品箱子',
+        ready: '準備出庫'
+      },
+      messages: {
+        boxScanned: '商品箱子已掃描：{box}',
+        processingSuccess: '加工出庫成功！商品已移至 CH七樓加工區',
+        shippingSuccess: '出貨成功！商品已標記為出貨狀態',
+        outboundError: '出庫失敗，請重試',
+        invalidBox: '無效的商品箱子 QR Code',
+        notBound: '該商品箱子尚未綁定櫃位',
+        notInStock: '該商品箱子不在庫存中'
+      }
+    },
+    returnToStock: {
+      title: '加工完成後歸還櫃位',
+      description: '將加工完成的商品歸還到指定櫃位',
+      step: '步驟',
+      step1: '1. 掃描目標櫃位 QR Code',
+      step2: '2. 掃描商品箱子 QR Code',
+      scanLocation: '掃描目標櫃位 QR Code',
+      scanBox: '掃描商品箱子 QR Code',
+      locationCode: '櫃位代碼',
+      locationPlaceholder: '請掃描或輸入櫃位 QR Code',
+      boxCode: '箱子 QR Code',
+      boxPlaceholder: '請掃描或輸入箱子 QR Code',
+      confirm: '確認歸還',
+      reset: '重置',
+      status: {
+        waitingLocation: '等待掃描目標櫃位',
+        waitingBox: '等待掃描商品箱子',
+        ready: '準備歸還'
+      },
+      messages: {
+        locationScanned: '目標櫃位已掃描：{location}',
+        boxScanned: '商品箱子已掃描：{box}',
+        returnSuccess: '歸還成功！商品已入庫到指定櫃位',
+        returnError: '歸還失敗，請重試',
+        invalidLocation: '無效的櫃位 QR Code',
+        invalidBox: '無效的商品箱子 QR Code',
+        notFromProcessing: '該商品箱子不在加工區'
+      }
+    },
+    common: {
+      scan: '掃描',
+      cancel: '取消',
+      confirm: '確認',
+      reset: '重置',
+      back: '返回',
+      next: '下一步',
+      loading: '處理中...',
+      scanSuccessful: '掃描成功',
+      scanError: '掃描失敗，請重試',
+      networkError: '網路錯誤，請檢查連線',
+      systemError: '系統錯誤，請聯繫管理員'
+    }
   }
 }

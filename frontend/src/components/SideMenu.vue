@@ -1,8 +1,10 @@
 <script setup>
 import { defineProps } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
 const router = useRouter();
+const { t } = useI18n();
 
 // 接收當前活動頁面作為參數
 const props = defineProps({
@@ -14,13 +16,15 @@ const props = defineProps({
 
 // 選單項目
 const menuItems = [
-  { icon: 'dashboard', text: '儀表板', path: '/dashboard', id: 'dashboard' },
-  { icon: 'purchase-orders', text: '進貨單', path: '/purchase-orders', id: 'purchase-orders' },
-  { icon: 'locations', text: '位置管理', path: '/locations', id: 'locations' },
+  { icon: 'dashboard', text: t('app.title'), path: '/dashboard', id: 'dashboard' },
+  { icon: 'purchase-orders', text: t('purchaseOrders.title'), path: '/purchase-orders', id: 'purchase-orders' },
+  { icon: 'locations', text: t('locations.title'), path: '/locations', id: 'locations' },
   { icon: 'items', text: '商品管理', path: '/items', id: 'items' },
+  { icon: 'scan-place', text: t('scanAndPlace.title'), path: '/scan-place', id: 'scan-place' },
   { icon: 'inventory', text: '記錄查詢', path: '/inventory-records', id: 'inventory-records' },
-  { icon: 'qrcode', text: 'QR Code 標籤管理', path: '/qrcode', id: 'qrcode' },
-  { icon: 'batch', text: '著品批作業', path: '/batch-operations', id: 'batch-operations' },
+  { icon: 'qrcode', text: t('qrCodes.title'), path: '/qr-codes', id: 'qrcode' },
+  { icon: 'movement-history', text: t('movementHistory.title'), path: '/movement-history', id: 'movement-history' },
+
   { icon: 'permissions', text: '權限管理', path: '/permissions', id: 'permissions' }
 ];
 
@@ -39,7 +43,7 @@ const navigateTo = (path) => {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
         </svg>
       </div>
-      <h1 class="text-xl font-bold">庫存管理系統</h1>
+      <h1 class="text-xl font-bold">{{ t('app.title') }}</h1>
     </div>
 
     <!-- 選單項目 -->
@@ -75,8 +79,14 @@ const navigateTo = (path) => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
 
+            <!-- 掃描歸位圖標 -->
+            <svg v-else-if="item.icon === 'scan-place'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+
             <!-- 記錄查詢圖標 -->
-            <svg v-else-if="item.icon === 'inventory-records'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg v-else-if="item.icon === 'inventory'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
 
@@ -85,10 +95,11 @@ const navigateTo = (path) => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
             </svg>
 
-            <!-- 著品批作業圖標 -->
-            <svg v-else-if="item.icon === 'batch'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <!-- 移動歷史圖標 -->
+            <svg v-else-if="item.icon === 'movement-history'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
+
 
             <!-- 權限管理圖標 -->
             <svg v-else-if="item.icon === 'permissions'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

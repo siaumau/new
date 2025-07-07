@@ -361,4 +361,95 @@ class QrCodeController extends Controller
             'updated_count' => $updatedCount
         ]);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/qr-codes/scan-assign",
+     *     summary="Scan and assign location to QR code",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="box_qr_content", type="string"),
+     *             @OA\Property(property="location_qr_content", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response="200", description="Location assigned successfully"),
+     *     @OA\Response(response="404", description="QR code or location not found")
+     * )
+     */
+    public function scanAssign(Request $request)
+    {
+        $validatedData = $request->validate([
+            'box_qr_content' => 'required|string',
+            'location_qr_content' => 'required|string'
+        ]);
+
+        // 根據箱子QR Code內容查找QR Code記錄
+        $qrCode = QrCode::where('qr_content', $validatedData['box_qr_content'])->first();
+
+        if (!$qrCode) {
+            return response()->json([
+                'message' => '找不到對應的箱子QR Code記錄',
+                'box_qr_content' => $validatedData['box_qr_content']
+            ], 404);
+        }
+
+        // 根據位置QR Code內容查找位置記錄
+        $location = \App\Models\Location::where('qr_code_data', $validatedData['location_qr_content'])
+            ->orWhere('location_code', $validatedData['location_qr_content'])
+            ->first();
+
+        if (!$location) {
+            return response()->json([
+                'message' => '找不到對應的位置記錄',
+                'location_qr_content' => $validatedData['location_qr_content']
+            ], 404);
+        }
+
+        // 檢查位置容量
+        $currentStock = QrCode::where('location_id', $location->id)->count();
+        if ($location->capacity && $currentStock >= $location->capacity) {
+            return response()->json([
+                'message' => '位置已滿，無法分配',
+                'location_code' => $location->location_code,
+                'current_stock' => $currentStock,
+                'capacity' => $location->capacity
+            ], 400);
+        }
+
+        // 記錄原位置
+        $fromLocationId = $qrCode->location_id;
+        $fromLocationCode = $qrCode->location ? $qrCode->location->location_code : null;
+
+        // 更新QR Code的位置
+        $qrCode->update([
+            'location_id' => $location->id,
+            'item_inbox_status' => 1 // 標記為已入庫
+        ]);
+
+        // 記錄移動日誌
+        \App\Models\MovementLog::create([
+            'qr_code_id' => $qrCode->qr_id,
+            'item_code' => $qrCode->item_code,
+            'item_name' => $qrCode->item_name,
+            'box_number' => $qrCode->box_number,
+            'from_location_id' => $fromLocationId,
+            'from_location_code' => $fromLocationCode,
+            'to_location_id' => $location->id,
+            'to_location_code' => $location->location_code,
+            'movement_type' => $fromLocationId ? 'move' : 'assign',
+            'reason' => '掃描歸位',
+            'operator' => 'user', // 這裡可以改為實際的使用者
+            'moved_at' => now(),
+            'notes' => '通過掃描QR Code進行歸位'
+        ]);
+
+        return response()->json([
+            'message' => '箱子已成功歸位',
+            'qr_code' => $qrCode->load(['posin', 'posinItem', 'location', 'item']),
+            'location' => $location,
+            'current_stock' => $currentStock + 1,
+            'capacity' => $location->capacity
+        ]);
+    }
 }

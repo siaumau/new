@@ -4,6 +4,7 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\PosinController;
 use App\Http\Controllers\QrCodeController;
+use App\Http\Controllers\MovementLogController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -45,15 +46,21 @@ Route::prefix('api/v1')->group(function () {
     // QR Code相關路由
     Route::get('check-qr-generated/{posinitem_id}', [PosinController::class, 'checkQRGenerated']);
     Route::post('generate-qr-labels', [PosinController::class, 'generateQRLabels']);
-    Route::post('save-qr-files', [PosinController::class, 'saveQRFiles']);
+    Route::get('qr-codes', [QrCodeController::class, 'index']);
+    Route::get('qr-codes/{id}', [QrCodeController::class, 'show']);
+    Route::post('qr-codes/{id}/assign-location', [QrCodeController::class, 'assignLocation']);
+    Route::post('qr-codes/{id}/update-status', [QrCodeController::class, 'updateStatus']);
+    Route::post('qr-codes/scan-assign', [QrCodeController::class, 'scanAssign']);
 
     // QR Code 標籤管理路由
     Route::get('qr-codes/statistics', [QrCodeController::class, 'statistics']);
     Route::get('qr-codes/by-zip-file/{zipFileName}', [QrCodeController::class, 'getByZipFile']);
     Route::post('qr-codes/batch-update-status', [QrCodeController::class, 'batchUpdateStatus']);
-    Route::post('qr-codes/{id}/update-status', [QrCodeController::class, 'updateStatus']);
-    Route::post('qr-codes/{id}/assign-location', [QrCodeController::class, 'assignLocation']);
-    Route::apiResource('qr-codes', QrCodeController::class);
+
+    // 移動記錄相關路由
+    Route::get('movement-logs', [MovementLogController::class, 'index']);
+    Route::get('movement-logs/{id}', [MovementLogController::class, 'show']);
+    Route::get('movement-logs/qr-code/{qrCodeId}', [MovementLogController::class, 'getQrCodeHistory']);
 
     /**
      * @OA\Get(

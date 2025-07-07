@@ -308,5 +308,112 @@ export default {
     delete: 'Delete',
     yes: 'Enabled',
     no: 'Disabled'
+  },
+  scanAndPlace: {
+    title: 'Scan & Place',
+    description: 'Use scanning functionality for quick product placement operations',
+    options: {
+      firstBinding: '01. Product Binding (First Warehousing)',
+      processShipping: '02. Processing/Shipping'
+    },
+    firstBinding: {
+      title: 'Product Binding (First Warehousing)',
+      description: 'Bind new products to cabinet positions and set as warehoused status',
+      step: 'Step',
+      step1: '1. Scan Cabinet QR Code',
+      step2: '2. Scan Product Box QR Code',
+      scanLocation: 'Scan Cabinet QR Code',
+      scanBox: 'Scan Product Box QR Code',
+      locationCode: 'Cabinet Code',
+      locationPlaceholder: 'Please scan or enter cabinet QR code',
+      boxCode: 'Box QR Code',
+      boxPlaceholder: 'Please scan or enter box QR code',
+      bindingOptions: 'Binding Options',
+      bindOnlyOption: 'Bind Only (No Warehousing)',
+      bindAndInboxOption: 'Bind & Warehouse (Default)',
+      confirm: 'Confirm Binding',
+      reset: 'Reset',
+      status: {
+        waitingLocation: 'Waiting for cabinet scan',
+        waitingBox: 'Waiting for product box scan',
+        ready: 'Ready to bind'
+      },
+      messages: {
+        locationScanned: 'Cabinet scanned: {location}',
+        boxScanned: 'Product box scanned: {box}',
+        bindingSuccess: 'Binding successful!',
+        bindingError: 'Binding failed, please try again',
+        invalidLocation: 'Invalid cabinet QR code',
+        invalidBox: 'Invalid product box QR code',
+        alreadyBound: 'This product box is already bound to another cabinet'
+      }
+    },
+    processShipping: {
+      title: 'Processing/Shipping',
+      description: 'Handle outbound operations for placed products',
+      scanBox: 'Scan Product Box QR Code',
+      boxCode: 'Box QR Code',
+      boxPlaceholder: 'Please scan or enter box QR code',
+      outboundType: 'Outbound Type',
+      processing: 'Processing (Default)',
+      shipping: 'Shipping',
+      confirm: 'Confirm Outbound',
+      reset: 'Reset',
+      status: {
+        waitingBox: 'Waiting for product box scan',
+        ready: 'Ready for outbound'
+      },
+      messages: {
+        boxScanned: 'Product box scanned: {box}',
+        processingSuccess: 'Processing outbound successful! Product moved to CH 7F Processing Area',
+        shippingSuccess: 'Shipping successful! Product marked as shipped',
+        outboundError: 'Outbound failed, please try again',
+        invalidBox: 'Invalid product box QR code',
+        notBound: 'This product box is not bound to any cabinet',
+        notInStock: 'This product box is not in stock'
+      }
+    },
+    returnToStock: {
+      title: 'Return to Cabinet After Processing',
+      description: 'Return processed products to designated cabinet',
+      step: 'Step',
+      step1: '1. Scan Target Cabinet QR Code',
+      step2: '2. Scan Product Box QR Code',
+      scanLocation: 'Scan Target Cabinet QR Code',
+      scanBox: 'Scan Product Box QR Code',
+      locationCode: 'Cabinet Code',
+      locationPlaceholder: 'Please scan or enter cabinet QR code',
+      boxCode: 'Box QR Code',
+      boxPlaceholder: 'Please scan or enter box QR code',
+      confirm: 'Confirm Return',
+      reset: 'Reset',
+      status: {
+        waitingLocation: 'Waiting for target cabinet scan',
+        waitingBox: 'Waiting for product box scan',
+        ready: 'Ready to return'
+      },
+      messages: {
+        locationScanned: 'Target cabinet scanned: {location}',
+        boxScanned: 'Product box scanned: {box}',
+        returnSuccess: 'Return successful! Product warehoused to designated cabinet',
+        returnError: 'Return failed, please try again',
+        invalidLocation: 'Invalid cabinet QR code',
+        invalidBox: 'Invalid product box QR code',
+        notFromProcessing: 'This product box is not from processing area'
+      }
+    },
+    common: {
+      scan: 'Scan',
+      cancel: 'Cancel',
+      confirm: 'Confirm',
+      reset: 'Reset',
+      back: 'Back',
+      next: 'Next',
+      loading: 'Processing...',
+      scanSuccessful: 'Scan successful',
+      scanError: 'Scan failed, please try again',
+      networkError: 'Network error, please check connection',
+      systemError: 'System error, please contact administrator'
+    }
   }
 }
