@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Posin;
 use App\Models\PosinItem;
+use App\Models\QrCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -436,6 +437,42 @@ class PosinController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="/api/v1/check-qr-generated/{posinitem_id}",
+     *     summary="Check if QR codes have been generated for a posin item",
+     *     @OA\Parameter(
+     *         name="posinitem_id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response="200", description="QR generation status"),
+     *     @OA\Response(response="404", description="Posin item not found")
+     * )
+     */
+    public function checkQRGenerated($posinitemId)
+    {
+        try {
+            $posinItem = PosinItem::find($posinitemId);
+            if (!$posinItem) {
+                return response()->json(['message' => 'Posin item not found'], 404);
+            }
+
+            $qrCodes = QrCode::where('posinitem_id', $posinitemId)->get();
+
+            return response()->json([
+                'generated' => $qrCodes->count() > 0,
+                'count' => $qrCodes->count(),
+                'zip_file_name' => $qrCodes->first()->zip_file_name ?? null,
+                'generated_at' => $qrCodes->first()->generated_at ?? null
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error checking QR generation status', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/v1/generate-qr-labels",
      *     summary="Generate QR code labels for a posin item",
@@ -455,6 +492,7 @@ class PosinController extends Controller
         $validatedData = $request->validate([
             'item' => 'required|array',
             'item.posinitem_id' => 'required|integer',
+            'item.posin_id' => 'required|integer',
             'item.item_sn' => 'required|string',
             'item.item_name' => 'required|string',
             'item.item_spec' => 'required|string',
@@ -468,26 +506,61 @@ class PosinController extends Controller
             $item = $validatedData['item'];
             $count = $validatedData['count'];
 
-            // Generate QR codes
+            // 檢查是否已經生成過 QR Code
+            $existingQRs = QrCode::where('posinitem_id', $item['posinitem_id'])->count();
+            if ($existingQRs > 0) {
+                return response()->json(['message' => 'QR codes already generated for this item'], 400);
+            }
+
+            // 生成 ZIP 檔案名稱
+            $zipFileName = $this->generateZipFileName($item, $count);
+
+            DB::beginTransaction();
+
+            // 生成 QR codes 並寫入資料表
             $qrCodes = [];
             for ($i = 1; $i <= $count; $i++) {
                 $qrData = $this->generateQRData($item, $i);
+                $fileName = $this->generateFileName($item, $i);
+
+                // 寫入 qr_codes 資料表
+                QrCode::create([
+                    'posin_id' => $item['posin_id'],
+                    'posinitem_id' => $item['posinitem_id'],
+                    'item_code' => $item['item_sn'],
+                    'item_name' => $item['item_name'],
+                    'item_batch' => $item['item_batch'],
+                    'expiry_date' => $item['item_expireday'],
+                    'box_number' => $i,
+                    'qr_content' => $qrData,
+                    'file_name' => $fileName,
+                    'zip_file_name' => $zipFileName,
+                    'generated_at' => now(),
+                    'generated_by' => 'user', // 這裡可以改為實際的使用者
+                    'status' => 'generated',
+                    'notes' => "外箱標籤 {$i}/{$count}"
+                ]);
+
                 $qrCodes[] = [
                     'data' => $qrData,
                     'serial' => str_pad($i, 3, '0', STR_PAD_LEFT),
-                    'item_info' => $item
+                    'item_info' => $item,
+                    'file_name' => $fileName
                 ];
             }
 
-            // Generate PDF with QR codes
-            $pdfContent = $this->generateQRLabelsPDF($qrCodes);
+            DB::commit();
 
-            return response($pdfContent, 200, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="qr_labels_' . $item['item_sn'] . '.pdf"'
+            // 回傳 QR Code 資料給前端處理
+            return response()->json([
+                'message' => 'QR codes generated successfully',
+                'qr_codes' => $qrCodes,
+                'zip_file_name' => $zipFileName,
+                'count' => $count
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Error generating QR labels', 'error' => $e->getMessage()], 500);
         }
     }
@@ -498,9 +571,29 @@ class PosinController extends Controller
     private function generateQRData($item, $serialNumber)
     {
         $expireDate = $item['item_expireday'] ? date('Ym', strtotime($item['item_expireday'])) : '';
-        $serial = str_pad($serialNumber, 3, '0', STR_PAD_LEFT);
+        $serial = str_pad($serialNumber, 9, '0', STR_PAD_LEFT);
 
-        return $item['item_sn'] . $item['item_batch'] . $expireDate . $serial;
+        return $item['item_sn'] . '-' . $item['item_batch'] . '-' . $expireDate . '-' . $serial;
+    }
+
+    /**
+     * Generate ZIP file name for QR labels
+     */
+    private function generateZipFileName($item, $count)
+    {
+        $date = date('Y-m-d');
+        $time = date('His');
+        return $item['item_sn'] . '-' . $item['item_batch'] . '-' . $date . '_' . $time . '_QR_LABELS_QTY_' . $count . '.zip';
+    }
+
+    /**
+     * Generate individual file name for QR code
+     */
+    private function generateFileName($item, $serialNumber)
+    {
+        $expireDate = $item['item_expireday'] ? date('Ymd', strtotime($item['item_expireday'])) : date('Ymd');
+        $serial = str_pad($serialNumber, 9, '0', STR_PAD_LEFT);
+        return $item['item_sn'] . '-' . $item['item_batch'] . '-' . $expireDate . '-' . $serial . '.png';
     }
 
     /**

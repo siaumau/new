@@ -33,7 +33,8 @@ Route::prefix('api/v1')->group(function () {
     Route::get('posin/{id}/items', [PosinController::class, 'getPosinItems']);
     Route::delete('posin-items/{id}', [PosinController::class, 'deletePosinItem']);
 
-    // QR Code生成路由
+    // QR Code相關路由
+    Route::get('check-qr-generated/{posinitem_id}', [PosinController::class, 'checkQRGenerated']);
     Route::post('generate-qr-labels', [PosinController::class, 'generateQRLabels']);
 
     /**

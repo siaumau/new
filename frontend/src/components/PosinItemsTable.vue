@@ -120,11 +120,20 @@
                 <td class="px-6 py-4 whitespace-nowrap text-center">
                   <div class="flex justify-center space-x-2">
                     <button
+                      v-if="!isQRGenerated(item)"
                       @click="openQRModal(item)"
                       class="bg-green-500 hover:bg-green-600 text-white font-medium py-1.5 px-3 rounded text-xs transition-colors shadow-sm"
                       :title="$t('posinItems.actions.generateQR')"
                     >
                       {{ $t('posinItems.table.generateQR') }}
+                    </button>
+                    <button
+                      v-else
+                      disabled
+                      class="bg-gray-400 text-white font-medium py-1.5 px-3 rounded text-xs cursor-not-allowed"
+                      :title="'QR Code 已生成'"
+                    >
+                      已生成QR
                     </button>
                     <button
                       @click="deleteItem(item)"
@@ -268,6 +277,73 @@
         </div>
       </div>
     </div>
+
+    <!-- 預覽彈窗 -->
+    <div v-if="showPreviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <!-- 預覽彈窗標題 -->
+        <div class="flex justify-between items-center border-b border-gray-200 p-6">
+          <h2 class="text-2xl font-bold text-gray-900">外箱 QR Code 標籤預覽</h2>
+          <button @click="closePreviewModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- 預覽內容 -->
+        <div class="p-6">
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-2">商品資訊</h3>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p><strong>商品名稱:</strong> {{ selectedItem?.item_name }}</p>
+              <p><strong>商品序號:</strong> {{ selectedItem?.item_sn }}</p>
+              <p><strong>批號:</strong> {{ selectedItem?.item_batch }}</p>
+              <p><strong>規格:</strong> {{ selectedItem?.item_spec }}</p>
+              <p><strong>總箱數:</strong> {{ qrGenerateCount }} 箱</p>
+              <p><strong>有效期限:</strong> {{ formatDate(selectedItem?.item_expireday) }}</p>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-4">QR Code 標籤預覽 (顯示前 {{ Math.min(qrGenerateCount, 5) }} 張)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div
+                v-for="qrCode in previewQRCodes"
+                :key="qrCode.serial"
+                class="border border-gray-200 rounded-lg p-4 text-center"
+              >
+                <div class="mb-3">
+                  <img :src="qrCode.image" :alt="`QR Code ${qrCode.serial}`" class="mx-auto w-32 h-32" />
+                </div>
+                <div class="text-sm text-gray-600">
+                  <p><strong>{{ qrCode.item_info.item_name }}</strong></p>
+                  <p>商品序號: {{ qrCode.item_info.item_sn }}</p>
+                  <p>規格: {{ qrCode.item_info.item_spec }}</p>
+                  <p>批號: {{ qrCode.item_info.item_batch }}</p>
+                  <p>編碼: {{ qrCode.data }}</p>
+                  <p>標籤: {{ qrCode.serial }}/{{ qrGenerateCount }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="qrGenerateCount > 5" class="mt-4 text-center text-gray-500">
+              <p>還有 {{ qrGenerateCount - 5 }} 張標籤未顯示...</p>
+            </div>
+          </div>
+
+          <!-- 預覽彈窗按鈕 -->
+          <div class="flex justify-end space-x-4">
+            <button
+              @click="closePreviewModal"
+              class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              關閉
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -276,6 +352,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import QRCode from 'qrcode'
+import JSZip from 'jszip'
+import { saveAs } from 'file-saver'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -294,6 +373,7 @@ const showQRModal = ref(false)
 const selectedItem = ref(null)
 const qrGenerateCount = ref(1)
 const loading = ref(false)
+const qrGeneratedStatus = ref({})
 
 // Methods
 const fetchPosinItems = async () => {
@@ -301,6 +381,9 @@ const fetchPosinItems = async () => {
   try {
     const response = await axios.get(`/api/v1/posin/${props.posinId}/items`)
     posinItems.value = response.data.data || response.data
+
+    // 檢查每個商品項目的 QR Code 生成狀態
+    await checkQRGeneratedStatus()
   } catch (error) {
     console.error('Error fetching posin items:', error)
     // 如果 API 失敗，使用模擬數據
@@ -316,6 +399,7 @@ const fetchPosinItems = async () => {
         item_batch: '5021A',
         item_expireday: '2027-01-01',
         posin: {
+          posin_id: props.posinId,
           posin_dt: '2025-05-05',
           posin_sn: '2025-05-05 [005]'
         }
@@ -331,6 +415,7 @@ const fetchPosinItems = async () => {
         item_batch: '5021A',
         item_expireday: '2027-01-01',
         posin: {
+          posin_id: props.posinId,
           posin_dt: '2025-05-05',
           posin_sn: '2025-05-05 [005]'
         }
@@ -431,33 +516,154 @@ const closeQRModal = () => {
   qrGenerateCount.value = 1
 }
 
-const downloadQRLabels = async () => {
-  try {
-    const response = await axios.post('/api/v1/generate-qr-labels', {
-      item: selectedItem.value,
-      count: qrGenerateCount.value
-    }, {
-      responseType: 'blob'
-    })
-
-    // 下載生成的PDF文件
-    const url = window.URL.createObjectURL(new Blob([response.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', `qr_labels_${selectedItem.value.item_sn}.pdf`)
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.URL.revokeObjectURL(url)
-  } catch (error) {
-    console.error('Error downloading QR labels:', error)
-    alert('生成QR標籤時發生錯誤')
+// 檢查 QR Code 生成狀態
+const checkQRGeneratedStatus = async () => {
+  for (const item of posinItems.value) {
+    try {
+      const response = await axios.get(`/api/v1/check-qr-generated/${item.posinitem_id}`)
+      qrGeneratedStatus.value[item.posinitem_id] = response.data.generated
+    } catch (error) {
+      console.error('Error checking QR status:', error)
+      qrGeneratedStatus.value[item.posinitem_id] = false
+    }
   }
 }
 
-const previewLabels = () => {
-  // 實現預覽功能
-  console.log('Preview labels for:', selectedItem.value, 'Count:', qrGenerateCount.value)
+// 檢查單個商品項目的 QR Code 生成狀態
+const isQRGenerated = (item) => {
+  return qrGeneratedStatus.value[item.posinitem_id] || false
+}
+
+// 生成 QR Code 圖片
+const generateQRCodeImage = async (qrData) => {
+  try {
+    const qrCodeDataURL = await QRCode.toDataURL(qrData, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    })
+    return qrCodeDataURL
+  } catch (error) {
+    console.error('Error generating QR code:', error)
+    throw error
+  }
+}
+
+// 下載 QR Code 標籤
+const downloadQRLabels = async () => {
+  try {
+    loading.value = true
+
+    // 準備商品資料
+    const itemData = {
+      ...selectedItem.value,
+      posin_id: props.posinId
+    }
+
+    // 呼叫後端 API 生成 QR Code 資料
+    const response = await axios.post('/api/v1/generate-qr-labels', {
+      item: itemData,
+      count: qrGenerateCount.value
+    })
+
+    if (response.data.message === 'QR codes already generated for this item') {
+      alert('此商品已經生成過 QR Code 標籤')
+      return
+    }
+
+    const { qr_codes, zip_file_name } = response.data
+
+    // 創建 ZIP 檔案
+    const zip = new JSZip()
+
+    // 為每個 QR Code 生成圖片並加入 ZIP
+    for (const qrCode of qr_codes) {
+      const qrImageDataURL = await generateQRCodeImage(qrCode.data)
+
+      // 將 base64 轉換為 blob
+      const base64Data = qrImageDataURL.split(',')[1]
+      const byteCharacters = atob(base64Data)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+
+      // 加入 ZIP 檔案
+      zip.file(qrCode.file_name, byteArray)
+    }
+
+    // 生成並下載 ZIP 檔案
+    const zipBlob = await zip.generateAsync({ type: 'blob' })
+    saveAs(zipBlob, zip_file_name)
+
+    // 同時儲存到 public/qr_codes 目錄（如果需要的話）
+    // 這裡可以加入將檔案儲存到本地目錄的邏輯
+
+    // 更新 QR Code 生成狀態
+    qrGeneratedStatus.value[selectedItem.value.posinitem_id] = true
+
+    // 關閉彈窗
+    closeQRModal()
+
+    alert(`成功生成 ${qr_codes.length} 張 QR Code 標籤`)
+
+  } catch (error) {
+    console.error('Error downloading QR labels:', error)
+    alert('生成QR標籤時發生錯誤: ' + (error.response?.data?.message || error.message))
+  } finally {
+    loading.value = false
+  }
+}
+
+// 預覽相關狀態
+const showPreviewModal = ref(false)
+const previewQRCodes = ref([])
+
+// 預覽標籤功能
+const previewLabels = async () => {
+  try {
+    loading.value = true
+
+    // 生成預覽用的 QR Code 資料
+    const qrCodes = []
+    for (let i = 1; i <= Math.min(qrGenerateCount.value, 5); i++) { // 最多預覽5個
+      const qrData = generateQRData(selectedItem.value, i)
+      const qrImageDataURL = await generateQRCodeImage(qrData)
+
+      qrCodes.push({
+        data: qrData,
+        serial: i,
+        image: qrImageDataURL,
+        item_info: selectedItem.value
+      })
+    }
+
+    previewQRCodes.value = qrCodes
+    showPreviewModal.value = true
+
+  } catch (error) {
+    console.error('Error generating preview:', error)
+    alert('生成預覽時發生錯誤')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 生成 QR Code 資料字串（與後端邏輯一致）
+const generateQRData = (item, serialNumber) => {
+  const expireDate = item.item_expireday ? new Date(item.item_expireday).toISOString().slice(0, 7).replace('-', '') : ''
+  const serial = String(serialNumber).padStart(9, '0')
+  return `${item.item_sn}-${item.item_batch}-${expireDate}-${serial}`
+}
+
+// 關閉預覽彈窗
+const closePreviewModal = () => {
+  showPreviewModal.value = false
+  previewQRCodes.value = []
 }
 
 // Lifecycle
