@@ -19,7 +19,7 @@
     </div>
 
     <!-- 主要內容區域 -->
-    <div class="md:ml-64 p-4">
+    <div class="p-4">
       <!-- 桌面版標題 -->
       <div class="hidden md:block mb-6">
         <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ t('scanAndPlace.title') }}</h1>

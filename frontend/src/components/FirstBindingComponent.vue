@@ -183,14 +183,31 @@ const handleLocationScan = async () => {
 
   try {
     loading.value = true;
-    // 模擬API呼叫驗證櫃位
-    await new Promise(resolve => setTimeout(resolve, 500));
 
-    scannedLocation.value = locationCode.value;
-    locationScanned.value = true;
-    errorMessage.value = '';
+    // 實際API呼叫驗證櫃位
+    const response = await fetch('/api/v1/scan-place/validate-location', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        location_code: locationCode.value
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      scannedLocation.value = locationCode.value;
+      locationScanned.value = true;
+      errorMessage.value = '';
+    } else {
+      errorMessage.value = data.message || t('scanAndPlace.firstBinding.messages.invalidLocation');
+    }
+
   } catch (error) {
-    errorMessage.value = t('scanAndPlace.firstBinding.messages.invalidLocation');
+    console.error('Location validation error:', error);
+    errorMessage.value = t('scanAndPlace.common.networkError');
   } finally {
     loading.value = false;
   }
@@ -213,14 +230,31 @@ const handleBoxScan = async () => {
 
   try {
     loading.value = true;
-    // 模擬API呼叫驗證箱子
-    await new Promise(resolve => setTimeout(resolve, 500));
 
-    scannedBox.value = boxCode.value;
-    boxScanned.value = true;
-    errorMessage.value = '';
+    // 實際API呼叫驗證箱子
+    const response = await fetch('/api/v1/scan-place/validate-box', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        box_code: boxCode.value
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      scannedBox.value = boxCode.value;
+      boxScanned.value = true;
+      errorMessage.value = '';
+    } else {
+      errorMessage.value = data.message || t('scanAndPlace.firstBinding.messages.invalidBox');
+    }
+
   } catch (error) {
-    errorMessage.value = t('scanAndPlace.firstBinding.messages.invalidBox');
+    console.error('Box validation error:', error);
+    errorMessage.value = t('scanAndPlace.common.networkError');
   } finally {
     loading.value = false;
   }
@@ -233,23 +267,31 @@ const handleBinding = async () => {
   try {
     loading.value = true;
 
-    // 模擬API呼叫執行綁定
-    const bindingData = {
-      location: scannedLocation.value,
-      box: scannedBox.value,
-      option: bindingOption.value
-    };
+    // 實際API呼叫執行綁定
+    const response = await fetch('/api/v1/scan-place/first-binding', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        location_code: scannedLocation.value,
+        box_code: scannedBox.value,
+        binding_option: bindingOption.value
+      })
+    });
 
-    console.log('Binding data:', bindingData);
+    const data = await response.json();
 
-    // 模擬API呼叫
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 發送完成事件
-    emit('complete', t('scanAndPlace.firstBinding.messages.bindingSuccess'));
+    if (response.ok && data.success) {
+      // 發送完成事件
+      emit('complete', data.message);
+    } else {
+      errorMessage.value = data.message || t('scanAndPlace.firstBinding.messages.bindingError');
+    }
 
   } catch (error) {
-    errorMessage.value = t('scanAndPlace.firstBinding.messages.bindingError');
+    console.error('Binding error:', error);
+    errorMessage.value = t('scanAndPlace.common.networkError');
   } finally {
     loading.value = false;
   }

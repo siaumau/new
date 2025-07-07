@@ -1,18 +1,54 @@
 <script setup>
-import { defineProps } from 'vue';
+import { defineProps, defineEmits, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 
 const router = useRouter();
 const { t } = useI18n();
 
-// 接收當前活動頁面作為參數
+// 接收父組件的 props
 const props = defineProps({
   activePage: {
     type: String,
     required: true
+  },
+  initialCollapsed: {
+    type: Boolean,
+    default: false
   }
 });
+
+// 定義事件
+const emit = defineEmits(['toggle']);
+
+// 側邊欄收合狀態
+const isCollapsed = ref(props.initialCollapsed);
+
+// 監聽父組件的 initialCollapsed 變化
+watch(() => props.initialCollapsed, (newVal) => {
+  isCollapsed.value = newVal;
+});
+
+// 檢查是否為小螢幕
+const checkScreenSize = () => {
+  const newCollapsed = window.innerWidth < 768; // md breakpoint
+  if (newCollapsed !== isCollapsed.value) {
+    isCollapsed.value = newCollapsed;
+    emit('toggle', newCollapsed);
+  }
+};
+
+// 在組件掛載時檢查螢幕大小
+onMounted(() => {
+  checkScreenSize();
+  window.addEventListener('resize', checkScreenSize);
+});
+
+// 切換側邊欄狀態
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value;
+  emit('toggle', isCollapsed.value);
+};
 
 // 選單項目
 const menuItems = [
@@ -24,7 +60,6 @@ const menuItems = [
   { icon: 'inventory', text: '記錄查詢', path: '/inventory-records', id: 'inventory-records' },
   { icon: 'qrcode', text: t('qrCodes.title'), path: '/qr-codes', id: 'qrcode' },
   { icon: 'movement-history', text: t('movementHistory.title'), path: '/movement-history', id: 'movement-history' },
-
   { icon: 'permissions', text: '權限管理', path: '/permissions', id: 'permissions' }
 ];
 
@@ -35,15 +70,28 @@ const navigateTo = (path) => {
 </script>
 
 <template>
-  <div class="bg-[#19A2B3] text-white h-screen w-64 flex flex-col">
+  <div class="bg-[#19A2B3] text-white h-screen flex flex-col transition-all duration-300 ease-in-out relative"
+       :class="isCollapsed ? 'w-16' : 'w-64'">
+
+    <!-- 切換按鈕 -->
+    <button
+      @click="toggleSidebar"
+      class="absolute top-4 -right-3 bg-[#19A2B3] text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white hover:bg-[#1694A3] transition-colors z-10"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              :d="isCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'" />
+      </svg>
+    </button>
+
     <!-- 系統標題 -->
     <div class="p-4 flex items-center gap-2 border-b border-[#1694A3]">
-      <div class="w-10 h-10 bg-white rounded-md flex items-center justify-center text-[#19A2B3]">
+      <div class="w-10 h-10 bg-white rounded-md flex items-center justify-center text-[#19A2B3] flex-shrink-0">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
         </svg>
       </div>
-      <h1 class="text-xl font-bold">{{ t('app.title') }}</h1>
+      <h1 v-show="!isCollapsed" class="text-xl font-bold whitespace-nowrap overflow-hidden">{{ t('app.title') }}</h1>
     </div>
 
     <!-- 選單項目 -->
@@ -51,11 +99,11 @@ const navigateTo = (path) => {
       <div v-for="item in menuItems" :key="item.id" class="border-b border-[#1694A3]">
         <button
           @click="navigateTo(item.path)"
-          class="w-full flex items-center p-4 hover:bg-[#1694A3] transition-colors duration-200"
+          class="w-full flex items-center p-4 hover:bg-[#1694A3] transition-colors duration-200 group relative"
           :class="{ 'bg-[#1694A3]': props.activePage === item.id }"
         >
           <!-- 使用適當的圖標 -->
-          <span class="w-8 h-8 flex items-center justify-center">
+          <span class="w-8 h-8 flex items-center justify-center flex-shrink-0">
             <!-- 儀表板圖標 -->
             <svg v-if="item.icon === 'dashboard'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
@@ -100,29 +148,36 @@ const navigateTo = (path) => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
 
-
             <!-- 權限管理圖標 -->
             <svg v-else-if="item.icon === 'permissions'" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </span>
-          <span class="ml-2">{{ item.text }}</span>
+
+          <!-- 選單文字 -->
+          <span v-show="!isCollapsed" class="ml-2 whitespace-nowrap overflow-hidden">{{ item.text }}</span>
+
+          <!-- 收合狀態下的提示標籤 -->
+          <div v-if="isCollapsed"
+               class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-20">
+            {{ item.text }}
+          </div>
         </button>
       </div>
     </nav>
 
     <!-- 用戶資訊 -->
     <div class="p-4 border-t border-[#1694A3] flex items-center">
-      <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#19A2B3]">
+      <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#19A2B3] flex-shrink-0">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       </div>
-      <div class="ml-2">
+      <div v-show="!isCollapsed" class="ml-2">
         <div class="font-bold">張三</div>
         <div class="text-sm text-[#9fe9f4]">管理員</div>
       </div>
-      <button class="ml-auto text-[#9fe9f4] hover:text-white">
+      <button v-show="!isCollapsed" class="ml-auto text-[#9fe9f4] hover:text-white">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
         </svg>

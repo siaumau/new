@@ -169,23 +169,38 @@ const handleBoxScan = async () => {
   try {
     loading.value = true;
 
-    // 模擬API呼叫驗證箱子並獲取商品資訊
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // 實際API呼叫驗證箱子並獲取商品資訊
+    const response = await fetch('/api/v1/scan-place/validate-box', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        box_code: boxCode.value
+      })
+    });
 
-    // 模擬商品資訊
-    itemInfo.value = {
-      itemCode: boxCode.value,
-      itemName: '範例商品',
-      currentLocation: 'A-01-001',
-      status: '已入庫'
-    };
+    const data = await response.json();
 
-    scannedBox.value = boxCode.value;
-    boxScanned.value = true;
-    errorMessage.value = '';
+    if (response.ok && data.success) {
+      // 設定商品資訊
+      itemInfo.value = {
+        itemCode: data.data.item_code,
+        itemName: data.data.item_name,
+        currentLocation: data.data.location_code || '未分配',
+        status: data.data.inbox_status === 'completed' ? '已入庫' : '待入庫'
+      };
+
+      scannedBox.value = boxCode.value;
+      boxScanned.value = true;
+      errorMessage.value = '';
+    } else {
+      errorMessage.value = data.message || t('scanAndPlace.processShipping.messages.invalidBox');
+    }
 
   } catch (error) {
-    errorMessage.value = t('scanAndPlace.processShipping.messages.invalidBox');
+    console.error('Box validation error:', error);
+    errorMessage.value = t('scanAndPlace.common.networkError');
   } finally {
     loading.value = false;
   }
@@ -198,31 +213,30 @@ const handleOutbound = async () => {
   try {
     loading.value = true;
 
-    // 模擬API呼叫執行出庫
-    const outboundData = {
-      box: scannedBox.value,
-      type: outboundType.value,
-      itemInfo: itemInfo.value
-    };
+    // 實際API呼叫執行出庫
+    const response = await fetch('/api/v1/scan-place/process-shipping', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        box_code: scannedBox.value,
+        outbound_type: outboundType.value
+      })
+    });
 
-    console.log('Outbound data:', outboundData);
+    const data = await response.json();
 
-    // 模擬API呼叫
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 根據出庫類型顯示不同的成功訊息
-    let successMessage = '';
-    if (outboundType.value === 'processing') {
-      successMessage = t('scanAndPlace.processShipping.messages.processingSuccess');
+    if (response.ok && data.success) {
+      // 發送完成事件
+      emit('complete', data.message);
     } else {
-      successMessage = t('scanAndPlace.processShipping.messages.shippingSuccess');
+      errorMessage.value = data.message || t('scanAndPlace.processShipping.messages.outboundError');
     }
 
-    // 發送完成事件
-    emit('complete', successMessage);
-
   } catch (error) {
-    errorMessage.value = t('scanAndPlace.processShipping.messages.outboundError');
+    console.error('Outbound error:', error);
+    errorMessage.value = t('scanAndPlace.common.networkError');
   } finally {
     loading.value = false;
   }

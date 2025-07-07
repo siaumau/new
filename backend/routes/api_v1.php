@@ -5,6 +5,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\PosinController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\MovementLogController;
+use App\Http\Controllers\ScanPlaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +62,13 @@ Route::prefix('api/v1')->group(function () {
     Route::get('movement-logs', [MovementLogController::class, 'index']);
     Route::get('movement-logs/{id}', [MovementLogController::class, 'show']);
     Route::get('movement-logs/qr-code/{qrCodeId}', [MovementLogController::class, 'getQrCodeHistory']);
+
+    // 掃描歸位相關路由
+    Route::post('scan-place/validate-location', [ScanPlaceController::class, 'validateLocation']);
+    Route::post('scan-place/validate-box', [ScanPlaceController::class, 'validateBox']);
+    Route::post('scan-place/first-binding', [ScanPlaceController::class, 'firstBinding']);
+    Route::post('scan-place/process-shipping', [ScanPlaceController::class, 'processShipping']);
+    Route::post('scan-place/return-to-stock', [ScanPlaceController::class, 'returnToStock']);
 
     /**
      * @OA\Get(

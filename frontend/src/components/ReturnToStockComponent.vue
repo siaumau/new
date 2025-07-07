@@ -180,14 +180,31 @@ const handleLocationScan = async () => {
 
   try {
     loading.value = true;
-    // 模擬API呼叫驗證櫃位
-    await new Promise(resolve => setTimeout(resolve, 500));
 
-    scannedLocation.value = locationCode.value;
-    locationScanned.value = true;
-    errorMessage.value = '';
+    // 實際API呼叫驗證櫃位
+    const response = await fetch('/api/v1/scan-place/validate-location', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        location_code: locationCode.value
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      scannedLocation.value = locationCode.value;
+      locationScanned.value = true;
+      errorMessage.value = '';
+    } else {
+      errorMessage.value = data.message || t('scanAndPlace.returnToStock.messages.invalidLocation');
+    }
+
   } catch (error) {
-    errorMessage.value = t('scanAndPlace.returnToStock.messages.invalidLocation');
+    console.error('Location validation error:', error);
+    errorMessage.value = t('scanAndPlace.common.networkError');
   } finally {
     loading.value = false;
   }
@@ -212,24 +229,39 @@ const handleBoxScan = async () => {
   try {
     loading.value = true;
 
-    // 模擬API呼叫驗證箱子並獲取商品資訊
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // 實際API呼叫驗證箱子並獲取商品資訊
+    const response = await fetch('/api/v1/scan-place/validate-box', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        box_code: boxCode.value
+      })
+    });
 
-    // 模擬商品資訊
-    itemInfo.value = {
-      itemCode: boxCode.value,
-      itemName: '範例商品',
-      originalLocation: 'A-01-001',
-      currentLocation: 'CH七樓加工區',
-      status: '加工中'
-    };
+    const data = await response.json();
 
-    scannedBox.value = boxCode.value;
-    boxScanned.value = true;
-    errorMessage.value = '';
+    if (response.ok && data.success) {
+      // 設定商品資訊
+      itemInfo.value = {
+        itemCode: data.data.item_code,
+        itemName: data.data.item_name,
+        originalLocation: '原櫃位',
+        currentLocation: data.data.location_code || 'CH七樓加工區',
+        status: data.data.location_code === 'CH七樓加工區' ? '加工中' : '其他'
+      };
+
+      scannedBox.value = boxCode.value;
+      boxScanned.value = true;
+      errorMessage.value = '';
+    } else {
+      errorMessage.value = data.message || t('scanAndPlace.returnToStock.messages.invalidBox');
+    }
 
   } catch (error) {
-    errorMessage.value = t('scanAndPlace.returnToStock.messages.invalidBox');
+    console.error('Box validation error:', error);
+    errorMessage.value = t('scanAndPlace.common.networkError');
   } finally {
     loading.value = false;
   }
@@ -242,23 +274,30 @@ const handleReturn = async () => {
   try {
     loading.value = true;
 
-    // 模擬API呼叫執行歸還
-    const returnData = {
-      location: scannedLocation.value,
-      box: scannedBox.value,
-      itemInfo: itemInfo.value
-    };
+    // 實際API呼叫執行歸還
+    const response = await fetch('/api/v1/scan-place/return-to-stock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        location_code: scannedLocation.value,
+        box_code: scannedBox.value
+      })
+    });
 
-    console.log('Return data:', returnData);
+    const data = await response.json();
 
-    // 模擬API呼叫
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 發送完成事件
-    emit('complete', t('scanAndPlace.returnToStock.messages.returnSuccess'));
+    if (response.ok && data.success) {
+      // 發送完成事件
+      emit('complete', data.message);
+    } else {
+      errorMessage.value = data.message || t('scanAndPlace.returnToStock.messages.returnError');
+    }
 
   } catch (error) {
-    errorMessage.value = t('scanAndPlace.returnToStock.messages.returnError');
+    console.error('Return error:', error);
+    errorMessage.value = t('scanAndPlace.common.networkError');
   } finally {
     loading.value = false;
   }

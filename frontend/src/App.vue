@@ -1,9 +1,28 @@
 <script setup>
 import SideMenu from './components/SideMenu.vue';
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
+
+// 側邊欄收合狀態
+const isSidebarCollapsed = ref(false);
+
+// 檢查是否為小螢幕
+const checkScreenSize = () => {
+  isSidebarCollapsed.value = window.innerWidth < 768; // md breakpoint
+};
+
+// 在組件掛載時檢查螢幕大小
+onMounted(() => {
+  checkScreenSize();
+  window.addEventListener('resize', checkScreenSize);
+});
+
+// 處理側邊欄狀態變化
+const handleSidebarToggle = (collapsed) => {
+  isSidebarCollapsed.value = collapsed;
+};
 
 // 根據目前路由動態決定 activePage
 const activePage = computed(() => {
@@ -15,6 +34,9 @@ const activePage = computed(() => {
   if (path.startsWith('/qrcode')) return 'qrcode';
   if (path.startsWith('/batch-operations')) return 'batch-operations';
   if (path.startsWith('/permissions')) return 'permissions';
+  if (path.startsWith('/scan-place')) return 'scan-place';
+  if (path.startsWith('/qr-codes')) return 'qrcode';
+  if (path.startsWith('/movement-history')) return 'movement-history';
   return 'purchase-orders'; // 預設值
 });
 </script>
@@ -22,12 +44,17 @@ const activePage = computed(() => {
 <template>
   <div class="flex h-screen">
     <!-- 側邊欄 -->
-    <div class="h-screen fixed left-0 top-0 z-10 w-64">
-      <SideMenu :activePage="activePage" class="h-full" />
+    <div class="h-screen fixed left-0 top-0 z-10 transition-all duration-300 ease-in-out"
+         :class="isSidebarCollapsed ? 'w-16' : 'w-64'">
+      <SideMenu
+        :activePage="activePage"
+        :initialCollapsed="isSidebarCollapsed"
+        @toggle="handleSidebarToggle"
+        class="h-full" />
     </div>
 
     <!-- 主內容區域 -->
-    <div class="flex-1 overflow-auto w-full">
+    <div class="flex-1 overflow-auto w-full transition-all duration-300 ease-in-out">
       <router-view />
     </div>
   </div>
