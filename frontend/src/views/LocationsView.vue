@@ -107,7 +107,7 @@ const loadLocations = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const response = await fetch('http://localhost:8000/api/v1/locations', {
+    const response = await fetch('http://192.168.0.234:8000/api/v1/locations', {
       method: 'GET',
       headers: {
         'accept': '*/*',
@@ -143,7 +143,7 @@ const handleSearch = () => {
 const loadLocationDetails = async (locationId) => {
   try {
     // 載入位置商品清單
-    const itemsResponse = await fetch(`http://localhost:8000/api/v1/locations/${locationId}/items`, {
+    const itemsResponse = await fetch(`http://192.168.0.234:8000/api/v1/locations/${locationId}/items`, {
       method: 'GET',
       headers: {
         'accept': '*/*',
@@ -161,7 +161,7 @@ const loadLocationDetails = async (locationId) => {
     // 載入層架分布資料（只有storage_type_code是'Shelf'時才載入）
     const currentLocation = selectedLocation.value;
     if (currentLocation && currentLocation.storageType === 'Shelf') {
-      const floorResponse = await fetch(`http://localhost:8000/api/v1/locations/${locationId}/floor-distribution`, {
+      const floorResponse = await fetch(`http://192.168.0.234:8000/api/v1/locations/${locationId}/floor-distribution`, {
         method: 'GET',
         headers: {
           'accept': '*/*',
@@ -225,7 +225,7 @@ const editLocation = (location) => {
 const deleteLocation = async (location) => {
   if (confirm(`確定要刪除位置「${location.name}」嗎？`)) {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/locations/${location.id}`, {
+      const response = await fetch(`http://192.168.0.234:8000/api/v1/locations/${location.id}`, {
         method: 'DELETE',
         headers: {
           'accept': '*/*',
@@ -253,8 +253,8 @@ const saveLocation = async () => {
   try {
     const isEdit = selectedLocation.value.id;
     const url = isEdit
-      ? `http://localhost:8000/api/v1/locations/${selectedLocation.value.id}`
-      : 'http://localhost:8000/api/v1/locations';
+              ? `http://192.168.0.234:8000/api/v1/locations/${selectedLocation.value.id}`
+        : 'http://192.168.0.234:8000/api/v1/locations';
 
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -282,6 +282,274 @@ const saveLocation = async () => {
   } catch (err) {
     console.error('儲存位置失敗:', err);
     alert('儲存位置失敗: ' + (err.message || '未知錯誤'));
+  }
+};
+
+// 下載CSV模板
+const downloadTemplate = () => {
+  // CSV模板內容（簡約版）
+  const csvContent = [
+    'building_code,storage_type_code,sub_area_code,position_code,notes',
+    'CH,S,C201,120,彰化層架區',
+    'TP,A,S101,80,台北區域'
+  ].join('\n');
+
+  // 添加BOM以支援Excel正確顯示繁體中文
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+  // 創建下載連結
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'location_template.csv');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+// 處理CSV文件匯入
+const handleFileImport = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // 檢查文件類型
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    alert('請選擇CSV格式的文件');
+    return;
+  }
+
+  try {
+    const text = await file.text();
+    const lines = text.split('\n').filter(line => line.trim());
+
+    if (lines.length < 2) {
+      alert('CSV文件格式錯誤或沒有資料');
+      return;
+    }
+
+    // 解析CSV數據（跳過標題行）
+    const dataLines = lines.slice(1);
+    const locations = [];
+
+    for (let i = 0; i < dataLines.length; i++) {
+      const line = dataLines[i].trim();
+      if (!line) continue;
+
+            // 解析CSV行（處理可能包含逗號的欄位）
+      const columns = parseCSVLine(line);
+
+      if (columns.length < 5) {
+        alert(`第 ${i + 2} 行資料格式錯誤，請檢查CSV格式`);
+        return;
+      }
+
+      // 根據簡約模板格式解析資料
+      const building_code = columns[0].trim();
+      const storage_type_code = columns[1].trim();
+      const sub_area_code = columns[2].trim();
+      const position_code = columns[3].trim();
+      const notes = columns[4].trim() || null;
+
+      // 生成位置代碼和名稱
+      const location_code = `${building_code}-${storage_type_code === 'S' ? 'Shelf' : 'Area'}-${sub_area_code}`;
+      const location_name = `${building_code}之1-${storage_type_code === 'S' ? '層架' : '區域'}類型1層-存放代號${sub_area_code}`;
+
+      const locationData = {
+        location_code: location_code,
+        location_name: location_name,
+        building_code: building_code,
+        floor_number: '1',
+        floor_area_code: '01',
+        storage_type_code: storage_type_code === 'S' ? 'Shelf' : 'Area',
+        sub_area_code: sub_area_code,
+        position_code: position_code,
+        capacity: parseInt(position_code) || 0,
+        current_stock: 0,
+        qr_code_data: location_code,
+        notes: notes,
+        is_active: true
+      };
+
+      locations.push(locationData);
+    }
+
+    // 批量匯入位置資料
+    await importLocations(locations);
+
+    // 清空文件輸入
+    event.target.value = '';
+
+  } catch (error) {
+    console.error('匯入文件失敗:', error);
+    alert('匯入文件失敗: ' + error.message);
+  }
+};
+
+// 解析CSV行（處理包含逗號的欄位）
+const parseCSVLine = (line) => {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
+};
+
+// 批量匯入位置資料
+const importLocations = async (locations) => {
+  loading.value = true;
+
+      try {
+      const response = await fetch('http://192.168.0.234:8000/api/v1/locations/batch', {
+        method: 'POST',
+        headers: {
+          'accept': '*/*',
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': ''
+        },
+        body: JSON.stringify({ locations })
+      });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      const { created_count, error_count, errors } = result;
+
+      // 顯示匯入結果
+      let message = `匯入完成！\n成功: ${created_count} 筆\n失敗: ${error_count} 筆`;
+
+      if (errors && errors.length > 0) {
+        message += '\n\n錯誤詳情:\n';
+        errors.slice(0, 5).forEach(error => {
+          message += `位置代碼 ${error.location_code}: ${error.error}\n`;
+        });
+        if (errors.length > 5) {
+          message += `... 還有 ${errors.length - 5} 個錯誤`;
+        }
+      }
+
+      alert(message);
+
+      // 重新載入位置資料
+      if (created_count > 0) {
+        await loadLocations();
+      }
+    } else {
+      // 處理驗證錯誤
+      if (result.errors) {
+        let errorMessage = '資料驗證失敗：\n';
+        Object.keys(result.errors).forEach(key => {
+          errorMessage += `${key}: ${result.errors[key].join(', ')}\n`;
+        });
+        alert(errorMessage);
+      } else {
+        alert('匯入失敗: ' + (result.message || '未知錯誤'));
+      }
+    }
+  } catch (error) {
+    console.error('匯入文件失敗:', error);
+    alert('匯入文件失敗: ' + error.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 列印 QR Code
+const printQRCode = () => {
+  if (!selectedLocation.value) return;
+
+  // 創建列印內容
+  const printContent = `
+    <html>
+      <head>
+        <title>位置 QR Code - ${selectedLocation.value.code}</title>
+        <style>
+          body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background: white;
+          }
+          .qr-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+          }
+          .qr-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+          }
+          .qr-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+          }
+          .qr-image {
+            margin: 20px 0;
+          }
+          .qr-info {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+          }
+          @media print {
+            body { margin: 0; padding: 10px; }
+            .qr-container { border: none; box-shadow: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="qr-container">
+          <div class="qr-title">${selectedLocation.value.code}</div>
+          <div class="qr-subtitle">${selectedLocation.value.name}</div>
+          <div class="qr-image">
+            <img src="${qrCodeUrl.value}" alt="QR Code" style="max-width: 200px; height: auto;" />
+          </div>
+          <div class="qr-info">
+            <div>建築：${selectedLocation.value.building}</div>
+            <div>存放類別：${selectedLocation.value.storageType}</div>
+            <div>存放代碼：${selectedLocation.value.storageCode}</div>
+            <div>列印時間：${new Date().toLocaleString('zh-TW')}</div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  // 創建新視窗並列印
+  const printWindow = window.open('', '_blank', 'width=600,height=800');
+  if (printWindow) {
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+
+    // 等待圖片載入完成後執行列印
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    };
   }
 };
 
@@ -362,15 +630,20 @@ onMounted(() => {
           </button>
 
           <!-- 操作按鈕 -->
-          <button class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+          <button
+            @click="downloadTemplate"
+            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
             {{ t('locations.search.downloadTemplate') }}
           </button>
-          <button class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+          <label class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors cursor-pointer">
             {{ t('locations.search.import') }}
-          </button>
-          <button class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors">
-            {{ t('locations.addNew') }}
-          </button>
+            <input
+              type="file"
+              accept=".csv"
+              class="hidden"
+              @change="handleFileImport"
+            />
+          </label>
         </div>
       </div>
     </div>
@@ -735,12 +1008,18 @@ onMounted(() => {
           <p class="text-sm text-gray-500">{{ selectedLocation?.name }}</p>
         </div>
 
-        <div class="flex justify-center mt-6">
+        <div class="flex justify-center space-x-3 mt-6">
           <button
             @click="closeModal"
+            class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+          >
+            關閉
+          </button>
+          <button
+            @click="printQRCode"
             class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
           >
-            {{ t('locations.qrModal.close') }}
+            列印
           </button>
         </div>
       </div>

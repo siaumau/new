@@ -27,6 +27,7 @@ Route::prefix('api/v1')->group(function () {
     Route::apiResource('posin', PosinController::class);
 
     // 位置相關的額外路由
+    Route::post('locations/batch', [LocationController::class, 'batchStore']);
     Route::get('locations/{id}/floor-distribution', [LocationController::class, 'getFloorDistribution']);
     Route::get('locations/{id}/items', [LocationController::class, 'getLocationItems']);
 

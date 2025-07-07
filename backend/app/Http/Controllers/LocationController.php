@@ -200,6 +200,82 @@ class LocationController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/v1/locations/batch",
+     *     summary="Create multiple locations",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="locations",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="location_code", type="string"),
+     *                     @OA\Property(property="location_name", type="string"),
+     *                     @OA\Property(property="building_code", type="string"),
+     *                     @OA\Property(property="floor_number", type="string"),
+     *                     @OA\Property(property="floor_area_code", type="string", nullable=true),
+     *                     @OA\Property(property="storage_type_code", type="string"),
+     *                     @OA\Property(property="sub_area_code", type="string", nullable=true),
+     *                     @OA\Property(property="position_code", type="string"),
+     *                     @OA\Property(property="capacity", type="integer"),
+     *                     @OA\Property(property="current_stock", type="integer"),
+     *                     @OA\Property(property="qr_code_data", type="string", nullable=true),
+     *                     @OA\Property(property="notes", type="string", nullable=true),
+     *                     @OA\Property(property="is_active", type="boolean"),
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response="201", description="Locations created successfully"),
+     *     @OA\Response(response="422", description="Validation error")
+     * )
+     */
+    public function batchStore(Request $request)
+    {
+        $request->validate([
+            'locations' => 'required|array|min:1',
+            'locations.*.location_code' => 'required|string|max:20|unique:locations',
+            'locations.*.location_name' => 'required|string|max:100',
+            'locations.*.building_code' => 'required|string|max:10',
+            'locations.*.floor_number' => 'required|string|max:10',
+            'locations.*.floor_area_code' => 'nullable|string|max:10',
+            'locations.*.storage_type_code' => 'required|string|max:20',
+            'locations.*.sub_area_code' => 'nullable|string|max:10',
+            'locations.*.position_code' => 'required|string|max:20',
+            'locations.*.capacity' => 'nullable|integer',
+            'locations.*.current_stock' => 'nullable|integer',
+            'locations.*.qr_code_data' => 'nullable|string',
+            'locations.*.notes' => 'nullable|string',
+            'locations.*.is_active' => 'nullable|boolean',
+        ]);
+
+        $locations = [];
+        $errors = [];
+
+        foreach ($request->locations as $index => $locationData) {
+            try {
+                $location = Location::create($locationData);
+                $locations[] = $location;
+            } catch (\Exception $e) {
+                $errors[] = [
+                    'index' => $index,
+                    'location_code' => $locationData['location_code'] ?? null,
+                    'error' => $e->getMessage()
+                ];
+            }
+        }
+
+        return response()->json([
+            'message' => 'Batch creation completed',
+            'created_count' => count($locations),
+            'error_count' => count($errors),
+            'locations' => $locations,
+            'errors' => $errors
+        ], 201);
+    }
+
+    /**
      * @OA\Put(
      *     path="/api/v1/locations/{id}",
      *     summary="Update a location",
