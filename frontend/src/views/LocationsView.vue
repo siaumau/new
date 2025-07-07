@@ -158,7 +158,7 @@ const loadLocationDetails = async (locationId) => {
       locationItems.value = [];
     }
 
-    // 模擬樓層分佈資料（如果有對應的API可以替換）
+    // 模擬層架分佈資料（如果有對應的API可以替換）
     floorDistribution.value = [
       { floor: 1, itemCount: 1, totalValue: 1380, items: ['SA202G1'] },
       { floor: 2, itemCount: 2, totalValue: 1510, items: ['S106E1A'] },
@@ -582,7 +582,7 @@ onMounted(() => {
           <div class="grid grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                樓層編號
+                層架編號
               </label>
               <input
                 v-model="selectedLocation.floorNumber"
@@ -592,7 +592,7 @@ onMounted(() => {
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                樓層區域代號
+                層架區域代號
               </label>
               <input
                 v-model="selectedLocation.floorAreaCode"
@@ -788,7 +788,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- 樓層分佈 -->
+          <!-- 層架分佈 -->
           <div class="mb-6">
             <div class="flex items-center space-x-2 mb-4">
               <div class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
@@ -796,7 +796,7 @@ onMounted(() => {
                   <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
                 </svg>
               </div>
-              <h4 class="text-lg font-semibold text-gray-900">樓層分佈</h4>
+              <h4 class="text-lg font-semibold text-gray-900">層架分佈</h4>
             </div>
 
             <div class="grid grid-cols-3 gap-4">
@@ -836,7 +836,7 @@ onMounted(() => {
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">商品貨號</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">批號</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">箱號</th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">樓層</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">層架</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">外箱編號</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">到期日</th>
                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">生成時間</th>

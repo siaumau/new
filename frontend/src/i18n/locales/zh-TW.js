@@ -197,7 +197,7 @@ export default {
       locationName: '位置名稱',
       building: '建築',
       storageType: '存放類別',
-      floor: '樓層區碼',
+      floor: '層架區碼',
       storageSmallCode: '存放小區/層代碼',
       storageCode: '存放代碼',
       capacity: '容量',

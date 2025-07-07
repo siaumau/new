@@ -83,8 +83,8 @@ return new class extends Migration
             $table->string('location_code', 20)->unique('uk_location_code')->comment('位置完整代碼');
             $table->string('location_name', 100)->comment('位置名稱');
             $table->string('building_code', 10)->comment('所在地代碼');
-            $table->string('floor_number', 10)->comment('樓層');
-            $table->string('floor_area_code', 10)->nullable()->comment('樓層區碼');
+            $table->string('floor_number', 10)->comment('層架');
+            $table->string('floor_area_code', 10)->nullable()->comment('層架區碼');
             $table->string('storage_type_code', 20)->index('idx_storage_type')->comment('存放類別代碼');
             $table->string('sub_area_code', 10)->nullable()->comment('存放小區/層代碼');
             $table->string('position_code', 20)->comment('存放代碼');
@@ -173,7 +173,7 @@ return new class extends Migration
             $table->date('expiry_date')->nullable();
             $table->integer('box_number')->default(1)->index('idx_box_number')->comment('箱號（流水號）');
             $table->integer('location_id')->nullable()->index('idx_location_id')->comment('位置ID');
-            $table->string('floor_level', 10)->nullable()->index('idx_floor_level')->comment('樓層（僅層架類型位置使用）');
+            $table->string('floor_level', 10)->nullable()->index('idx_floor_level')->comment('層架（僅層架類型位置使用）');
             $table->text('qr_content');
             $table->string('file_name');
             $table->string('zip_file_name')->nullable()->index('idx_zip_file_name')->comment('ZIP檔案名稱');
