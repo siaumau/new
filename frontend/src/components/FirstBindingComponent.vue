@@ -44,13 +44,14 @@
           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           @input="handleLocationInput"
           @keyup.enter="handleLocationScan"
+          @click="openScanner('location')"
         />
         <button
-          @click="handleLocationScan"
+          @click="openScanner('location')"
           class="absolute right-2 top-2 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 21h8v-8h-8v8zm2-6h4v4h-4v-4z"/>
           </svg>
         </button>
       </div>
@@ -73,14 +74,15 @@
           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           @input="handleBoxInput"
           @keyup.enter="handleBoxScan"
+          @click="openScanner('box')"
         />
         <button
-          @click="handleBoxScan"
+          @click="openScanner('box')"
           :disabled="!locationScanned"
           class="absolute right-2 top-2 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 21h8v-8h-8v8zm2-6h4v4h-4v-4z"/>
           </svg>
         </button>
       </div>
@@ -138,12 +140,14 @@
         <span v-else>{{ t('scanAndPlace.firstBinding.confirm') }}</span>
       </button>
     </div>
+    <QrCodeScanner v-if="showScanner" @close="closeScanner" @scanned="handleScanned" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import QrCodeScanner from './QrCodeScanner.vue';
 
 const { t } = useI18n();
 
@@ -160,11 +164,37 @@ const scannedBox = ref('');
 const bindingOption = ref('bind-and-inbox');
 const errorMessage = ref('');
 const loading = ref(false);
+const showScanner = ref(false);
+const scannedDataType = ref(null);
 
 // 計算屬性
 const canBind = computed(() => {
   return locationScanned.value && boxScanned.value;
 });
+
+// 開啟掃描器
+const openScanner = (type) => {
+  scannedDataType.value = type;
+  showScanner.value = true;
+};
+
+// 關閉掃描器
+const closeScanner = () => {
+  showScanner.value = false;
+};
+
+// 處理掃描結果
+const handleScanned = (data) => {
+  if (scannedDataType.value === 'location') {
+    locationCode.value = data;
+    handleLocationScan();
+  } else if (scannedDataType.value === 'box') {
+    boxCode.value = data;
+    handleBoxScan();
+  }
+  closeScanner();
+};
+
 
 // 處理櫃位輸入
 const handleLocationInput = () => {

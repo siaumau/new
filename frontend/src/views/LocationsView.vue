@@ -107,7 +107,7 @@ const loadLocations = async () => {
   loading.value = true;
   error.value = '';
   try {
-    const response = await fetch('http://192.168.0.234:8000/api/v1/locations', {
+    const response = await fetch('http://localhost:8000/api/v1/locations', {
       method: 'GET',
       headers: {
         'accept': '*/*',
@@ -143,7 +143,7 @@ const handleSearch = () => {
 const loadLocationDetails = async (locationId) => {
   try {
     // 載入位置商品清單
-    const itemsResponse = await fetch(`http://192.168.0.234:8000/api/v1/locations/${locationId}/items`, {
+    const itemsResponse = await fetch(`http://localhost:8000/api/v1/locations/${locationId}/items`, {
       method: 'GET',
       headers: {
         'accept': '*/*',
@@ -161,7 +161,7 @@ const loadLocationDetails = async (locationId) => {
     // 載入層架分布資料（只有storage_type_code是'Shelf'時才載入）
     const currentLocation = selectedLocation.value;
     if (currentLocation && currentLocation.storageType === 'Shelf') {
-      const floorResponse = await fetch(`http://192.168.0.234:8000/api/v1/locations/${locationId}/floor-distribution`, {
+      const floorResponse = await fetch(`http://localhost:8000/api/v1/locations/${locationId}/floor-distribution`, {
         method: 'GET',
         headers: {
           'accept': '*/*',
@@ -225,7 +225,7 @@ const editLocation = (location) => {
 const deleteLocation = async (location) => {
   if (confirm(`確定要刪除位置「${location.name}」嗎？`)) {
     try {
-      const response = await fetch(`http://192.168.0.234:8000/api/v1/locations/${location.id}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/locations/${location.id}`, {
         method: 'DELETE',
         headers: {
           'accept': '*/*',
@@ -258,8 +258,8 @@ const saveLocation = async () => {
   try {
     const isEdit = selectedLocation.value.id;
     const url = isEdit
-              ? `http://192.168.0.234:8000/api/v1/locations/${selectedLocation.value.id}`
-        : 'http://192.168.0.234:8000/api/v1/locations';
+              ? `http://localhost:8000/api/v1/locations/${selectedLocation.value.id}`
+        : 'http://localhost:8000/api/v1/locations';
 
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -424,10 +424,10 @@ const importLocations = async (locations) => {
   loading.value = true;
 
   try {
-    console.log('發送請求到:', 'http://192.168.0.234:8000/api/v1/locations/batch');
+    console.log('發送請求到:', 'http://localhost:8000/api/v1/locations/batch');
     console.log('請求資料:', { locations });
 
-    const response = await fetch('http://192.168.0.234:8000/api/v1/locations/batch', {
+    const response = await fetch('http://localhost:8000/api/v1/locations/batch', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
