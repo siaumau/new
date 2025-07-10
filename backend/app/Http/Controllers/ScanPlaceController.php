@@ -136,8 +136,12 @@ class ScanPlaceController extends Controller
 
             // 檢查是否已綁定其他櫃位
             if ($qrCode->location_id && $qrCode->location_id !== $location->id) {
+                // 取得已綁定的櫃位名稱
+                $boundLocation = Location::find($qrCode->location_id);
+                $boundLocationName = $boundLocation ? $boundLocation->location_name : '未知櫃位';
+
                 throw ValidationException::withMessages([
-                    'box_code' => ['該商品箱子已綁定其他櫃位：' . $qrCode->location_id]
+                    'box_code' => ['該商品箱子已綁定其他櫃位：' . $boundLocationName]
                 ]);
             }
 
@@ -339,8 +343,12 @@ class ScanPlaceController extends Controller
 
             // 檢查是否在加工區（由於加工區不在location表中，檢查location_id是否為null）
             if ($qrCode->location_id !== null) {
+                // 取得當前櫃位名稱
+                $currentLocation = Location::find($qrCode->location_id);
+                $currentLocationName = $currentLocation ? $currentLocation->location_name : '未知櫃位';
+
                 throw ValidationException::withMessages([
-                    'box_code' => ['該商品箱子不在加工區，當前位置ID：' . $qrCode->location_id]
+                    'box_code' => ['該商品箱子不在加工區，當前位置：' . $currentLocationName]
                 ]);
             }
 
