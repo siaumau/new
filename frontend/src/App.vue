@@ -1,25 +1,41 @@
 <script setup>
 import SideMenu from './components/SideMenu.vue';
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
 
-// 側邊欄收合狀態
+// 側邊欄的基礎收合狀態 (由使用者操作或螢幕寬度決定)
 const isSidebarCollapsed = ref(false);
 
-// 檢查是否為小螢幕
+// 最終給模板使用的狀態，它會根據頁面和裝置強制覆寫基礎狀態
+const finalSidebarState = computed(() => {
+  const isMobile = window.innerWidth < 768;
+  // 在行動裝置上且路徑為 /scan-place 時，強制收合
+  if (isMobile && route.path === '/scan-place') {
+    return true;
+  }
+  // 其他情況下，使用基礎狀態
+  return isSidebarCollapsed.value;
+});
+
+// 檢查螢幕大小來設定預設的收合狀態
 const checkScreenSize = () => {
   isSidebarCollapsed.value = window.innerWidth < 768; // md breakpoint
 };
 
-// 在組件掛載時檢查螢幕大小
+// 組件掛載時，設定監聽器
 onMounted(() => {
   checkScreenSize();
   window.addEventListener('resize', checkScreenSize);
 });
 
-// 處理側邊欄狀態變化
+// 組件卸載時，移除監聽器，避免記憶體洩漏
+onUnmounted(() => {
+  window.removeEventListener('resize', checkScreenSize);
+});
+
+// 處理來自 SideMenu 的切換事件
 const handleSidebarToggle = (collapsed) => {
   isSidebarCollapsed.value = collapsed;
 };
@@ -44,17 +60,18 @@ const activePage = computed(() => {
 <template>
   <div class="flex h-screen">
     <!-- 側邊欄 -->
-    <div class="h-screen fixed left-0 top-0 z-10 transition-all duration-300 ease-in-out"
-         :class="isSidebarCollapsed ? 'w-16' : 'w-64'">
+    <div class="h-screen fixed left-0 top-0 z-20 transition-all duration-300 ease-in-out"
+         :class="finalSidebarState ? 'w-16' : 'w-64'">
       <SideMenu
         :activePage="activePage"
-        :initialCollapsed="isSidebarCollapsed"
+        :initialCollapsed="finalSidebarState"
         @toggle="handleSidebarToggle"
         class="h-full" />
     </div>
 
     <!-- 主內容區域 -->
-    <div class="flex-1 overflow-auto w-full transition-all duration-300 ease-in-out">
+    <div class="flex-1 overflow-auto w-full transition-all duration-300 ease-in-out"
+         :class="finalSidebarState ? 'ml-16' : 'ml-64'">
       <router-view />
     </div>
   </div>
