@@ -737,65 +737,97 @@ const executeBatchPrint = async () => {
             body {
               font-family: 'Microsoft JhengHei', Arial, sans-serif;
               margin: 0;
-              padding: 20px;
+              padding: 0;
               background: white;
             }
-            .qr-grid {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 20px;
-              max-width: 800px;
-              margin: 0 auto;
-            }
-            .qr-item {
-              border: 1px solid #ddd;
-              border-radius: 8px;
-              padding: 15px;
-              text-align: center;
+            .qr-page {
+              width: 100%;
+              height: 100vh;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              page-break-after: always;
               page-break-inside: avoid;
+              padding: 20px;
+              box-sizing: border-box;
+            }
+            .qr-container {
+              width: 100%;
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              text-align: center;
+              background: white;
             }
             .qr-title {
-              font-size: 1.2rem;
+              font-size: 3rem;
               font-weight: bold;
-              margin-bottom: 5px;
+              margin-bottom: 20px;
               color: #333;
             }
             .qr-subtitle {
-              font-size: 1rem;
+              font-size: 2rem;
               color: #666;
-              margin-bottom: 10px;
+              margin-bottom: 30px;
             }
             .qr-image {
-              margin: 10px 0;
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+              height: 100%;
             }
             .qr-image img {
               width: 100%;
-              max-width: 150px;
-              height: auto;
+              height: 100%;
+              object-fit: contain;
+            }
+            .qr-info {
+              margin-top: 15px;
+              font-size: 1rem;
+              color: #888;
             }
             @media print {
-              body { margin: 0; padding: 10px; }
-              .qr-item { border: 1px solid #000; }
-              .qr-grid { gap: 10px; }
+              body { margin: 0; padding: 0; }
+              .qr-page { 
+                page-break-after: always; 
+                height: 100vh;
+                padding: 0;
+              }
+              .qr-container { 
+                width: 100%;
+                height: 100%;
+                box-shadow: none;
+              }
+              .qr-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+              }
             }
             @page {
               size: A4;
-              margin: 1cm;
+              margin: 0.5cm;
             }
           </style>
         </head>
         <body>
-          <div class="qr-grid">
-            ${selectedLocationData.map(location => `
-              <div class="qr-item">
+          ${selectedLocationData.map(location => `
+            <div class="qr-page">
+              <div class="qr-container">
                 <div class="qr-title">${location.code}</div>
                 <div class="qr-subtitle">${location.name}</div>
                 <div class="qr-image">
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(location.qrData)}" alt="QR Code" />
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(location.qrData)}" alt="QR Code" />
                 </div>
+
               </div>
-            `).join('')}
-          </div>
+            </div>
+          `).join('')}
         </body>
       </html>
     `;
