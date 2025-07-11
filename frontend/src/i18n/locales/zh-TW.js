@@ -180,7 +180,7 @@ export default {
       changhua: '彰化'
     },
     categories: {
-      area: '區域',
+      area: '棧板',
       shelf: '層架'
     },
     pagination: {

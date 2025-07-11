@@ -361,7 +361,7 @@ const handleFileImport = async (event) => {
 
             // 生成位置代碼和名稱
       const location_code = `${building_code}-${storage_type_code === 'S' ? 'Shelf' : 'Area'}-${sub_area_code}`;
-      const location_name = `${building_code}-${storage_type_code === 'S' ? '層架' : '區域'}類型1層-存放代號${sub_area_code}`;
+      const location_name = `${building_code}-${storage_type_code === 'S' ? '層架' : '棧板'}-存放代號${sub_area_code}`;
 
       const locationData = {
         location_code: location_code,
@@ -565,20 +565,20 @@ const printQRCode = () => {
             background: white;
           }
           .qr-container {
-            max-width: 400px;
+            max-width: 100%;
             margin: 0 auto;
             padding: 20px;
             border: 1px solid #ddd;
             border-radius: 8px;
           }
           .qr-title {
-            font-size: 24px;
+            font-size:2rem;
             font-weight: bold;
             margin-bottom: 10px;
             color: #333;
           }
           .qr-subtitle {
-            font-size: 16px;
+            font-size: 2.5rem;
             color: #666;
             margin-bottom: 20px;
           }
@@ -601,13 +601,7 @@ const printQRCode = () => {
           <div class="qr-title">${selectedLocation.value.code}</div>
           <div class="qr-subtitle">${selectedLocation.value.name}</div>
           <div class="qr-image">
-            <img src="${qrCodeUrl.value}" alt="QR Code" style="max-width: 200px; height: auto;" />
-          </div>
-          <div class="qr-info">
-            <div>建築：${selectedLocation.value.building}</div>
-            <div>存放類別：${selectedLocation.value.storageType}</div>
-            <div>存放代碼：${selectedLocation.value.storageCode}</div>
-            <div>列印時間：${new Date().toLocaleString('zh-TW')}</div>
+            <img src="${qrCodeUrl.value}" alt="QR Code" style="width: 100%; height: auto;" />
           </div>
         </div>
       </body>
@@ -665,8 +659,8 @@ const generateLocationCode = () => {
     selectedLocation.value.code = `${building}-${storageType}-${positionCode}`;
 
     // 生成位置名稱
-    const storageTypeText = storageType === 'Shelf' ? '層架' : '區域';
-    selectedLocation.value.name = `${building}-${storageTypeText}類型1層-存放代號${positionCode}`;
+    const storageTypeText = storageType === 'Shelf' ? '層架' : '棧板';
+    selectedLocation.value.name = `${building}-${storageTypeText}-存放代號${positionCode}`;
   }
 };
 

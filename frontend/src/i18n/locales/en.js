@@ -180,7 +180,7 @@ export default {
       changhua: 'Changhua'
     },
     categories: {
-      area: 'Area',
+      area: 'Pallet',
       shelf: 'Shelf'
     },
     pagination: {
