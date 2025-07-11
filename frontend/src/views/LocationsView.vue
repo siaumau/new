@@ -21,6 +21,11 @@ const error = ref('');
 const locationItems = ref([]);
 const floorDistribution = ref([]);
 
+// 批次列印相關狀態
+const selectedLocations = ref(new Set());
+const showBatchPrintMode = ref(false);
+const batchPrintLoading = ref(false);
+
 // 篩選後的位置資料
 const filteredLocations = computed(() => {
   let filtered = locations.value;
@@ -669,6 +674,172 @@ watch(() => selectedLocation.value?.building, generateLocationCode);
 watch(() => selectedLocation.value?.storageType, generateLocationCode);
 watch(() => selectedLocation.value?.storageCode, generateLocationCode);
 
+// 批次列印相關函數
+// 切換選取狀態
+const toggleLocationSelection = (locationId) => {
+  if (selectedLocations.value.has(locationId)) {
+    selectedLocations.value.delete(locationId);
+  } else {
+    selectedLocations.value.add(locationId);
+  }
+};
+
+// 全選/取消全選
+const toggleSelectAll = () => {
+  if (selectedLocations.value.size === paginatedLocations.value.length) {
+    selectedLocations.value.clear();
+  } else {
+    paginatedLocations.value.forEach(location => {
+      selectedLocations.value.add(location.id);
+    });
+  }
+};
+
+// 檢查是否全選
+const isAllSelected = computed(() => {
+  return paginatedLocations.value.length > 0 && 
+         selectedLocations.value.size === paginatedLocations.value.length;
+});
+
+// 檢查是否有部分選取
+const isPartiallySelected = computed(() => {
+  return selectedLocations.value.size > 0 && 
+         selectedLocations.value.size < paginatedLocations.value.length;
+});
+
+// 批次列印 QR Code
+const batchPrintQRCodes = async () => {
+  if (selectedLocations.value.size === 0) {
+    alert(t('locations.batchPrint.noSelection'));
+    return;
+  }
+
+  // 執行實際的批次列印
+  await executeBatchPrint();
+};
+
+// 執行實際的批次列印
+const executeBatchPrint = async () => {
+  batchPrintLoading.value = true;
+  
+  try {
+    // 獲取選取的位置資料
+    const selectedLocationData = paginatedLocations.value.filter(location => 
+      selectedLocations.value.has(location.id)
+    );
+
+    // 創建批次列印內容
+    const printContent = `
+      <html>
+        <head>
+          <title>批次位置 QR Code 列印</title>
+          <style>
+            body {
+              font-family: 'Microsoft JhengHei', Arial, sans-serif;
+              margin: 0;
+              padding: 20px;
+              background: white;
+            }
+            .qr-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 20px;
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            .qr-item {
+              border: 1px solid #ddd;
+              border-radius: 8px;
+              padding: 15px;
+              text-align: center;
+              page-break-inside: avoid;
+            }
+            .qr-title {
+              font-size: 1.2rem;
+              font-weight: bold;
+              margin-bottom: 5px;
+              color: #333;
+            }
+            .qr-subtitle {
+              font-size: 1rem;
+              color: #666;
+              margin-bottom: 10px;
+            }
+            .qr-image {
+              margin: 10px 0;
+            }
+            .qr-image img {
+              width: 100%;
+              max-width: 150px;
+              height: auto;
+            }
+            @media print {
+              body { margin: 0; padding: 10px; }
+              .qr-item { border: 1px solid #000; }
+              .qr-grid { gap: 10px; }
+            }
+            @page {
+              size: A4;
+              margin: 1cm;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="qr-grid">
+            ${selectedLocationData.map(location => `
+              <div class="qr-item">
+                <div class="qr-title">${location.code}</div>
+                <div class="qr-subtitle">${location.name}</div>
+                <div class="qr-image">
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(location.qrData)}" alt="QR Code" />
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </body>
+      </html>
+    `;
+
+    // 創建新視窗並列印
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+
+      // 等待圖片載入完成後執行列印
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+          
+          // 清空選取狀態
+          selectedLocations.value.clear();
+          showBatchPrintMode.value = false;
+        }, 1000);
+      };
+    }
+  } catch (error) {
+    console.error('批次列印失敗:', error);
+    alert('批次列印失敗: ' + error.message);
+  } finally {
+    batchPrintLoading.value = false;
+  }
+};
+
+// 開啟批次列印模式
+const enableBatchPrintMode = () => {
+  showBatchPrintMode.value = !showBatchPrintMode.value;
+  if (!showBatchPrintMode.value) {
+    selectedLocations.value.clear();
+  }
+};
+
+// 關閉批次列印模式
+const closeBatchPrintModal = () => {
+  showBatchPrintMode.value = false;
+  selectedLocations.value.clear();
+};
+
 onMounted(() => {
   loadLocations();
 });
@@ -726,7 +897,11 @@ onMounted(() => {
           </button>
 
           <!-- 操作按鈕 -->
-
+          <button
+            @click="enableBatchPrintMode"
+            :class="showBatchPrintMode ? 'px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors' : 'px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'">
+            {{ showBatchPrintMode ? t('locations.batchPrint.startPrint') : t('locations.batchPrint.enableMode') }}
+          </button>
           <button
             @click="downloadTemplate"
             class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
@@ -763,11 +938,42 @@ onMounted(() => {
 
     <!-- 資料表格 -->
     <div v-else class="px-6 py-4">
+      <!-- 批次列印控制區域 -->
+      <div v-if="showBatchPrintMode" class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <span class="text-blue-800 font-medium">{{ t('locations.batchPrint.selectedLocations', { count: selectedLocations.size }) }}</span>
+            <button
+              @click="batchPrintQRCodes"
+              :disabled="selectedLocations.size === 0"
+              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ t('locations.batchPrint.startBatchPrint') }}
+            </button>
+          </div>
+          <button
+            @click="closeBatchPrintModal"
+            class="text-blue-600 hover:text-blue-800 underline"
+          >
+            {{ t('locations.batchPrint.cancelBatchPrint') }}
+          </button>
+        </div>
+      </div>
+      
       <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="overflow-x-auto">
           <table class="min-w-full">
             <thead class="bg-teal-600 text-white">
               <tr>
+                <th v-if="showBatchPrintMode" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  <input
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    :indeterminate="isPartiallySelected"
+                    @change="toggleSelectAll"
+                    class="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 rounded focus:ring-teal-500 focus:ring-2"
+                  />
+                </th>
                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   {{ t('locations.table.locationCode') }}
                 </th>
@@ -794,6 +1000,14 @@ onMounted(() => {
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="location in paginatedLocations" :key="location.id" class="hover:bg-gray-50">
+                <td v-if="showBatchPrintMode" class="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    :checked="selectedLocations.has(location.id)"
+                    @change="toggleLocationSelection(location.id)"
+                    class="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 rounded focus:ring-teal-500 focus:ring-2"
+                  />
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <a href="#" @click.prevent="showDetails(location)" class="text-teal-600 hover:text-teal-900 font-medium">
                     {{ location.code }}

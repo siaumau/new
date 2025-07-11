@@ -212,6 +212,21 @@ export default {
     qrModal: {
       title: '位置 QR Code',
       close: '關閉'
+    },
+    batchPrint: {
+      title: '批次列印 QR Code',
+      description: '選擇要批次列印的位置 QR Code',
+      selectedCount: '已選擇 {count} 個位置進行批次列印',
+      noSelection: '請至少選擇一個位置進行批次列印',
+      printButton: '列印 {count} 個 QR Code',
+      processing: '處理中...',
+      cancel: '取消',
+      close: '關閉',
+      enableMode: '批次列印 QR Code',
+      startPrint: '開始列印批次 QR Code',
+      selectedLocations: '已選擇 {count} 個位置',
+      startBatchPrint: '開始列印批次 QR Code',
+      cancelBatchPrint: '取消批次列印'
     }
   },
   qrCodes: {

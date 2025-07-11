@@ -212,6 +212,21 @@ export default {
     qrModal: {
       title: 'Location QR Code',
       close: 'Close'
+    },
+    batchPrint: {
+      title: 'Batch Print QR Codes',
+      description: 'Select locations to batch print QR codes',
+      selectedCount: 'Selected {count} locations for batch printing',
+      noSelection: 'Please select at least one location for batch printing',
+      printButton: 'Print {count} QR Codes',
+      processing: 'Processing...',
+      cancel: 'Cancel',
+      close: 'Close',
+      enableMode: 'Batch Print QR Codes',
+      startPrint: 'Start Batch Print QR Codes',
+      selectedLocations: 'Selected {count} locations',
+      startBatchPrint: 'Start Batch Print QR Codes',
+      cancelBatchPrint: 'Cancel Batch Print'
     }
   },
   qrCodes: {
