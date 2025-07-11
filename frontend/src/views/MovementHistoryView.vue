@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-100">
 
 
-    <div class="ml-64 p-8">
+    <div class="p-8">
       <!-- 頁面標題 -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">{{ t('movementHistory.title') }}</h1>
