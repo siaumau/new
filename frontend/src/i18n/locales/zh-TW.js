@@ -154,6 +154,14 @@ export default {
       button: '商品搜尋',
       allBuildings: '全部建築',
       allCategories: '全部類別',
+      allDates: '全部日期',
+      today: '今天',
+      yesterday: '昨天',
+      thisWeek: '本週',
+      lastWeek: '上週',
+      thisMonth: '本月',
+      lastMonth: '上月',
+      customDate: '自訂日期',
       downloadTemplate: '下載模板',
       import: '匯入'
     },
@@ -163,6 +171,7 @@ export default {
       building: '建築',
       storageType: '存放類別',
       storageCode: '存放代碼',
+      createdAt: '建立日期',
       capacity: '容量',
       stock: '庫存',
       utilization: '使用率',
@@ -226,7 +235,8 @@ export default {
       startPrint: '開始列印批次 QR Code',
       selectedLocations: '已選擇 {count} 個位置',
       startBatchPrint: '開始列印批次 QR Code',
-      cancelBatchPrint: '取消批次列印'
+      cancelBatchPrint: '取消批次列印',
+      selectAllFiltered: '全選篩選結果'
     }
   },
   qrCodes: {

@@ -154,6 +154,14 @@ export default {
       button: 'Product Search',
       allBuildings: 'All Buildings',
       allCategories: 'All Categories',
+      allDates: 'All Dates',
+      today: 'Today',
+      yesterday: 'Yesterday',
+      thisWeek: 'This Week',
+      lastWeek: 'Last Week',
+      thisMonth: 'This Month',
+      lastMonth: 'Last Month',
+      customDate: 'Custom Date',
       downloadTemplate: 'Download Template',
       import: 'Import'
     },
@@ -163,6 +171,7 @@ export default {
       building: 'Building',
       storageType: 'Storage Type',
       storageCode: 'Storage Code',
+      createdAt: 'Created At',
       capacity: 'Capacity',
       stock: 'Stock',
       utilization: 'Utilization',
@@ -226,7 +235,8 @@ export default {
       startPrint: 'Start Batch Print QR Codes',
       selectedLocations: 'Selected {count} locations',
       startBatchPrint: 'Start Batch Print QR Codes',
-      cancelBatchPrint: 'Cancel Batch Print'
+      cancelBatchPrint: 'Cancel Batch Print',
+      selectAllFiltered: 'Select All Filtered'
     }
   },
   qrCodes: {

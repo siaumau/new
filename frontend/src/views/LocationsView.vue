@@ -10,6 +10,8 @@ const loading = ref(false);
 const searchText = ref('');
 const selectedBuilding = ref('');
 const selectedCategory = ref('');
+const selectedDateRange = ref('');
+const customDate = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const showEditModal = ref(false);
@@ -46,6 +48,80 @@ const filteredLocations = computed(() => {
   // 類別篩選
   if (selectedCategory.value) {
     filtered = filtered.filter(location => location.storageType === selectedCategory.value);
+  }
+
+  // 日期範圍篩選
+  if (selectedDateRange.value) {
+    const today = new Date();
+    const filterDate = new Date();
+    
+    switch (selectedDateRange.value) {
+      case 'today':
+        filterDate.setHours(0, 0, 0, 0);
+        filtered = filtered.filter(location => {
+          const locationDate = new Date(location.createdAt);
+          return locationDate >= filterDate;
+        });
+        break;
+      case 'yesterday':
+        filterDate.setDate(filterDate.getDate() - 1);
+        filterDate.setHours(0, 0, 0, 0);
+        const yesterdayEnd = new Date(filterDate);
+        yesterdayEnd.setDate(yesterdayEnd.getDate() + 1);
+        filtered = filtered.filter(location => {
+          const locationDate = new Date(location.createdAt);
+          return locationDate >= filterDate && locationDate < yesterdayEnd;
+        });
+        break;
+      case 'thisWeek':
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        filtered = filtered.filter(location => {
+          const locationDate = new Date(location.createdAt);
+          return locationDate >= startOfWeek;
+        });
+        break;
+      case 'lastWeek':
+        const lastWeekStart = new Date(today);
+        lastWeekStart.setDate(today.getDate() - today.getDay() - 7);
+        lastWeekStart.setHours(0, 0, 0, 0);
+        const lastWeekEnd = new Date(lastWeekStart);
+        lastWeekEnd.setDate(lastWeekEnd.getDate() + 7);
+        filtered = filtered.filter(location => {
+          const locationDate = new Date(location.createdAt);
+          return locationDate >= lastWeekStart && locationDate < lastWeekEnd;
+        });
+        break;
+      case 'thisMonth':
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        filtered = filtered.filter(location => {
+          const locationDate = new Date(location.createdAt);
+          return locationDate >= startOfMonth;
+        });
+        break;
+      case 'lastMonth':
+        const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 1);
+        filtered = filtered.filter(location => {
+          const locationDate = new Date(location.createdAt);
+          return locationDate >= lastMonthStart && locationDate < lastMonthEnd;
+        });
+        break;
+    }
+  }
+
+  // 自訂日期篩選
+  if (customDate.value) {
+    const searchDate = new Date(customDate.value);
+    searchDate.setHours(0, 0, 0, 0);
+    const searchDateEnd = new Date(searchDate);
+    searchDateEnd.setDate(searchDateEnd.getDate() + 1);
+    
+    filtered = filtered.filter(location => {
+      const locationDate = new Date(location.createdAt);
+      return locationDate >= searchDate && locationDate < searchDateEnd;
+    });
   }
 
   return filtered;
@@ -649,6 +725,19 @@ const formatUtilization = (utilization) => {
   return utilization + '%';
 };
 
+// 格式化日期
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
 // 自動生成位置代碼和名稱
 const generateLocationCode = () => {
   if (selectedLocation.value &&
@@ -686,9 +775,43 @@ const toggleLocationSelection = (locationId) => {
 
 // 全選/取消全選
 const toggleSelectAll = () => {
-  if (selectedLocations.value.size === paginatedLocations.value.length) {
-    selectedLocations.value.clear();
+  if (selectedDateRange.value || customDate.value) {
+    // 如果有日期篩選，根據篩選條件進行全選/取消全選
+    const filteredIds = new Set(filteredLocations.value.map(location => location.id));
+    const selectedFilteredIds = Array.from(selectedLocations.value).filter(id => filteredIds.has(id));
+    
+    if (selectedFilteredIds.length === filteredLocations.value.length) {
+      // 如果已全選，則取消選取所有符合篩選條件的位置
+      filteredLocations.value.forEach(location => {
+        selectedLocations.value.delete(location.id);
+      });
+    } else {
+      // 如果未全選，則選取所有符合篩選條件的位置
+      filteredLocations.value.forEach(location => {
+        selectedLocations.value.add(location.id);
+      });
+    }
   } else {
+    // 如果沒有日期篩選，則按原來的邏輯處理
+    if (selectedLocations.value.size === paginatedLocations.value.length) {
+      selectedLocations.value.clear();
+    } else {
+      paginatedLocations.value.forEach(location => {
+        selectedLocations.value.add(location.id);
+      });
+    }
+  }
+};
+
+// 根據日期篩選全選
+const selectAllByDateFilter = () => {
+  if (selectedDateRange.value || customDate.value) {
+    // 根據日期篩選選取所有符合條件的位置
+    filteredLocations.value.forEach(location => {
+      selectedLocations.value.add(location.id);
+    });
+  } else {
+    // 如果沒有日期篩選，則選取當前頁面的所有位置
     paginatedLocations.value.forEach(location => {
       selectedLocations.value.add(location.id);
     });
@@ -697,14 +820,30 @@ const toggleSelectAll = () => {
 
 // 檢查是否全選
 const isAllSelected = computed(() => {
-  return paginatedLocations.value.length > 0 && 
-         selectedLocations.value.size === paginatedLocations.value.length;
+  if (selectedDateRange.value || customDate.value) {
+    // 如果有日期篩選，檢查是否選取了所有符合篩選條件的位置
+    const filteredIds = new Set(filteredLocations.value.map(location => location.id));
+    const selectedFilteredIds = Array.from(selectedLocations.value).filter(id => filteredIds.has(id));
+    return filteredLocations.value.length > 0 && selectedFilteredIds.length === filteredLocations.value.length;
+  } else {
+    // 如果沒有日期篩選，檢查是否選取了當前頁面的所有位置
+    return paginatedLocations.value.length > 0 && 
+           selectedLocations.value.size === paginatedLocations.value.length;
+  }
 });
 
 // 檢查是否有部分選取
 const isPartiallySelected = computed(() => {
-  return selectedLocations.value.size > 0 && 
-         selectedLocations.value.size < paginatedLocations.value.length;
+  if (selectedDateRange.value || customDate.value) {
+    // 如果有日期篩選，檢查是否有部分選取符合篩選條件的位置
+    const filteredIds = new Set(filteredLocations.value.map(location => location.id));
+    const selectedFilteredIds = Array.from(selectedLocations.value).filter(id => filteredIds.has(id));
+    return selectedFilteredIds.length > 0 && selectedFilteredIds.length < filteredLocations.value.length;
+  } else {
+    // 如果沒有日期篩選，檢查是否有部分選取當前頁面的位置
+    return selectedLocations.value.size > 0 && 
+           selectedLocations.value.size < paginatedLocations.value.length;
+  }
 });
 
 // 批次列印 QR Code
@@ -920,6 +1059,28 @@ onMounted(() => {
             <option value="Shelf">{{ t('locations.categories.shelf') }}</option>
           </select>
 
+          <!-- 日期範圍篩選 -->
+          <select
+            v-model="selectedDateRange"
+            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          >
+            <option value="">{{ t('locations.search.allDates') }}</option>
+            <option value="today">{{ t('locations.search.today') }}</option>
+            <option value="yesterday">{{ t('locations.search.yesterday') }}</option>
+            <option value="thisWeek">{{ t('locations.search.thisWeek') }}</option>
+            <option value="lastWeek">{{ t('locations.search.lastWeek') }}</option>
+            <option value="thisMonth">{{ t('locations.search.thisMonth') }}</option>
+            <option value="lastMonth">{{ t('locations.search.lastMonth') }}</option>
+          </select>
+
+          <!-- 自訂日期搜尋 -->
+          <input
+            v-model="customDate"
+            type="date"
+            :placeholder="t('locations.search.customDate')"
+            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          />
+
           <!-- 搜尋按鈕 -->
           <button
             @click="handleSearch"
@@ -974,7 +1135,22 @@ onMounted(() => {
       <div v-if="showBatchPrintMode" class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-4">
-            <span class="text-blue-800 font-medium">{{ t('locations.batchPrint.selectedLocations', { count: selectedLocations.size }) }}</span>
+            <span class="text-blue-800 font-medium">
+              {{ t('locations.batchPrint.selectedLocations', { count: selectedLocations.size }) }}
+              <span v-if="selectedDateRange" class="text-sm text-blue-600">
+                ({{ t('locations.search.' + selectedDateRange) }})
+              </span>
+              <span v-if="customDate" class="text-sm text-blue-600">
+                ({{ t('locations.search.customDate') }}: {{ formatDate(customDate) }})
+              </span>
+            </span>
+            <button
+              v-if="selectedDateRange || customDate"
+              @click="selectAllByDateFilter"
+              class="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+            >
+              {{ t('locations.batchPrint.selectAllFiltered') }}
+            </button>
             <button
               @click="batchPrintQRCodes"
               :disabled="selectedLocations.size === 0"
@@ -1021,7 +1197,9 @@ onMounted(() => {
                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   {{ t('locations.table.storageCode') }}
                 </th>
-
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  {{ t('locations.table.createdAt') }}
+                </th>
                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   {{ t('locations.table.notes') }}
                 </th>
@@ -1056,6 +1234,9 @@ onMounted(() => {
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ location.storageCode }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ formatDate(location.createdAt) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ location.notes }}
