@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PrintTemplateModal from '../components/PrintTemplateModal.vue';
 
 const { t } = useI18n();
 
@@ -27,6 +28,7 @@ const floorDistribution = ref([]);
 const selectedLocations = ref(new Set());
 const showBatchPrintMode = ref(false);
 const batchPrintLoading = ref(false);
+const showPrintTemplateModal = ref(false);
 
 // 篩選後的位置資料
 const filteredLocations = computed(() => {
@@ -852,13 +854,16 @@ const batchPrintQRCodes = async () => {
     alert(t('locations.batchPrint.noSelection'));
     return;
   }
+  showPrintTemplateModal.value = true;
+};
 
-  // 執行實際的批次列印
-  await executeBatchPrint();
+const handleTemplateSelected = (template) => {
+  showPrintTemplateModal.value = false;
+  executeBatchPrint(template);
 };
 
 // 執行實際的批次列印
-const executeBatchPrint = async () => {
+const executeBatchPrint = async (template = 'template1') => {
   batchPrintLoading.value = true;
   
   try {
@@ -901,6 +906,10 @@ const executeBatchPrint = async () => {
               text-align: center;
               background: white;
             }
+            .qr-container.template2 {
+              flex-direction: row;
+              text-align: left;
+            }
             .qr-title {
               font-size: 3rem;
               font-weight: bold;
@@ -920,10 +929,18 @@ const executeBatchPrint = async () => {
               width: 100%;
               height: 100%;
             }
+            .qr-image.template2 {
+              flex: 0 0 40%;
+              justify-content: flex-start;
+            }
             .qr-image img {
               width: 100%;
               height: 100%;
               object-fit: contain;
+            }
+            .qr-details.template2 {
+              flex: 1;
+              padding-left: 20px;
             }
             .qr-info {
               margin-top: 15px;
@@ -957,13 +974,14 @@ const executeBatchPrint = async () => {
         <body>
           ${selectedLocationData.map(location => `
             <div class="qr-page">
-              <div class="qr-container">
-                <div class="qr-title">${location.code}</div>
-                <div class="qr-subtitle">${location.name}</div>
-                <div class="qr-image">
+              <div class="qr-container ${template === 'template2' ? 'template2' : ''}">
+                <div class="qr-image ${template === 'template2' ? 'template2' : ''}">
                   <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(location.qrData)}" alt="QR Code" />
                 </div>
-
+                <div class="qr-details ${template === 'template2' ? 'template2' : ''}">
+                  <div class="qr-title">${location.code}</div>
+                  <div class="qr-subtitle">${location.name}</div>
+                </div>
               </div>
             </div>
           `).join('')}
@@ -1625,6 +1643,13 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Print Template Modal -->
+    <PrintTemplateModal
+      v-if="showPrintTemplateModal"
+      @close="showPrintTemplateModal = false"
+      @select="handleTemplateSelected"
+    />
   </div>
 </template>
 
