@@ -916,10 +916,16 @@ const executeBatchPrint = async (template = 'template1') => {
               margin-bottom: 20px;
               color: #333;
             }
+            .qr-title.shelf-size {
+              font-size: 1.5rem; /* 縮小一半 */
+            }
             .qr-subtitle {
               font-size: 2rem;
               color: #666;
               margin-bottom: 30px;
+            }
+            .qr-subtitle.shelf-size {
+              font-size: 1rem; /* 縮小一半 */
             }
             .qr-image {
               flex: 1;
@@ -979,8 +985,8 @@ const executeBatchPrint = async (template = 'template1') => {
                   <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(location.qrData)}" alt="QR Code" />
                 </div>
                 <div class="qr-details ${template === 'template2' ? 'template2' : ''}">
-                  <div class="qr-title">${location.code}</div>
-                  <div class="qr-subtitle">${location.name}</div>
+                  <div class="qr-title ${location.storageType === 'Shelf' ? 'shelf-size' : ''}">${location.code}</div>
+                  <div class="qr-subtitle ${location.storageType === 'Shelf' ? 'shelf-size' : ''}">${location.name}</div>
                 </div>
               </div>
             </div>
