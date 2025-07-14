@@ -40,4 +40,9 @@ class Item extends Model
         'item_vcode',
         'item_size',
     ];
+
+    public function qrCodes()
+    {
+        return $this->hasMany(QrCode::class, 'item_id', 'item_id');
+    }
 }

@@ -1,24 +1,9 @@
 <?php
 
-use App\Http\Controllers\ItemController;
-use App\Http\Controllers\LocationController;
-use App\Http\Controllers\PosinController;
-use App\Http\Controllers\QrCodeController;
-use App\Http\Controllers\MovementLogController;
-use App\Http\Controllers\ScanPlaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
+use App\Http\Controllers\Api\V1\ItemController;
+use App\Http\Controllers\Api\V1\QrCodeController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -26,6 +11,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::prefix('api/v1')->group(function () {
     Route::apiResource('items', ItemController::class);
+    Route::get('qr-codes-binded', [QrCodeController::class, 'index']);
     Route::apiResource('locations', LocationController::class);
     Route::apiResource('posin', PosinController::class);
 

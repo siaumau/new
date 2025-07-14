@@ -9,6 +9,66 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/items": {
+            "get": {
+                "tags": [
+                    "default"
+                ],
+                "summary": "Get list of items",
+                "description": "Returns list of items",
+                "operationId": "getItems",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                }
+            }
+        },
+        "/qr-codes-binded": {
+            "get": {
+                "tags": [
+                    "default"
+                ],
+                "summary": "Get list of qr codes with item info",
+                "description": "Returns list of qr codes with their associated item info",
+                "operationId": "getQrCodes",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Item"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "pageSize": {
+                                            "type": "integer"
+                                        },
+                                        "totalPages": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/controller-test": {
             "get": {
                 "summary": "Test Controller API endpoint",
@@ -480,6 +540,9 @@
                     },
                     "404": {
                         "description": "Location not found"
+                    },
+                    "400": {
+                        "description": "Cannot delete location with items"
                     }
                 }
             }
@@ -531,6 +594,178 @@
                     },
                     "404": {
                         "description": "Location not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/locations/batch": {
+            "post": {
+                "summary": "Create multiple locations",
+                "operationId": "a1e0fecbd453d6755e7eed8ee7e904f0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "locations": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "location_code": {
+                                                    "type": "string"
+                                                },
+                                                "location_name": {
+                                                    "type": "string"
+                                                },
+                                                "building_code": {
+                                                    "type": "string"
+                                                },
+                                                "floor_number": {
+                                                    "type": "string"
+                                                },
+                                                "floor_area_code": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "storage_type_code": {
+                                                    "type": "string"
+                                                },
+                                                "sub_area_code": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "position_code": {
+                                                    "type": "string"
+                                                },
+                                                "capacity": {
+                                                    "type": "integer"
+                                                },
+                                                "current_stock": {
+                                                    "type": "integer"
+                                                },
+                                                "qr_code_data": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Locations created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/movement-logs": {
+            "get": {
+                "summary": "Get movement logs with pagination and filters",
+                "operationId": "551bcce5c71c1c45730094a74eb8d092",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "movement_type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_range",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Movement logs retrieved successfully"
+                    }
+                }
+            }
+        },
+        "/api/v1/movement-logs/{id}": {
+            "get": {
+                "summary": "Get specific movement log",
+                "operationId": "037dd76c54f07668f55be966d940ad01",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Movement log retrieved successfully"
+                    },
+                    "404": {
+                        "description": "Movement log not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/movement-logs/qr-code/{qrCodeId}": {
+            "get": {
+                "summary": "Get movement history for specific QR code",
+                "operationId": "214dd5ca3a8bcebc2c89011452e21cca",
+                "parameters": [
+                    {
+                        "name": "qrCodeId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Movement history retrieved successfully"
                     }
                 }
             }
@@ -973,6 +1208,524 @@
                     }
                 }
             }
+        },
+        "/api/v1/posin/batch": {
+            "post": {
+                "summary": "Batch import purchase orders from CSV data",
+                "operationId": "9a4a13bbfcfa8b8f37342e94f9b2638f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "purchase_orders": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "order_number": {
+                                                    "type": "string"
+                                                },
+                                                "user_name": {
+                                                    "type": "string"
+                                                },
+                                                "order_date": {
+                                                    "type": "string"
+                                                },
+                                                "expected_date": {
+                                                    "type": "string"
+                                                },
+                                                "notes": {
+                                                    "type": "string"
+                                                },
+                                                "item_id": {
+                                                    "type": "integer"
+                                                },
+                                                "item_batch": {
+                                                    "type": "string"
+                                                },
+                                                "item_count": {
+                                                    "type": "integer"
+                                                },
+                                                "item_price": {
+                                                    "type": "number"
+                                                },
+                                                "item_expireday": {
+                                                    "type": "string"
+                                                },
+                                                "item_validyear": {
+                                                    "type": "integer"
+                                                },
+                                                "itemtype": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Batch import completed"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/qr-codes": {
+            "get": {
+                "summary": "Get all QR codes with pagination and search",
+                "operationId": "f158335d7f511a916a495f0223b183d7",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Status filter",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "generated",
+                                "printed",
+                                "used"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "location_id",
+                        "in": "query",
+                        "description": "Location ID filter",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of QR codes"
+                    }
+                }
+            }
+        },
+        "/api/v1/qr-codes/{id}": {
+            "get": {
+                "summary": "Get a specific QR code",
+                "operationId": "15c6fb8c68e23013f7771e15c910e05b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR code details"
+                    },
+                    "404": {
+                        "description": "QR code not found"
+                    }
+                }
+            },
+            "put": {
+                "summary": "Update a QR code",
+                "operationId": "e8617b549da8b20b3871f0caf42064bd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "location_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "floor_level": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "generated",
+                                            "printed",
+                                            "used"
+                                        ]
+                                    },
+                                    "item_inbox_status": {
+                                        "type": "integer",
+                                        "enum": [
+                                            0,
+                                            1
+                                        ]
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "QR code updated successfully"
+                    },
+                    "404": {
+                        "description": "QR code not found"
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete a QR code",
+                "operationId": "0f27fd99918ac30094fb58bf84d84adf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR code deleted successfully"
+                    },
+                    "404": {
+                        "description": "QR code not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/qr-codes/{id}/update-status": {
+            "post": {
+                "summary": "Update QR code status",
+                "operationId": "aba88d3fdb2a2c85fa60ca02a9d13f77",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "generated",
+                                            "printed",
+                                            "used"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully"
+                    },
+                    "404": {
+                        "description": "QR code not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/qr-codes/{id}/assign-location": {
+            "post": {
+                "summary": "Assign location to QR code",
+                "operationId": "64d05160a2a482e87f2f8bce90e23862",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "location_id": {
+                                        "type": "integer"
+                                    },
+                                    "floor_level": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Location assigned successfully"
+                    },
+                    "404": {
+                        "description": "QR code or location not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/qr-codes/statistics": {
+            "get": {
+                "summary": "Get QR code statistics",
+                "operationId": "65fe3f75aaba315dab3c13901fa6516c",
+                "responses": {
+                    "200": {
+                        "description": "QR code statistics"
+                    }
+                }
+            }
+        },
+        "/api/v1/qr-codes/by-zip-file/{zipFileName}": {
+            "get": {
+                "summary": "Get QR codes by ZIP file name",
+                "operationId": "a6457e24bf96296227aff5325885e59f",
+                "parameters": [
+                    {
+                        "name": "zipFileName",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR codes in the ZIP file"
+                    }
+                }
+            }
+        },
+        "/api/v1/qr-codes/batch-update-status": {
+            "post": {
+                "summary": "Batch update QR codes status",
+                "operationId": "760a45a8502d1e504f79d976eefab8ad",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "qr_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "generated",
+                                            "printed",
+                                            "used"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Batch status update completed"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/qr-codes/scan-assign": {
+            "post": {
+                "summary": "Scan and assign location to QR code",
+                "operationId": "0b0ca0c0db7ccfbde5f7636707b16aab",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "box_qr_content": {
+                                        "type": "string"
+                                    },
+                                    "location_qr_content": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Location assigned successfully"
+                    },
+                    "404": {
+                        "description": "QR code or location not found"
+                    }
+                }
+            }
         }
-    }
+    },
+    "components": {
+        "schemas": {
+            "Item": {
+                "properties": {
+                    "qr_id": {
+                        "type": "integer"
+                    },
+                    "posin_id": {
+                        "type": "integer"
+                    },
+                    "posinitem_id": {
+                        "type": "integer"
+                    },
+                    "item_code": {
+                        "type": "string"
+                    },
+                    "item_name": {
+                        "type": "string"
+                    },
+                    "item_batch": {
+                        "type": "string"
+                    },
+                    "expiry_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "box_number": {
+                        "type": "integer"
+                    },
+                    "location_id": {
+                        "type": "integer"
+                    },
+                    "floor_level": {
+                        "type": "string"
+                    },
+                    "qr_content": {
+                        "type": "string"
+                    },
+                    "file_name": {
+                        "type": "string"
+                    },
+                    "zip_file_name": {
+                        "type": "string"
+                    },
+                    "generated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "generated_by": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "posin_sn": {
+                        "type": "string"
+                    },
+                    "posin_user": {
+                        "type": "string"
+                    },
+                    "posin_dt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "location_code": {
+                        "type": "string"
+                    },
+                    "location_name": {
+                        "type": "string"
+                    },
+                    "building_code": {
+                        "type": "string"
+                    },
+                    "storage_type_code": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "default",
+            "description": "default"
+        }
+    ]
 }
