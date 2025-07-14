@@ -44,6 +44,11 @@ const router = createRouter({
       path: '/movement-history',
       name: 'movement-history',
       component: MovementHistoryView
+    },
+    {
+      path: '/products',
+      name: 'products',
+      component: () => import('../views/ProductsView.vue')
     }
   ]
 })

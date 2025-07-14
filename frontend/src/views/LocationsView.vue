@@ -660,10 +660,16 @@ const printQRCode = () => {
             margin-bottom: 10px;
             color: #333;
           }
+          .qr-title.shelf-size {
+            font-size: 1rem; /* 縮小一半 */
+          }
           .qr-subtitle {
             font-size: 2.5rem;
             color: #666;
             margin-bottom: 20px;
+          }
+          .qr-subtitle.shelf-size {
+            font-size: 1.25rem; /* 縮小一半 */
           }
           .qr-image {
             margin: 20px 0;
@@ -681,8 +687,8 @@ const printQRCode = () => {
       </head>
       <body>
         <div class="qr-container">
-          <div class="qr-title">${selectedLocation.value.code}</div>
-          <div class="qr-subtitle">${selectedLocation.value.name}</div>
+          <div class="qr-title ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.code}</div>
+          <div class="qr-subtitle ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.name}</div>
           <div class="qr-image">
             <img src="${qrCodeUrl.value}" alt="QR Code" style="width: 100%; height: auto;" />
           </div>
