@@ -4,6 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\QrCodeController;
+use App\Http\Controllers\LocationController;
+use App\Http\Controllers\PosinController;
+use App\Http\Controllers\MovementLogController;
+use App\Http\Controllers\ScanPlaceController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
