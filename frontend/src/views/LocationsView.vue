@@ -444,7 +444,7 @@ const handleFileImport = async (event) => {
 
             // 生成位置代碼和名稱
       const location_code = `${building_code}-${storage_type_code === 'S' ? 'Shelf' : 'Area'}-${sub_area_code}`;
-      const location_name = `${building_code}-${storage_type_code === 'S' ? '層架' : '棧板'}-存放代號${sub_area_code}`;
+      const location_name = `${building_code}-${storage_type_code === 'S' ? '層架' : '棧板'}-${sub_area_code}`;
 
       const locationData = {
         location_code: location_code,
@@ -756,7 +756,7 @@ const generateLocationCode = () => {
 
     // 生成位置名稱
     const storageTypeText = storageType === 'Shelf' ? '層架' : '棧板';
-    selectedLocation.value.name = `${building}-${storageTypeText}-存放代號${positionCode}`;
+    selectedLocation.value.name = `${building}-${storageTypeText}-${positionCode}`;
   }
 };
 
