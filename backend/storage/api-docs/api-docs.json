@@ -24,7 +24,7 @@
                 }
             }
         },
-        "/qr-codes-binded": {
+        "/api/v1/qr-codes-binded": {
             "get": {
                 "tags": [
                     "default"

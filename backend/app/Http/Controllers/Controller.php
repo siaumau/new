@@ -23,7 +23,7 @@ class Controller extends BaseController
 
     /**
      * @OA\Get(
-     *     path="/controller-test",
+     *     path="/api/v1/controller-test",
      *     summary="Test Controller API endpoint",
      *     @OA\Response(response="200", description="Successful operation")
      * )
