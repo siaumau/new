@@ -65,16 +65,16 @@ import { ref, onMounted } from 'vue';
 const products = ref([]);
 const showDetailsModal = ref(false);
 const selectedProduct = ref(null);
+const apiUrl = import.meta.env.VITE_APP_URL;
 
 const fetchProducts = async () => {
   try {
     // 假設產品API端點為 /api/v1/products
-    const response = await fetch('http://localhost:8000/api/v1/products');
+    const response = await fetch(`${apiUrl}/api/v1/products`);
     if (!response.ok) {
       throw new Error('Failed to fetch products');
     }
     const data = await response.json();
-    // 假設API返回的資料結構為 { data: [...] } 或直接是陣列
     products.value = data.data || data; 
   } catch (error) {
     console.error('Error fetching products:', error);

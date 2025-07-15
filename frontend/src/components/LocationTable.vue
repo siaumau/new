@@ -35,10 +35,11 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
 const locations = ref([]);
+const apiUrl = import.meta.env.VITE_APP_URL;
 
 const fetchLocations = async () => {
   try {
-    const response = await axios.get('http://localhost:8000/locations');
+    const response = await axios.get(`${apiUrl}/locations`);
     locations.value = response.data;
   } catch (error) {
     console.error('Error fetching locations:', error);
@@ -60,7 +61,7 @@ const editLocation = (location) => {
 const deleteLocation = async (id) => {
   if (confirm('Are you sure you want to delete this location?')) {
     try {
-      await axios.delete(`http://localhost:8000/locations/${id}`);
+      await axios.delete(`${apiUrl}/locations/${id}`);
       fetchLocations(); // Refresh the list
     } catch (error) {
       console.error('Error deleting location:', error);

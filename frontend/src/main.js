@@ -6,8 +6,10 @@ import router from './router'
 import axios from 'axios'
 import i18n from './i18n'
 
+const apiUrl = import.meta.env.VITE_APP_URL;
+
 // 設定 axios 基礎 URL
-axios.defaults.baseURL = 'http://localhost:8000';  // 後端 API 的基礎 URL
+axios.defaults.baseURL = apiUrl;  // 後端 API 的基礎 URL
 
 // 添加請求攔截器以處理 CSRF 令牌等
 axios.interceptors.request.use(config => {
