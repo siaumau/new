@@ -130,7 +130,7 @@ return new class extends Migration
             $table->comment('權限表');
             $table->integer('id', true);
             $table->string('module', 50)->comment('模組名稱');
-            $table->string('name', 50)->unique('name')->comment('權限名稱');
+            $table->string('name', 50)->unique('permissions_name_unique')->comment('權限名稱');
             $table->json('actions')->comment('可執行動作');
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrentOnUpdate()->useCurrent();
@@ -172,7 +172,7 @@ return new class extends Migration
             $table->string('item_batch', 50)->nullable();
             $table->date('expiry_date')->nullable();
             $table->integer('box_number')->default(1)->index('idx_box_number')->comment('箱號（流水號）');
-            $table->integer('location_id')->nullable()->index('idx_location_id')->comment('位置ID');
+            $table->integer('location_id')->nullable()->index('idx_qr_location_id')->comment('位置ID');
             $table->string('floor_level', 10)->nullable()->index('idx_floor_level')->comment('層架（僅層架類型位置使用）');
             $table->text('qr_content');
             $table->string('file_name');
@@ -196,7 +196,7 @@ return new class extends Migration
         Schema::create('roles', function (Blueprint $table) {
             $table->comment('角色表');
             $table->integer('id', true);
-            $table->string('name', 50)->unique('name')->comment('角色名稱');
+            $table->string('name', 50)->unique('roles_name_unique')->comment('角色名稱');
             $table->text('description')->nullable()->comment('角色描述');
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrentOnUpdate()->useCurrent();

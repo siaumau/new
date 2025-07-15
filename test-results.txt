@@ -1,0 +1,471 @@
+Starting test execution 
+============================================ 
+ Running Refactored Architecture Tests 
+============================================ 
+ 
+1. Checking environment... 
+=============================== 
+PHP Version: 
+PHP 8.0.30 (cli) (built: Sep  1 2023 14:15:38) ( ZTS Visual C++ 2019 x64 )
+Copyright (c) The PHP Group
+Zend Engine v4.0.30, Copyright (c) Zend Technologies
+Laravel Version: 
+Laravel Framework 9.52.20
+ 
+2. Running Service Layer Tests... 
+================================ 
+Warning: TTY mode is not supported on Windows platform.
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Services\PosinServiceTest[39m
+  [32;1m✓[39;22m[39m [2mit can create posin with valid data[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when creating posin with invalid item[22m[39m
+  [32;1m✓[39;22m[39m [2mit can update posin successfully[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when updating non existent posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can delete posin when no qr codes exist[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when deleting posin with qr codes[22m[39m
+  [32;1m✓[39;22m[39m [2mit can convert to us purchase order[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when converting already converted posin[22m[39m
+
+  [37;1mTests:  [39;22m[32;1m8 passed[39;22m
+  [37;1mTime:   [39;22m[39m7.25s[39m
+
+
+ 
+3. Running Repository Tests... 
+=============================== 
+Warning: TTY mode is not supported on Windows platform.
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Repositories\PosinRepositoryTest[39m
+  [32;1m✓[39;22m[39m [2mit can create posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can find posin by id[22m[39m
+  [32;1m✓[39;22m[39m [2mit returns null when posin not found[22m[39m
+  [32;1m✓[39;22m[39m [2mit can find or fail posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when find or fail not found[22m[39m
+  [32;1m✓[39;22m[39m [2mit can find by order number[22m[39m
+  [32;1m✓[39;22m[39m [2mit returns null when order number not found[22m[39m
+  [32;1m✓[39;22m[39m [2mit can update posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can delete posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can apply search filter[22m[39m
+  [32;1m✓[39;22m[39m [2mit can apply status filter for completed[22m[39m
+  [32;1m✓[39;22m[39m [2mit can apply status filter for pending[22m[39m
+  [32;1m✓[39;22m[39m [2mit can get items with relations[22m[39m
+  [32;1m✓[39;22m[39m [2mit can delete items[22m[39m
+  [32;1m✓[39;22m[39m [2mit can check existing item[22m[39m
+  [32;1m✓[39;22m[39m [2mit returns false when item does not exist[22m[39m
+  [32;1m✓[39;22m[39m [2mit can get statistics[22m[39m
+  [32;1m✓[39;22m[39m [2mit can get recent records[22m[39m
+
+  [37;1mTests:  [39;22m[32;1m18 passed[39;22m
+  [37;1mTime:   [39;22m[39m0.93s[39m
+
+
+ 
+4. Running Feature Tests... 
+=========================== 
+Warning: TTY mode is not supported on Windows platform.
+
+  [37;41;1m FAIL [39;49;22m[39m Tests\Feature\PosinControllerRefactoredTest[39m
+  [32;1m✓[39;22m[39m [2mit can get posin list[22m[39m
+  [32;1m✓[39;22m[39m [2mit can search posin list[22m[39m
+  [32;1m✓[39;22m[39m [2mit can filter posin by status[22m[39m
+  [32;1m✓[39;22m[39m [2mit can create posin with valid data[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails to create posin with invalid data[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails to create posin with non existent item[22m[39m
+  [31;1m⨯[39;22m[39m [2mit can show posin details[22m[39m
+  [32;1m✓[39;22m[39m [2mit returns 404 when posin not found[22m[39m
+  [31;1m⨯[39;22m[39m [2mit can update posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can delete posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can get posin items[22m[39m
+  [32;1m✓[39;22m[39m [2mit can convert to us purchase order[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails to convert already converted posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can batch import posin[22m[39m
+
+  [2m---[22m
+
+  [31;1m• Tests\Feature\PosinControllerRefactoredTest [39;22m> [31;1mit can show posin details[39;22m
+[39;1m  Failed asserting that an array has the key 'items'.[39;22m
+
+  at [32mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Constraint\Constraint.php[39m:[32m122[39m
+    118▕         if (!empty($description)) {
+    119▕             $failureDescription = $description . "\n" . $failureDescription;
+    120▕         }
+    121▕ 
+  ➜ 122▕         throw new ExpectationFailedException(
+    123▕             $failureDescription,
+    124▕             $comparisonFailure,
+    125▕         );
+    126▕     }
+
+  [33m1   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Constraint\Constraint.php[39;22m:[39;1m56[39;22m
+  [90m    PHPUnit\Framework\Constraint\Constraint::fail("")[39m
+
+  [33m2   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Assert.php[39;22m:[39;1m2438[39;22m
+  [90m    PHPUnit\Framework\Constraint\Constraint::evaluate("")[39m
+
+  [33m3   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Assert.php[39;22m:[39;1m128[39;22m
+  [90m    PHPUnit\Framework\Assert::assertThat(Object(PHPUnit\Framework\Constraint\ArrayHasKey), "")[39m
+
+  [33m4   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\AssertableJsonString.php[39;22m:[39;1m278[39;22m
+  [90m    PHPUnit\Framework\Assert::assertArrayHasKey("items")[39m
+
+  [33m5   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\AssertableJsonString.php[39;22m:[39;1m263[39;22m
+  [90m    Illuminate\Testing\AssertableJsonString::assertStructure()[39m
+
+  [33m6   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\AssertableJsonString.php[39;22m:[39;1m276[39;22m
+  [90m    Illuminate\Testing\AssertableJsonString::assertStructure()[39m
+
+  [33m7   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php[39;22m:[39;1m757[39;22m
+  [90m    Illuminate\Testing\AssertableJsonString::assertStructure(["success"])[39m
+
+  [33m8   [39m[39;1mD:\sideproject\new\backend\tests\Feature\PosinControllerRefactoredTest.php[39;22m:[39;1m221[39;22m
+  [90m    Illuminate\Testing\TestResponse::assertJsonStructure(["success"])[39m
+
+  [33m9   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m1617[39;22m
+  [90m    Tests\Feature\PosinControllerRefactoredTest::it_can_show_posin_details()[39m
+
+  [33m10  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m1223[39;22m
+  [90m    PHPUnit\Framework\TestCase::runTest()[39m
+
+  [33m11  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestResult.php[39;22m:[39;1m729[39;22m
+  [90m    PHPUnit\Framework\TestCase::runBare()[39m
+
+  [33m12  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m973[39;22m
+  [90m    PHPUnit\Framework\TestResult::run(Object(Tests\Feature\PosinControllerRefactoredTest))[39m
+
+  [33m13  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestSuite.php[39;22m:[39;1m685[39;22m
+  [90m    PHPUnit\Framework\TestCase::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m14  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\TestRunner.php[39;22m:[39;1m651[39;22m
+  [90m    PHPUnit\Framework\TestSuite::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m15  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\Command.php[39;22m:[39;1m146[39;22m
+  [90m    PHPUnit\TextUI\TestRunner::run(Object(PHPUnit\Framework\TestSuite), [])[39m
+
+  [33m16  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\Command.php[39;22m:[39;1m99[39;22m
+  [90m    PHPUnit\TextUI\Command::run()[39m
+
+  [33m17  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\phpunit[39;22m:[39;1m107[39;22m
+  [90m    PHPUnit\TextUI\Command::main()[39m
+
+  [31;1m• Tests\Feature\PosinControllerRefactoredTest [39;22m> [31;1mit can update posin[39;22m
+[39;1m  Expected response status code [200] but received 422.
+  Failed asserting that 200 is identical to 422.
+  
+  
+  
+  The following errors occurred during the last request:
+  
+  {
+      "message": "\u6307\u5b9a\u7684\u7528\u6236\u4e0d\u5b58\u5728 (and 1 more error)",
+      "errors": {
+          "_users_id": [
+              "\u6307\u5b9a\u7684\u7528\u6236\u4e0d\u5b58\u5728"
+          ],
+          "posin_sn": [
+              "\u9032\u8ca8\u55ae\u865f\u5df2\u5b58\u5728"
+          ]
+      }
+  }[39;22m
+
+  at [32mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Constraint\Constraint.php[39m:[32m122[39m
+    118▕         if (!empty($description)) {
+    119▕             $failureDescription = $description . "\n" . $failureDescription;
+    120▕         }
+    121▕ 
+  ➜ 122▕         throw new ExpectationFailedException(
+    123▕             $failureDescription,
+    124▕             $comparisonFailure,
+    125▕         );
+    126▕     }
+
+  [33m1   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Constraint\IsIdentical.php[39;22m:[39;1m80[39;22m
+  [90m    PHPUnit\Framework\Constraint\Constraint::fail("Expected response status code [200] but received 422.")[39m
+
+  [33m2   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Assert.php[39;22m:[39;1m2438[39;22m
+  [90m    PHPUnit\Framework\Constraint\IsIdentical::evaluate("Expected response status code [200] but received 422.")[39m
+
+  [33m3   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Assert.php[39;22m:[39;1m1404[39;22m
+  [90m    PHPUnit\Framework\Assert::assertThat(Object(PHPUnit\Framework\Constraint\IsIdentical), "Expected response status code [200] but received 422.")[39m
+
+  [33m4   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php[39;22m:[39;1m123[39;22m
+  [90m    PHPUnit\Framework\Assert::assertSame("Expected response status code [200] but received 422.")[39m
+
+  [33m5   [39m[39;1mD:\sideproject\new\backend\tests\Feature\PosinControllerRefactoredTest.php[39;22m:[39;1m279[39;22m
+  [90m    Illuminate\Testing\TestResponse::assertStatus()[39m
+
+  [33m6   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m1617[39;22m
+  [90m    Tests\Feature\PosinControllerRefactoredTest::it_can_update_posin()[39m
+
+  [33m7   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m1223[39;22m
+  [90m    PHPUnit\Framework\TestCase::runTest()[39m
+
+  [33m8   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestResult.php[39;22m:[39;1m729[39;22m
+  [90m    PHPUnit\Framework\TestCase::runBare()[39m
+
+  [33m9   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m973[39;22m
+  [90m    PHPUnit\Framework\TestResult::run(Object(Tests\Feature\PosinControllerRefactoredTest))[39m
+
+  [33m10  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestSuite.php[39;22m:[39;1m685[39;22m
+  [90m    PHPUnit\Framework\TestCase::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m11  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\TestRunner.php[39;22m:[39;1m651[39;22m
+  [90m    PHPUnit\Framework\TestSuite::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m12  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\Command.php[39;22m:[39;1m146[39;22m
+  [90m    PHPUnit\TextUI\TestRunner::run(Object(PHPUnit\Framework\TestSuite), [])[39m
+
+  [33m13  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\Command.php[39;22m:[39;1m99[39;22m
+  [90m    PHPUnit\TextUI\Command::run()[39m
+
+  [33m14  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\phpunit[39;22m:[39;1m107[39;22m
+  [90m    PHPUnit\TextUI\Command::main()[39m
+
+
+  [37;1mTests:  [39;22m[31;1m2 failed[39;22m[39m, [39m[32;1m12 passed[39;22m
+  [37;1mTime:   [39;22m[39m4.61s[39m
+
+
+ 
+5. Running Request Validation Tests... 
+======================================= 
+Warning: TTY mode is not supported on Windows platform.
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Requests\PosinCreateRequestTest[39m
+  [32;1m✓[39;22m[39m [2mit passes validation with valid data[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with missing required fields[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with duplicate order number[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with non existent item[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with invalid batch format[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with invalid count[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with invalid price[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with past expiry date[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with empty items array[22m[39m
+  [32;1m✓[39;22m[39m [2mit provides custom error messages[22m[39m
+
+  [37;1mTests:  [39;22m[32;1m10 passed[39;22m
+  [37;1mTime:   [39;22m[39m0.53s[39m
+
+
+ 
+6. Running All Refactored Tests... 
+=================================== 
+Warning: TTY mode is not supported on Windows platform.
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Services\PosinServiceTest[39m
+  [32;1m✓[39;22m[39m [2mit can create posin with valid data[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when creating posin with invalid item[22m[39m
+  [32;1m✓[39;22m[39m [2mit can update posin successfully[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when updating non existent posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can delete posin when no qr codes exist[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when deleting posin with qr codes[22m[39m
+  [32;1m✓[39;22m[39m [2mit can convert to us purchase order[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when converting already converted posin[22m[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Repositories\PosinRepositoryTest[39m
+  [32;1m✓[39;22m[39m [2mit can create posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can find posin by id[22m[39m
+  [32;1m✓[39;22m[39m [2mit returns null when posin not found[22m[39m
+  [32;1m✓[39;22m[39m [2mit can find or fail posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit throws exception when find or fail not found[22m[39m
+  [32;1m✓[39;22m[39m [2mit can find by order number[22m[39m
+  [32;1m✓[39;22m[39m [2mit returns null when order number not found[22m[39m
+  [32;1m✓[39;22m[39m [2mit can update posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can delete posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can apply search filter[22m[39m
+  [32;1m✓[39;22m[39m [2mit can apply status filter for completed[22m[39m
+  [32;1m✓[39;22m[39m [2mit can apply status filter for pending[22m[39m
+  [32;1m✓[39;22m[39m [2mit can get items with relations[22m[39m
+  [32;1m✓[39;22m[39m [2mit can delete items[22m[39m
+  [32;1m✓[39;22m[39m [2mit can check existing item[22m[39m
+  [32;1m✓[39;22m[39m [2mit returns false when item does not exist[22m[39m
+  [32;1m✓[39;22m[39m [2mit can get statistics[22m[39m
+  [32;1m✓[39;22m[39m [2mit can get recent records[22m[39m
+
+  [37;41;1m FAIL [39;49;22m[39m Tests\Feature\PosinControllerRefactoredTest[39m
+  [32;1m✓[39;22m[39m [2mit can get posin list[22m[39m
+  [32;1m✓[39;22m[39m [2mit can search posin list[22m[39m
+  [32;1m✓[39;22m[39m [2mit can filter posin by status[22m[39m
+  [32;1m✓[39;22m[39m [2mit can create posin with valid data[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails to create posin with invalid data[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails to create posin with non existent item[22m[39m
+  [31;1m⨯[39;22m[39m [2mit can show posin details[22m[39m
+  [32;1m✓[39;22m[39m [2mit returns 404 when posin not found[22m[39m
+  [31;1m⨯[39;22m[39m [2mit can update posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can delete posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can get posin items[22m[39m
+  [32;1m✓[39;22m[39m [2mit can convert to us purchase order[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails to convert already converted posin[22m[39m
+  [32;1m✓[39;22m[39m [2mit can batch import posin[22m[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\Requests\PosinCreateRequestTest[39m
+  [32;1m✓[39;22m[39m [2mit passes validation with valid data[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with missing required fields[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with duplicate order number[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with non existent item[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with invalid batch format[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with invalid count[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with invalid price[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with past expiry date[22m[39m
+  [32;1m✓[39;22m[39m [2mit fails validation with empty items array[22m[39m
+  [32;1m✓[39;22m[39m [2mit provides custom error messages[22m[39m
+
+  [2m---[22m
+
+  [31;1m• Tests\Feature\PosinControllerRefactoredTest [39;22m> [31;1mit can show posin details[39;22m
+[39;1m  Failed asserting that an array has the key 'items'.[39;22m
+
+  at [32mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Constraint\Constraint.php[39m:[32m122[39m
+    118▕         if (!empty($description)) {
+    119▕             $failureDescription = $description . "\n" . $failureDescription;
+    120▕         }
+    121▕ 
+  ➜ 122▕         throw new ExpectationFailedException(
+    123▕             $failureDescription,
+    124▕             $comparisonFailure,
+    125▕         );
+    126▕     }
+
+  [33m1   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Constraint\Constraint.php[39;22m:[39;1m56[39;22m
+  [90m    PHPUnit\Framework\Constraint\Constraint::fail("")[39m
+
+  [33m2   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Assert.php[39;22m:[39;1m2438[39;22m
+  [90m    PHPUnit\Framework\Constraint\Constraint::evaluate("")[39m
+
+  [33m3   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Assert.php[39;22m:[39;1m128[39;22m
+  [90m    PHPUnit\Framework\Assert::assertThat(Object(PHPUnit\Framework\Constraint\ArrayHasKey), "")[39m
+
+  [33m4   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\AssertableJsonString.php[39;22m:[39;1m278[39;22m
+  [90m    PHPUnit\Framework\Assert::assertArrayHasKey("items")[39m
+
+  [33m5   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\AssertableJsonString.php[39;22m:[39;1m263[39;22m
+  [90m    Illuminate\Testing\AssertableJsonString::assertStructure()[39m
+
+  [33m6   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\AssertableJsonString.php[39;22m:[39;1m276[39;22m
+  [90m    Illuminate\Testing\AssertableJsonString::assertStructure()[39m
+
+  [33m7   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php[39;22m:[39;1m757[39;22m
+  [90m    Illuminate\Testing\AssertableJsonString::assertStructure(["success"])[39m
+
+  [33m8   [39m[39;1mD:\sideproject\new\backend\tests\Feature\PosinControllerRefactoredTest.php[39;22m:[39;1m221[39;22m
+  [90m    Illuminate\Testing\TestResponse::assertJsonStructure(["success"])[39m
+
+  [33m9   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m1617[39;22m
+  [90m    Tests\Feature\PosinControllerRefactoredTest::it_can_show_posin_details()[39m
+
+  [33m10  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m1223[39;22m
+  [90m    PHPUnit\Framework\TestCase::runTest()[39m
+
+  [33m11  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestResult.php[39;22m:[39;1m729[39;22m
+  [90m    PHPUnit\Framework\TestCase::runBare()[39m
+
+  [33m12  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m973[39;22m
+  [90m    PHPUnit\Framework\TestResult::run(Object(Tests\Feature\PosinControllerRefactoredTest))[39m
+
+  [33m13  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestSuite.php[39;22m:[39;1m685[39;22m
+  [90m    PHPUnit\Framework\TestCase::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m14  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestSuite.php[39;22m:[39;1m685[39;22m
+  [90m    PHPUnit\Framework\TestSuite::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m15  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestSuite.php[39;22m:[39;1m685[39;22m
+  [90m    PHPUnit\Framework\TestSuite::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m16  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\TestRunner.php[39;22m:[39;1m651[39;22m
+  [90m    PHPUnit\Framework\TestSuite::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m17  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\Command.php[39;22m:[39;1m146[39;22m
+  [90m    PHPUnit\TextUI\TestRunner::run(Object(PHPUnit\Framework\TestSuite), [])[39m
+
+  [33m18  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\Command.php[39;22m:[39;1m99[39;22m
+  [90m    PHPUnit\TextUI\Command::run()[39m
+
+  [33m19  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\phpunit[39;22m:[39;1m107[39;22m
+  [90m    PHPUnit\TextUI\Command::main()[39m
+
+  [31;1m• Tests\Feature\PosinControllerRefactoredTest [39;22m> [31;1mit can update posin[39;22m
+[39;1m  Expected response status code [200] but received 422.
+  Failed asserting that 200 is identical to 422.
+  
+  
+  
+  The following errors occurred during the last request:
+  
+  {
+      "message": "\u6307\u5b9a\u7684\u7528\u6236\u4e0d\u5b58\u5728 (and 1 more error)",
+      "errors": {
+          "_users_id": [
+              "\u6307\u5b9a\u7684\u7528\u6236\u4e0d\u5b58\u5728"
+          ],
+          "posin_sn": [
+              "\u9032\u8ca8\u55ae\u865f\u5df2\u5b58\u5728"
+          ]
+      }
+  }[39;22m
+
+  at [32mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Constraint\Constraint.php[39m:[32m122[39m
+    118▕         if (!empty($description)) {
+    119▕             $failureDescription = $description . "\n" . $failureDescription;
+    120▕         }
+    121▕ 
+  ➜ 122▕         throw new ExpectationFailedException(
+    123▕             $failureDescription,
+    124▕             $comparisonFailure,
+    125▕         );
+    126▕     }
+
+  [33m1   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Constraint\IsIdentical.php[39;22m:[39;1m80[39;22m
+  [90m    PHPUnit\Framework\Constraint\Constraint::fail("Expected response status code [200] but received 422.")[39m
+
+  [33m2   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Assert.php[39;22m:[39;1m2438[39;22m
+  [90m    PHPUnit\Framework\Constraint\IsIdentical::evaluate("Expected response status code [200] but received 422.")[39m
+
+  [33m3   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\Assert.php[39;22m:[39;1m1404[39;22m
+  [90m    PHPUnit\Framework\Assert::assertThat(Object(PHPUnit\Framework\Constraint\IsIdentical), "Expected response status code [200] but received 422.")[39m
+
+  [33m4   [39m[39;1mD:\sideproject\new\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php[39;22m:[39;1m123[39;22m
+  [90m    PHPUnit\Framework\Assert::assertSame("Expected response status code [200] but received 422.")[39m
+
+  [33m5   [39m[39;1mD:\sideproject\new\backend\tests\Feature\PosinControllerRefactoredTest.php[39;22m:[39;1m279[39;22m
+  [90m    Illuminate\Testing\TestResponse::assertStatus()[39m
+
+  [33m6   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m1617[39;22m
+  [90m    Tests\Feature\PosinControllerRefactoredTest::it_can_update_posin()[39m
+
+  [33m7   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m1223[39;22m
+  [90m    PHPUnit\Framework\TestCase::runTest()[39m
+
+  [33m8   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestResult.php[39;22m:[39;1m729[39;22m
+  [90m    PHPUnit\Framework\TestCase::runBare()[39m
+
+  [33m9   [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestCase.php[39;22m:[39;1m973[39;22m
+  [90m    PHPUnit\Framework\TestResult::run(Object(Tests\Feature\PosinControllerRefactoredTest))[39m
+
+  [33m10  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestSuite.php[39;22m:[39;1m685[39;22m
+  [90m    PHPUnit\Framework\TestCase::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m11  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestSuite.php[39;22m:[39;1m685[39;22m
+  [90m    PHPUnit\Framework\TestSuite::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m12  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\Framework\TestSuite.php[39;22m:[39;1m685[39;22m
+  [90m    PHPUnit\Framework\TestSuite::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m13  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\TestRunner.php[39;22m:[39;1m651[39;22m
+  [90m    PHPUnit\Framework\TestSuite::run(Object(PHPUnit\Framework\TestResult))[39m
+
+  [33m14  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\Command.php[39;22m:[39;1m146[39;22m
+  [90m    PHPUnit\TextUI\TestRunner::run(Object(PHPUnit\Framework\TestSuite), [])[39m
+
+  [33m15  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\src\TextUI\Command.php[39;22m:[39;1m99[39;22m
+  [90m    PHPUnit\TextUI\Command::run()[39m
+
+  [33m16  [39m[39;1mD:\sideproject\new\backend\vendor\phpunit\phpunit\phpunit[39;22m:[39;1m107[39;22m
+  [90m    PHPUnit\TextUI\Command::main()[39m
+
+
+  [37;1mTests:  [39;22m[31;1m2 failed[39;22m[39m, [39m[32;1m48 passed[39;22m
+  [37;1mTime:   [39;22m[39m1.48s[39m
+
+
+ 
+Test execution completed 
+============================================ 

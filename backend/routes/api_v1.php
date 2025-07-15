@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\QrCodeController;
 use App\Http\Controllers\LocationController;
-use App\Http\Controllers\PosinController;
+use App\Http\Controllers\PosinControllerRefactored;
 use App\Http\Controllers\MovementLogController;
 use App\Http\Controllers\ScanPlaceController;
 
@@ -17,7 +17,7 @@ Route::prefix('api/v1')->group(function () {
     Route::apiResource('items', ItemController::class);
     Route::get('qr-codes-binded', [QrCodeController::class, 'index']);
     Route::apiResource('locations', LocationController::class);
-    Route::apiResource('posin', PosinController::class);
+    Route::apiResource('posin', PosinControllerRefactored::class);
 
     // 位置相關的額外路由
     Route::post('locations/batch', [LocationController::class, 'batchStore']);
@@ -25,18 +25,18 @@ Route::prefix('api/v1')->group(function () {
     Route::get('locations/{id}/items', [LocationController::class, 'getLocationItems']);
 
     // 進貨單相關的額外路由
-    Route::post('posin/batch', [PosinController::class, 'batchStore']);
+    Route::post('posin/batch', [PosinControllerRefactored::class, 'batchStore']);
 
     // 美國進貨單生成路由
-    Route::patch('posin/{id}/generate-us-purchase-order', [PosinController::class, 'generateUsPurchaseOrder']);
+    Route::patch('posin/{id}/generate-us-purchase-order', [PosinControllerRefactored::class, 'generateUsPurchaseOrder']);
 
     // 進貨單商品項目相關路由
-    Route::get('posin/{id}/items', [PosinController::class, 'getPosinItems']);
-    Route::delete('posin-items/{id}', [PosinController::class, 'deletePosinItem']);
+    Route::get('posin/{id}/items', [PosinControllerRefactored::class, 'getPosinItems']);
+    Route::delete('posin-items/{id}', [PosinControllerRefactored::class, 'deletePosinItem']);
 
     // QR Code相關路由
-    Route::get('check-qr-generated/{posinitem_id}', [PosinController::class, 'checkQRGenerated']);
-    Route::post('generate-qr-labels', [PosinController::class, 'generateQRLabels']);
+    Route::get('check-qr-generated/{posinitem_id}', [PosinControllerRefactored::class, 'checkQRGenerated']);
+    Route::post('generate-qr-labels', [PosinControllerRefactored::class, 'generateQRLabels']);
     Route::get('qr-codes', [QrCodeController::class, 'index']);
     Route::get('qr-codes/{id}', [QrCodeController::class, 'show']);
     Route::post('qr-codes/{id}/assign-location', [QrCodeController::class, 'assignLocation']);
