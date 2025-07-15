@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Item;
+use App\Models\QrCode;
 use Illuminate\Http\Request;
 
 class QrCodeController extends Controller
@@ -76,5 +77,67 @@ class QrCodeController extends Controller
             'pageSize' => $items->perPage(),
             'totalPages' => $items->lastPage(),
         ]);
+    }
+
+    /**
+     * Get QR code statistics
+     */
+    public function statistics()
+    {
+        try {
+            $totalQrCodes = QrCode::count();
+            $generatedQrCodes = QrCode::where('status', 'generated')->count();
+            $printedQrCodes = QrCode::where('status', 'printed')->count();
+            $usedQrCodes = QrCode::where('status', 'used')->count();
+            
+            // QR codes by location
+            $qrCodesByLocation = QrCode::whereNotNull('location_id')
+                ->with('location:id,location_code,location_name')
+                ->selectRaw('location_id, COUNT(*) as count')
+                ->groupBy('location_id')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'location_id' => $item->location_id,
+                        'location_code' => optional($item->location)->location_code,
+                        'location_name' => optional($item->location)->location_name,
+                        'count' => $item->count
+                    ];
+                });
+
+            // Recent QR codes
+            $recentQrCodes = QrCode::with('location:id,location_code,location_name')
+                ->orderBy('generated_at', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function ($qrCode) {
+                    return [
+                        'qr_id' => $qrCode->qr_id,
+                        'item_code' => $qrCode->item_code,
+                        'item_name' => $qrCode->item_name,
+                        'location_code' => optional($qrCode->location)->location_code,
+                        'generated_at' => $qrCode->generated_at,
+                        'status' => $qrCode->status
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total_qr_codes' => $totalQrCodes,
+                    'generated_qr_codes' => $generatedQrCodes,
+                    'printed_qr_codes' => $printedQrCodes,
+                    'used_qr_codes' => $usedQrCodes,
+                    'qr_codes_by_location' => $qrCodesByLocation,
+                    'recent_qr_codes' => $recentQrCodes
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get QR code statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

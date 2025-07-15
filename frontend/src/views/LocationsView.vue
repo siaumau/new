@@ -185,7 +185,7 @@ const transformFrontendDataToApi = (frontendData) => {
   };
 };
 
-const apiUrl = import.meta.env.VITE_APP_URL;
+const apiUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 // 載入位置資料
 const loadLocations = async () => {
