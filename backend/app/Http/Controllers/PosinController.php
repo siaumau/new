@@ -156,7 +156,7 @@ class PosinController extends Controller
      *                 @OA\Property(property="item_count", type="integer"),
      *                 @OA\Property(property="item_price", type="number"),
      *                 @OA\Property(property="item_expireday", type="string", format="date"),
-     *                 @OA\Property(property="item_validyear", type="string"),
+     *                 @OA\Property(property="item_validyear", type="string")
      *             ))
      *         )
      *     ),
@@ -253,7 +253,7 @@ class PosinController extends Controller
      *                 @OA\Property(property="item_count", type="integer"),
      *                 @OA\Property(property="item_price", type="number"),
      *                 @OA\Property(property="item_expireday", type="string", format="date"),
-     *                 @OA\Property(property="item_validyear", type="string"),
+     *                 @OA\Property(property="item_validyear", type="string")
      *             ))
      *         )
      *     ),

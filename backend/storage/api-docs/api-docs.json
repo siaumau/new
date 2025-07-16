@@ -24,7 +24,7 @@
                 }
             }
         },
-        "/api/v1/qr-codes-binded": {
+        "/qr-codes-binded": {
             "get": {
                 "tags": [
                     "default"
@@ -69,10 +69,10 @@
                 }
             }
         },
-        "/controller-test": {
+        "/api/v1/controller-test": {
             "get": {
                 "summary": "Test Controller API endpoint",
-                "operationId": "2cca0e31e0e639a3f2a689bdfe382f3d",
+                "operationId": "81b887bb95dd1284f3e2110444d5110e",
                 "responses": {
                     "200": {
                         "description": "Successful operation"
