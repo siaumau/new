@@ -1,6 +1,6 @@
 export default {
   app: {
-    title: '庫存管理系統'
+    title: '*庫存管理系統'
   },
   purchaseOrders: {
     title: '進貨訂單管理',
