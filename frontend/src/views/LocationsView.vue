@@ -509,10 +509,10 @@ const importLocations = async (locations) => {
   loading.value = true;
 
   try {
-    console.log('發送請求到:', 'http://localhost:8000/api/v1/locations/batch');
+    console.log('發送請求到:', '/api/v1/locations/batch');
     console.log('請求資料:', { locations });
 
-    const response = await fetch('http://localhost:8000/api/v1/locations/batch', {
+    const response = await fetch('/api/v1/locations/batch', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
