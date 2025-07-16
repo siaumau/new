@@ -106,7 +106,8 @@ class ScanPlaceController extends Controller
         $request->validate([
             'location_code' => 'required|string',
             'box_code' => 'required|string',
-            'binding_option' => 'required|in:bind-only,bind-and-inbox'
+            // 'binding_option' => 'required|in:bind-only,bind-and-inbox' // 改為非必填
+            'binding_option' => 'nullable|in:bind-only,bind-and-inbox'
         ]);
 
         try {
@@ -137,18 +138,21 @@ class ScanPlaceController extends Controller
             // 檢查是否已綁定其他櫃位
             if ($qrCode->location_id && $qrCode->location_id !== $location->id) {
                 // 取得已綁定的櫃位名稱
-                $boundLocation = Location::find($qrCode->location_id);
-                $boundLocationName = $boundLocation ? $boundLocation->location_name : '未知櫃位';
+                // $boundLocation = Location::find($qrCode->location_id);
+                // $boundLocationName = $boundLocation ? $boundLocation->location_name : '未知櫃位';
 
                 throw ValidationException::withMessages([
-                    'box_code' => ['該商品箱子已綁定其他櫃位：' . $boundLocationName]
+                    'box_code' => ['該商品箱子已經綁定，無法再綁定']
                 ]);
             }
 
             // 更新QR Code記錄
             $qrCode->location_id = $location->id;
 
-            if ($request->binding_option === 'bind-and-inbox') {
+            // 預設 binding_option
+            $bindingOption = $request->binding_option ?? 'bind-only';
+
+            if ($bindingOption === 'bind-and-inbox') {
                 $qrCode->item_inbox_status = 1;
                 $qrCode->status = 'used';
             }
@@ -166,13 +170,13 @@ class ScanPlaceController extends Controller
                 'to_location_id' => $location->id,
                 'to_location_code' => $request->location_code,
                 'movement_type' => 'assign',
-                'reason' => $request->binding_option === 'bind-and-inbox' ? '綁定並入庫' : '僅綁定',
+                'reason' => $bindingOption === 'bind-and-inbox' ? '綁定並入庫' : '僅綁定',
                 'operator' => 'system', // 實際應該從認證用戶獲取
                 'moved_at' => now()
             ]);
 
             // 更新櫃位庫存
-            if ($request->binding_option === 'bind-and-inbox') {
+            if ($bindingOption === 'bind-and-inbox') {
                 $location->increment('current_stock');
             }
 
@@ -180,11 +184,11 @@ class ScanPlaceController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $request->binding_option === 'bind-and-inbox' ? '綁定並入庫成功' : '綁定成功',
+                'message' => $bindingOption === 'bind-and-inbox' ? '綁定並入庫成功' : '綁定成功',
                 'data' => [
                     'qr_code_id' => $qrCode->qr_id,
                     'location_code' => $request->location_code,
-                    'binding_option' => $request->binding_option
+                    'binding_option' => $bindingOption
                 ]
             ]);
 
