@@ -185,7 +185,7 @@ const transformFrontendDataToApi = (frontendData) => {
   };
 };
 
-const apiUrl = import.meta.env.VITE_APP_URL;
+// 使用相對路徑，讓 Vite 代理處理 API 請求
 
 // 載入位置資料
 const loadLocations = async () => {
@@ -228,7 +228,7 @@ const handleSearch = () => {
 const loadLocationDetails = async (locationId) => {
   try {
     // 載入位置商品清單
-    const itemsResponse = await fetch(`${apiUrl}/api/v1/locations/${locationId}/items`, {
+    const itemsResponse = await fetch(`/api/v1/locations/${locationId}/items`, {
       method: 'GET',
       headers: {
         'accept': '*/*',
@@ -246,7 +246,7 @@ const loadLocationDetails = async (locationId) => {
     // 載入層架分布資料（只有storage_type_code是'Shelf'時才載入）
     const currentLocation = selectedLocation.value;
     if (currentLocation && currentLocation.storageType === 'Shelf') {
-      const floorResponse = await fetch(`${apiUrl}/api/v1/locations/${locationId}/floor-distribution`, {
+      const floorResponse = await fetch(`/api/v1/locations/${locationId}/floor-distribution`, {
         method: 'GET',
         headers: {
           'accept': '*/*',
@@ -310,7 +310,7 @@ const editLocation = (location) => {
 const deleteLocation = async (location) => {
   if (confirm(`確定要刪除位置「${location.name}」嗎？`)) {
     try {
-      const response = await fetch(`${apiUrl}/api/v1/locations/${location.id}`, {
+      const response = await fetch(`/api/v1/locations/${location.id}`, {
         method: 'DELETE',
         headers: {
           'accept': '*/*',
@@ -343,8 +343,8 @@ const saveLocation = async () => {
   try {
     const isEdit = selectedLocation.value.id;
     const url = isEdit
-              ? `${apiUrl}/api/v1/locations/${selectedLocation.value.id}`
-        : `${apiUrl}/api/v1/locations`;
+              ? `/api/v1/locations/${selectedLocation.value.id}`
+        : `/api/v1/locations`;
 
     const method = isEdit ? 'PUT' : 'POST';
 

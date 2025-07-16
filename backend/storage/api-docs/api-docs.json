@@ -600,7 +600,7 @@
         },
         "/api/v1/locations/batch": {
             "post": {
-                "summary": "Create multiple locations",
+                "summary": "Create multiple locations (duplicate location_code will be skipped)",
                 "operationId": "a1e0fecbd453d6755e7eed8ee7e904f0",
                 "requestBody": {
                     "required": true,
@@ -667,7 +667,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Locations created successfully"
+                        "description": "Locations created successfully (duplicates skipped)"
                     },
                     "422": {
                         "description": "Validation error"

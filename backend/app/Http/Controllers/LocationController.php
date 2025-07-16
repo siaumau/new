@@ -216,7 +216,7 @@ class LocationController extends Controller
     /**
      * @OA\Post(
      *     path="/api/v1/locations/batch",
-     *     summary="Create multiple locations",
+     *     summary="Create multiple locations (duplicate location_code will be skipped)",
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
@@ -241,7 +241,7 @@ class LocationController extends Controller
      *             )
      *         )
      *     ),
-     *     @OA\Response(response="201", description="Locations created successfully"),
+     *     @OA\Response(response="201", description="Locations created successfully (duplicates skipped)"),
      *     @OA\Response(response="422", description="Validation error")
      * )
      */
@@ -249,7 +249,7 @@ class LocationController extends Controller
     {
         $request->validate([
             'locations' => 'required|array|min:1',
-            'locations.*.location_code' => 'required|string|max:20|unique:locations',
+            'locations.*.location_code' => 'required|string|max:20',
             'locations.*.location_name' => 'required|string|max:100',
             'locations.*.building_code' => 'required|string|max:10',
             'locations.*.floor_number' => 'required|string|max:10',
@@ -266,9 +266,22 @@ class LocationController extends Controller
 
         $locations = [];
         $errors = [];
+        $skipped = [];
 
         foreach ($request->locations as $index => $locationData) {
             try {
+                // 檢查 location_code 是否已存在
+                $existingLocation = Location::where('location_code', $locationData['location_code'])->first();
+                
+                if ($existingLocation) {
+                    $skipped[] = [
+                        'index' => $index,
+                        'location_code' => $locationData['location_code'],
+                        'message' => '位置代碼已存在，已跳過'
+                    ];
+                    continue;
+                }
+
                 $location = Location::create($locationData);
                 $locations[] = $location;
             } catch (\Exception $e) {
@@ -281,11 +294,13 @@ class LocationController extends Controller
         }
 
         return response()->json([
-            'message' => 'Batch creation completed',
+            'message' => '批量匯入完成',
             'created_count' => count($locations),
             'error_count' => count($errors),
+            'skipped_count' => count($skipped),
             'locations' => $locations,
-            'errors' => $errors
+            'errors' => $errors,
+            'skipped' => $skipped
         ], 201);
     }
 

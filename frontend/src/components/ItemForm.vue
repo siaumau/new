@@ -69,8 +69,6 @@ const form = ref({
   item_size: '',
 });
 
-const apiUrl = import.meta.env.VITE_APP_URL;
-
 const resetForm = () => {
   form.value = {
     item_name: '',
@@ -115,9 +113,9 @@ watch(() => props.item, (newItem) => {
 const saveItem = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`${apiUrl}/items/${form.value.item_id}`, form.value);
+      await axios.put(`/api/v1/items/${form.value.item_id}`, form.value);
     } else {
-      await axios.post(`${apiUrl}/items`, form.value);
+      await axios.post(`/api/v1/items`, form.value);
     }
     emit('saved');
     closeForm();

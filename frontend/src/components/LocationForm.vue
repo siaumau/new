@@ -98,14 +98,12 @@ watch(() => props.location, (newLocation) => {
   }
 }, { immediate: true });
 
-const apiUrl = import.meta.env.VITE_APP_URL;
-
 const saveLocation = async () => {
   try {
     if (isEditing.value) {
-      await axios.put(`${apiUrl}/locations/${form.value.id}`, form.value);
+      await axios.put(`/api/v1/locations/${form.value.id}`, form.value);
     } else {
-      await axios.post(`${apiUrl}/locations`, form.value);
+      await axios.post(`/api/v1/locations`, form.value);
     }
     emit('saved');
     closeForm();

@@ -65,12 +65,10 @@ import { ref, onMounted } from 'vue';
 const products = ref([]);
 const showDetailsModal = ref(false);
 const selectedProduct = ref(null);
-const apiUrl = import.meta.env.VITE_APP_URL;
-
 const fetchProducts = async () => {
   try {
     // 假設產品API端點為 /api/v1/products
-    const response = await fetch(`${apiUrl}/api/v1/products`);
+    const response = await fetch(`/api/v1/products`);
     if (!response.ok) {
       throw new Error('Failed to fetch products');
     }
