@@ -154,7 +154,7 @@ return new class extends Migration
             $table->bigInteger('itemtype');
             $table->bigInteger('item_id')->index('item_id');
             $table->text('item_name');
-            $table->text('item_sn')->index('idx_item_sn');
+            $table->text('item_sn');
             $table->text('item_spec');
             $table->string('item_batch', 20)->index('idx_item_batch')->comment('批號');
             $table->bigInteger('item_count');
