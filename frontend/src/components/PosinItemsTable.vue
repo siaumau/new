@@ -606,7 +606,8 @@ const fetchItemsDetails = async () => {
       if (!itemsCache.value[itemId]) {
         try {
           const response = await axios.get(`/api/v1/items/${itemId}`)
-          itemsCache.value[itemId] = response.data
+          // 處理API響應格式，如果有data屬性則使用它，否則使用整個response.data
+          itemsCache.value[itemId] = response.data.data || response.data
         } catch (error) {
           console.error(`Error fetching item details for item_id ${itemId}:`, error)
           // 如果無法獲取，使用預設值

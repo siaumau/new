@@ -65,4 +65,55 @@ class ItemController extends Controller
             'totalPages' => $items->lastPage(),
         ]);
     }
+
+    /**
+     * @OA\Get(
+     *      path="/items/{id}",
+     *      operationId="getItem",
+     *      tags={"default"},
+     *      summary="Get item by ID",
+     *      description="Returns a single item",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="Item id",
+     *          required=true,
+     *          in="path",
+     *          @OA\Schema(
+     *              type="integer"
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Successful operation"
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Item not found"
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        try {
+            $item = Item::findOrFail($id);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $item
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found',
+                'error' => 'The requested item does not exist.'
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching item: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching item',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
