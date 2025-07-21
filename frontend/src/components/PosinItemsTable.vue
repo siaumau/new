@@ -256,9 +256,9 @@
                   class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg flex items-center space-x-2 transition-colors shadow-sm"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                   </svg>
-                  <span>{{ $t('posinItems.qrCode.download', { count: qrGenerateCount }) }}</span>
+                  <span>儲存 {{ qrGenerateCount }} 張 QR Code</span>
                 </button>
                 <button
                   @click="previewLabels"
@@ -319,16 +319,14 @@
                 class="border border-gray-200 rounded-lg p-4 text-center"
               >
                 <div class="mb-3">
-                  <img :src="qrCode.image" :alt="`QR Code ${qrCode.serial}`" class="mx-auto w-32 h-32" />
+                  <img :src="qrCode.image" :alt="`QR Code ${qrCode.serial}`" class="mx-auto w-64 h-" />
                 </div>
                 <div class="text-sm text-gray-600">
                   <p><strong>{{ qrCode.item_info.item_name }}</strong></p>
                   <p>商品序號: {{ qrCode.item_info.item_sn }}</p>
-                  <p>規格: {{ qrCode.item_info.item_spec }}</p>
                   <p>批號: {{ qrCode.item_info.item_batch }}</p>
-                  <p>每箱: {{ qrCode.item_info.item_inbox }}個</p>
+                  <p>箱入數: {{ qrCode.item_info.item_inbox }}個</p>
                   <p>有效期限: {{ formatDate(qrCode.item_info.item_expireday) }}</p>
-                  <p>編碼: {{ qrCode.data }}</p>
                   <p>標籤: {{ qrGenerateCount }}箱之{{ qrCode.serial }}</p>
                   <p v-if="qrCode.item_info.posin_note">備註: {{ qrCode.item_info.posin_note }}</p>
                 </div>
@@ -352,6 +350,82 @@
         </div>
       </div>
     </div>
+
+    <!-- QR Code 列印預覽全屏模態框 -->
+    <div v-if="showPrintPreview" class="fixed inset-0 bg-white z-50">
+      <!-- 控制列 -->
+      <div class="no-print bg-gray-100 p-4 border-b flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">QR Code 標籤列印預覽</h2>
+          <p class="text-sm text-gray-600">{{ selectedItem?.item_name }} - 共 {{ printQRCodes.length }} 張標籤</p>
+        </div>
+        <div class="flex space-x-3">
+          <button
+            @click="printLabels"
+            class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-6 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+            </svg>
+            <span>列印所有標籤</span>
+          </button>
+          <button
+            @click="closePrintPreview"
+            class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          >
+            關閉
+          </button>
+        </div>
+      </div>
+
+      <!-- 列印內容區域 -->
+      <div class="print-content overflow-y-auto" style="height: calc(100vh - 80px);">
+        <!-- 每個QR碼標籤佔一頁 -->
+        <div
+          v-for="(qrCode, index) in printQRCodes"
+          :key="qrCode.serial"
+          class="print-page"
+          :class="{ 'page-break': index < printQRCodes.length - 1 }"
+        >
+          <div class="label-container">
+            <!-- 商品名稱 -->
+            <div class="item-name">{{ qrCode.item_info.item_name }}</div>
+            
+            <!-- QR Code 圖片 -->
+            <div class="qr-code-section">
+              <img :src="qrCode.qrImage" :alt="`QR Code ${qrCode.serial}`" class="qr-image" />
+            </div>
+            
+            <!-- 商品資訊 -->
+            <div class="item-details">
+              <div class="info-row">
+                <span class="label">商品序號:</span>
+                <span class="value">{{ qrCode.item_info.item_sn }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">批號:</span>
+                <span class="value">{{ qrCode.item_info.item_batch }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">箱入數:</span>
+                <span class="value">{{ qrCode.item_info.item_inbox || 48 }}個</span>
+              </div>
+              <div class="info-row">
+                <span class="label">有效期限:</span>
+                <span class="value">{{ formatDate(qrCode.item_info.item_expireday) }}</span>
+              </div>
+              <div class="label-number">
+                標籤: {{ printQRCodes.length }}箱之{{ qrCode.serial }}
+              </div>
+              <div v-if="qrCode.item_info.posin_note" class="info-row">
+                <span class="label">備註:</span>
+                <span class="value">{{ qrCode.item_info.posin_note }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -361,8 +435,6 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import QRCode from 'qrcode'
-import JSZip from 'jszip'
-import { saveAs } from 'file-saver'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -384,6 +456,8 @@ const loading = ref(false)
 const qrGeneratedStatus = ref({})
 const itemsCache = ref({}) // 新增：商品資料快取
 const posinInfo = ref(null) // 新增：進貨單資訊
+const showPrintPreview = ref(false) // 列印預覽顯示狀態
+const printQRCodes = ref([]) // 要列印的QR碼數據
 
 // Methods
 const fetchPosinItems = async () => {
@@ -637,7 +711,7 @@ const generateQRCodeImage = async (qrData) => {
   }
 }
 
-// 下載 QR Code 標籤
+// 生成並顯示 QR Code 標籤
 const downloadQRLabels = async () => {
   try {
     loading.value = true
@@ -659,112 +733,35 @@ const downloadQRLabels = async () => {
       return
     }
 
-    const { qr_codes, zip_file_name } = response.data
+    const { qr_codes } = response.data
 
-    // 創建 ZIP 檔案
-    const zip = new JSZip()
-
-    // 為每個 QR Code 生成包含文字的完整標籤圖片
+    // 生成QR碼預覽數據
+    printQRCodes.value = []
     for (const qrCode of qr_codes) {
-      const completeLabelImage = await generateCompleteLabel(qrCode)
-
-      // 將 base64 轉換為 blob
-      const base64Data = completeLabelImage.split(',')[1]
-      const byteCharacters = atob(base64Data)
-      const byteNumbers = new Array(byteCharacters.length)
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i)
-      }
-      const byteArray = new Uint8Array(byteNumbers)
-
-      // 加入 ZIP 檔案
-      zip.file(qrCode.file_name, byteArray)
+      const qrImageDataURL = await generateQRCodeImage(qrCode.data)
+      printQRCodes.value.push({
+        ...qrCode,
+        qrImage: qrImageDataURL
+      })
     }
-
-    // 生成並下載 ZIP 檔案
-    const zipBlob = await zip.generateAsync({ type: 'blob' })
-    saveAs(zipBlob, zip_file_name)
-
-    // 同步儲存到 public/qr_codes 目錄
-    await saveToPublicDirectory(qr_codes, zip_file_name)
 
     // 更新 QR Code 生成狀態
     qrGeneratedStatus.value[selectedItem.value.posinitem_id] = true
 
-    // 關閉彈窗
+    // 關閉QR生成彈窗
     closeQRModal()
 
-    alert(`成功生成 ${qr_codes.length} 張 QR Code 標籤`)
+    // 顯示列印預覽
+    showPrintPreview.value = true
 
   } catch (error) {
-    console.error('Error downloading QR labels:', error)
+    console.error('Error generating QR labels:', error)
     alert('生成QR標籤時發生錯誤: ' + (error.response?.data?.message || error.message))
   } finally {
     loading.value = false
   }
 }
 
-// 儲存檔案到 public/qr_codes 目錄
-const saveToPublicDirectory = async (qrCodes, zipFileName) => {
-  try {
-    // 創建 FormData 來傳送檔案
-    const formData = new FormData()
-
-    // 為每個 QR Code 生成圖片並加入 FormData
-    for (const qrCode of qrCodes) {
-      const completeLabelImage = await generateCompleteLabel(qrCode)
-
-      // 將 base64 轉換為 blob
-      const base64Data = completeLabelImage.split(',')[1]
-      const byteCharacters = atob(base64Data)
-      const byteNumbers = new Array(byteCharacters.length)
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i)
-      }
-      const byteArray = new Uint8Array(byteNumbers)
-      const blob = new Blob([byteArray], { type: 'image/png' })
-
-      // 加入 FormData
-      formData.append('files[]', blob, qrCode.file_name)
-    }
-
-    // 加入 ZIP 檔案
-    const zip = new JSZip()
-    for (const qrCode of qrCodes) {
-      const completeLabelImage = await generateCompleteLabel(qrCode)
-      const base64Data = completeLabelImage.split(',')[1]
-      const byteCharacters = atob(base64Data)
-      const byteNumbers = new Array(byteCharacters.length)
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i)
-      }
-      const byteArray = new Uint8Array(byteNumbers)
-      zip.file(qrCode.file_name, byteArray)
-    }
-    const zipBlob = await zip.generateAsync({ type: 'blob' })
-    formData.append('zip_file', zipBlob, zipFileName)
-
-    // 加入額外資訊
-    formData.append('item_info', JSON.stringify({
-      item_name: selectedItem.value.item_name,
-      item_sn: selectedItem.value.item_sn,
-      item_batch: selectedItem.value.item_batch,
-      count: qrCodes.length
-    }))
-
-    // 呼叫後端 API 儲存檔案
-    await axios.post('/api/v1/save-qr-files', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-
-    console.log('QR Code 檔案已成功儲存到 public/qr_codes 目錄')
-  } catch (error) {
-    console.error('Error saving files to public directory:', error)
-    // 不中斷下載流程，只記錄錯誤
-  }
-}
 
 // 生成包含 QR Code 和文字的完整標籤
 const generateCompleteLabel = async (qrCode) => {
@@ -805,16 +802,14 @@ const generateCompleteLabel = async (qrCode) => {
         // 繪製商品資訊
         ctx.font = '12px Arial'
         ctx.fillText(`商品序號: ${qrCode.item_info.item_sn}`, 160, 50)
-        ctx.fillText(`規格: ${qrCode.item_info.item_spec}`, 160, 70)
-        ctx.fillText(`批號: ${qrCode.item_info.item_batch}`, 160, 90)
-        ctx.fillText(`每箱: ${qrCode.item_info.item_inbox}個`, 160, 110)
-        ctx.fillText(`有效期限: ${formatDate(qrCode.item_info.item_expireday)}`, 160, 130)
-        ctx.fillText(`編碼: ${qrCode.data}`, 160, 150)
-        ctx.fillText(`標籤: ${qrGenerateCount.value}箱之${qrCode.serial}`, 160, 170)
+        ctx.fillText(`批號: ${qrCode.item_info.item_batch}`, 160, 70)
+        ctx.fillText(`箱入數: ${qrCode.item_info.item_inbox}個`, 160, 90)
+        ctx.fillText(`有效期限: ${formatDate(qrCode.item_info.item_expireday)}`, 160, 110)
+        ctx.fillText(`標籤: ${qrGenerateCount.value}箱之${qrCode.serial}`, 160, 130)
 
         // 如果有備註，也顯示
         if (qrCode.item_info.posin_note) {
-          ctx.fillText(`備註: ${qrCode.item_info.posin_note}`, 160, 190)
+          ctx.fillText(`備註: ${qrCode.item_info.posin_note}`, 160, 150)
         }
 
         // 繪製邊框
@@ -899,6 +894,18 @@ const closePreviewModal = () => {
   previewQRCodes.value = []
 }
 
+// 列印標籤
+const printLabels = () => {
+  window.print()
+}
+
+// 關閉列印預覽
+const closePrintPreview = () => {
+  showPrintPreview.value = false
+  printQRCodes.value = []
+  selectedItem.value = null
+}
+
 // Lifecycle
 onMounted(() => {
   fetchPosinItems()
@@ -940,5 +947,120 @@ button:hover {
 /* 表格行懸停效果 */
 tbody tr:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 列印預覽樣式 */
+.print-page {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.label-container {
+  width: 100%;
+  max-width: 600px;
+  border: 3px solid #000;
+  padding: 3rem;
+  text-align: center;
+  background: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.item-name {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: #1f2937;
+}
+
+.qr-code-section {
+  margin: 2rem 0;
+}
+
+.qr-image {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  display: block;
+}
+
+.item-details {
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 1rem 0;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.info-row .label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.info-row .value {
+  font-weight: 500;
+  color: #111827;
+}
+
+.label-number {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+/* 列印專用樣式 */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-page {
+    page-break-after: always;
+    min-height: 100vh;
+    padding: 1cm;
+  }
+  
+  .print-page:last-child {
+    page-break-after: avoid;
+  }
+  
+  .label-container {
+    max-width: none;
+    width: 100%;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: none;
+  }
+  
+  @page {
+    size: A4;
+    margin: 0.5cm;
+  }
+  
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* 螢幕預覽時的分頁效果 */
+.page-break {
+  border-bottom: 2px dashed #ccc;
+  margin-bottom: 2rem;
 }
 </style>

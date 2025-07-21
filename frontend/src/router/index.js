@@ -4,6 +4,7 @@ import LocationsView from '../views/LocationsView.vue'
 import PosinItemsView from '../views/PosinItemsView.vue'
 import PurchaseOrdersView from '../views/PurchaseOrdersView.vue'
 import QrCodeView from '../views/QrCodeView.vue'
+import QRCodePrintView from '../views/QRCodePrintView.vue'
 import MovementHistoryView from '../views/MovementHistoryView.vue'
 import ScanPlaceView from '../views/ScanPlaceView.vue'
 
@@ -34,6 +35,11 @@ const router = createRouter({
       path: '/qr-codes',
       name: 'qr-codes',
       component: QrCodeView
+    },
+    {
+      path: '/qr-print',
+      name: 'qr-print',
+      component: QRCodePrintView
     },
     {
       path: '/scan-place',

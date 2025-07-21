@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code 標籤 - 2%水楊酸身體乳</title>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 0.5cm;
+            }
+            
+            .page-break {
+                page-break-after: always;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;
+        }
+        
+        .label {
+            width: 100%;
+            height: 100vh;
+            border: 2px solid #000;
+            box-sizing: border-box;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .label:not(:last-child) {
+            page-break-after: always;
+        }
+        
+        .qr-code {
+            margin: 20px 0;
+        }
+        
+        .qr-code img {
+            width: 200px;
+            height: 200px;
+        }
+        
+        .item-info {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        
+        .item-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .info-row {
+            margin: 8px 0;
+        }
+        
+        .label-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 20px;
+        }
+        
+        .print-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .print-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .print-btn:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-controls no-print">
+        <button class="print-btn" onclick="window.print()">列印所有標籤</button>
+    </div>
+
+    <div class="label">
+        <div class="item-name">2%水楊酸身體乳</div>
+        
+        <div class="qr-code">
+            <img src="data:image/png;base64,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" alt="QR Code 001" />
+        </div>
+        
+        <div class="item-info">
+            <div class="info-row"><strong>商品序號:</strong> 5700</div>
+            <div class="info-row"><strong>批號:</strong> P22272A</div>
+            <div class="info-row"><strong>箱入數:</strong> 48個</div>
+            <div class="info-row"><strong>有效期限:</strong> 2026/9/1</div>
+            <div class="label-number">標籤: 3箱之001</div>
+            <div class="info-row"><strong>備註:</strong> PCT344海運</div>
+        </div>
+    </div>
+
+    <div class="label">
+        <div class="item-name">2%水楊酸身體乳</div>
+        
+        <div class="qr-code">
+            <img src="data:image/png;base64,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" alt="QR Code 002" />
+        </div>
+        
+        <div class="item-info">
+            <div class="info-row"><strong>商品序號:</strong> 5700</div>
+            <div class="info-row"><strong>批號:</strong> P22272A</div>
+            <div class="info-row"><strong>箱入數:</strong> 48個</div>
+            <div class="info-row"><strong>有效期限:</strong> 2026/9/1</div>
+            <div class="label-number">標籤: 3箱之002</div>
+            <div class="info-row"><strong>備註:</strong> PCT344海運</div>
+        </div>
+    </div>
+
+    <div class="label">
+        <div class="item-name">2%水楊酸身體乳</div>
+        
+        <div class="qr-code">
+            <img src="data:image/png;base64,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" alt="QR Code 003" />
+        </div>
+        
+        <div class="item-info">
+            <div class="info-row"><strong>商品序號:</strong> 5700</div>
+            <div class="info-row"><strong>批號:</strong> P22272A</div>
+            <div class="info-row"><strong>箱入數:</strong> 48個</div>
+            <div class="info-row"><strong>有效期限:</strong> 2026/9/1</div>
+            <div class="label-number">標籤: 3箱之003</div>
+            <div class="info-row"><strong>備註:</strong> PCT344海運</div>
+        </div>
+    </div>
+
+</body>
+</html>

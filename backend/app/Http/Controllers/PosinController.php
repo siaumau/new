@@ -1014,4 +1014,138 @@ class PosinController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/qr-files",
+     *     summary="Get list of saved QR code files",
+     *     @OA\Response(response="200", description="List of QR code files")
+     * )
+     */
+    public function getQRFiles()
+    {
+        try {
+            $qrCodesPath = public_path('qr_codes');
+            
+            if (!file_exists($qrCodesPath)) {
+                return response()->json(['files' => []]);
+            }
+
+            $files = [];
+            $directories = scandir($qrCodesPath);
+            
+            foreach ($directories as $dir) {
+                if ($dir === '.' || $dir === '..') continue;
+                
+                $dirPath = $qrCodesPath . '/' . $dir;
+                if (is_dir($dirPath)) {
+                    $dirFiles = scandir($dirPath);
+                    $pngFiles = array_filter($dirFiles, function($file) {
+                        return pathinfo($file, PATHINFO_EXTENSION) === 'png';
+                    });
+                    $htmlFiles = array_filter($dirFiles, function($file) {
+                        return pathinfo($file, PATHINFO_EXTENSION) === 'html';
+                    });
+                    
+                    $allFiles = array_merge(array_values($pngFiles), array_values($htmlFiles));
+                    
+                    if (!empty($allFiles)) {
+                        $files[] = [
+                            'folder_name' => $dir,
+                            'files' => $allFiles,
+                            'file_count' => count($allFiles),
+                            'file_types' => [
+                                'png' => count($pngFiles),
+                                'html' => count($htmlFiles)
+                            ],
+                            'created_at' => date('Y-m-d H:i:s', filemtime($dirPath))
+                        ];
+                    }
+                }
+            }
+
+            // 按創建時間排序，最新的在前
+            usort($files, function($a, $b) {
+                return strtotime($b['created_at']) - strtotime($a['created_at']);
+            });
+
+            return response()->json(['files' => $files]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('獲取QR檔案列表失敗: ' . $e->getMessage());
+            return response()->json([
+                'message' => '獲取檔案列表失敗',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/save-qr-html",
+     *     summary="Save QR code HTML file",
+     *     @OA\Response(response="200", description="HTML file saved successfully")
+     * )
+     */
+    public function saveQRHTML(Request $request)
+    {
+        try {
+            // 確保 qr_codes 目錄存在
+            $qrCodesPath = public_path('qr_codes');
+            if (!file_exists($qrCodesPath)) {
+                mkdir($qrCodesPath, 0755, true);
+            }
+
+            $savedFiles = [];
+
+            // 處理HTML檔案
+            if ($request->hasFile('html_file')) {
+                $file = $request->file('html_file');
+                $fileName = $file->getClientOriginalName();
+                
+                // 根據商品資訊創建目錄名稱
+                $itemInfo = json_decode($request->input('item_info'), true);
+                $dirName = sprintf(
+                    '%s_%s_%s_%d_labels',
+                    $itemInfo['item_sn'],
+                    $itemInfo['item_batch'],
+                    date('Y-m-d_H-i-s'),
+                    $itemInfo['count']
+                );
+
+                $itemPath = $qrCodesPath . '/' . $dirName;
+                if (!file_exists($itemPath)) {
+                    mkdir($itemPath, 0755, true);
+                }
+
+                // 儲存HTML檔案
+                $filePath = $itemPath . '/' . $fileName;
+                $file->move($itemPath, $fileName);
+                $savedFiles[] = $fileName;
+
+                // 記錄到日誌
+                \Illuminate\Support\Facades\Log::info(
+                    'QR Code HTML檔案已儲存到 public/qr_codes 目錄 - 商品: %s (SN: %s, 批號: %s, 數量: %d)',
+                    [
+                        $itemInfo['item_name'],
+                        $itemInfo['item_sn'],
+                        $itemInfo['item_batch'],
+                        $itemInfo['count']
+                    ]
+                );
+            }
+
+            return response()->json([
+                'message' => 'QR Code HTML檔案已成功儲存',
+                'saved_files' => $savedFiles
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('儲存QR HTML檔案失敗: ' . $e->getMessage());
+            return response()->json([
+                'message' => '儲存HTML檔案失敗',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
