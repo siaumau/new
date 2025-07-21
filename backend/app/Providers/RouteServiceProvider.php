@@ -49,7 +49,7 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('qr-generation', function (Request $request) {
-            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
+            return Limit::perMinute(100)->by($request->user()?->id ?: $request->ip());
         });
     }
 }
