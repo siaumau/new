@@ -353,133 +353,7 @@
       </div>
     </div>
 
-    <!-- QR Code 列印預覽全屏模態框 -->
-    <div v-if="showPrintPreview" class="fixed inset-0 bg-white z-50">
-      <!-- 控制列 -->
-      <div class="no-print bg-gray-100 p-4 border-b flex justify-between items-center">
-        <div>
-          <h2 class="text-xl font-bold text-gray-900">QR Code 標籤列印預覽</h2>
-          <p class="text-sm text-gray-600">{{ selectedItem?.item_name }} - 共 {{ printQRCodes.length }} 張標籤</p>
-          <p class="text-xs text-green-600 mt-1">✓ HTML備份檔案已自動下載到您的電腦</p>
-        </div>
-        <div class="flex space-x-3">
-          <button
-            @click="printLabels"
-            class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-6 rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-            </svg>
-            <span>列印所有標籤</span>
-          </button>
-          <button
-            @click="closePrintPreview"
-            class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-          >
-            關閉
-          </button>
-        </div>
-      </div>
-
-      <!-- 列印內容區域 -->
-      <div class="print-content overflow-y-auto" style="height: calc(100vh - 80px);">
-        <!-- 頁面導航 -->
-        <div class="no-print bg-gray-50 p-4 border-b flex justify-between items-center sticky top-0 z-10">
-          <div class="flex items-center space-x-4">
-            <span class="text-sm text-gray-600">第 {{ currentPage }} 頁，共 {{ printQRCodes.length }} 頁 (滾動查看所有標籤)</span>
-            <div class="flex space-x-2">
-              <button
-                @click="goToPrevPage"
-                :disabled="currentPage <= 1"
-                class="px-3 py-1 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed rounded text-sm"
-              >
-                上一頁
-              </button>
-              <button
-                @click="goToNextPage"
-                :disabled="currentPage >= printQRCodes.length"
-                class="px-3 py-1 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed rounded text-sm"
-              >
-                下一頁
-              </button>
-            </div>
-          </div>
-          <div class="text-sm text-gray-500">
-            滾動查看所有頁面，或使用上下頁按鈕
-          </div>
-        </div>
-
-        <!-- 每個QR碼標籤佔一頁 -->
-        <div
-          v-for="(qrCode, index) in printQRCodes"
-          :key="qrCode.serial"
-          :ref="el => pageRefs[index] = el"
-          class="print-page"
-          :class="{ 'page-break': index < printQRCodes.length - 1 }"
-        >
-          <div class="label-container">
-            <!-- 商品名稱 -->
-            <div class="item-name">{{ qrCode.item_info.item_name }}</div>
-            <!-- QR碼編號顯示 -->
-            <div class="qr-serial-number">QR碼編號: {{ qrCode.serial }} / {{ printQRCodes.length }}</div>
-            
-            <!-- QR Code 圖片 -->
-            <div class="qr-code-section">
-              <img 
-                v-if="qrCode.qrImage"
-                :src="qrCode.qrImage" 
-                :alt="`QR Code ${qrCode.serial}`" 
-                class="qr-image"
-                @error="handleQRImageError"
-              />
-              <div 
-                v-else
-                class="qr-image-placeholder"
-              >
-                <div class="text-red-500 text-center">
-                  <svg class="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 18.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  <p class="text-sm">QR碼生成失敗</p>
-                  <p class="text-xs text-gray-500">{{ qrCode.data }}</p>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 商品資訊 -->
-            <div class="item-details">
-              <div class="info-row">
-                <span class="label">商品序號:</span>
-                <span class="value">{{ qrCode.item_info.item_sn }}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">QR碼內容:</span>
-                <span class="value qr-data-text">{{ qrCode.data }}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">批號:</span>
-                <span class="value">{{ qrCode.item_info.item_batch }}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">箱入數:</span>
-                <span class="value">{{ qrCode.item_info.item_inbox || 48 }}個</span>
-              </div>
-              <div class="info-row">
-                <span class="label">有效期限:</span>
-                <span class="value">{{ formatDate(qrCode.item_info.item_expireday) }}</span>
-              </div>
-              <div class="label-number">
-                標籤: {{ printQRCodes.length }}箱之{{ qrCode.serial }}
-              </div>
-              <div v-if="qrCode.item_info.posin_note" class="info-row">
-                <span class="label">備註:</span>
-                <span class="value">{{ qrCode.item_info.posin_note }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- 移除列印預覽模態框，直接下載HTML檔案 -->
   </div>
 </template>
 
@@ -510,10 +384,7 @@ const loading = ref(false)
 const qrGeneratedStatus = ref({})
 const itemsCache = ref({}) // 新增：商品資料快取
 const posinInfo = ref(null) // 新增：進貨單資訊
-const showPrintPreview = ref(false) // 列印預覽顯示狀態
-const printQRCodes = ref([]) // 要列印的QR碼數據
-const currentPage = ref(1) // 當前頁面
-const pageRefs = ref([]) // 頁面元素引用
+// 移除不需要的列印預覽相關變數
 
 // Methods
 const fetchPosinItems = async () => {
@@ -792,28 +663,28 @@ const downloadQRLabels = async () => {
 
     const { qr_codes } = response.data
 
-    // 生成QR碼預覽數據
-    printQRCodes.value = []
+    // 生成QR碼數據用於下載
+    const qrCodesForDownload = []
     for (const qrCode of qr_codes) {
       try {
         const qrImageDataURL = await generateQRCodeImage(qrCode.data)
         console.log(`Generated QR for ${qrCode.serial}:`, qrImageDataURL.substring(0, 50) + '...')
-        printQRCodes.value.push({
+        qrCodesForDownload.push({
           ...qrCode,
           qrImage: qrImageDataURL
         })
       } catch (error) {
         console.error(`Error generating QR image for ${qrCode.serial}:`, error)
         // 如果QR碼生成失敗，仍然添加到列表但不含圖片
-        printQRCodes.value.push({
+        qrCodesForDownload.push({
           ...qrCode,
           qrImage: null
         })
       }
     }
 
-    // 同時生成並下載HTML檔案
-    await generateAndDownloadHTML(printQRCodes.value)
+    // 直接生成並下載HTML檔案
+    await generateAndDownloadHTML(qrCodesForDownload)
 
     // 更新 QR Code 生成狀態
     qrGeneratedStatus.value[selectedItem.value.posinitem_id] = true
@@ -821,8 +692,8 @@ const downloadQRLabels = async () => {
     // 關閉QR生成彈窗
     closeQRModal()
 
-    // 顯示列印預覽
-    showPrintPreview.value = true
+    // 顯示成功訊息
+    alert(`成功生成 ${qrGenerateCount.value} 張 QR Code 標籤並下載HTML檔案！`)
 
   } catch (error) {
     console.error('Error generating QR labels:', error)
@@ -1170,69 +1041,17 @@ const closePreviewModal = () => {
   previewQRCodes.value = []
 }
 
-// 列印標籤
-const printLabels = () => {
-  window.print()
-}
-
-// 關閉列印預覽
-const closePrintPreview = () => {
-  showPrintPreview.value = false
-  printQRCodes.value = []
-  selectedItem.value = null
-  currentPage.value = 1
-  pageRefs.value = []
-}
-
-// 頁面導航方法
-const goToPrevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    scrollToPage(currentPage.value - 1)
-  }
-}
-
-const goToNextPage = () => {
-  if (currentPage.value < printQRCodes.value.length) {
-    currentPage.value++
-    scrollToPage(currentPage.value - 1)
-  }
-}
-
-const scrollToPage = (pageIndex) => {
-  if (pageRefs.value[pageIndex]) {
-    // 滾動到頁面頂部，留一些空間顯示導航
-    pageRefs.value[pageIndex].scrollIntoView({ 
-      behavior: 'smooth', 
-      block: 'start',
-      inline: 'nearest'
-    })
-    
-    // 使用 setTimeout 確保滾動完成後再微調位置
-    setTimeout(() => {
-      if (pageRefs.value[pageIndex]) {
-        const element = pageRefs.value[pageIndex]
-        const container = element.closest('.print-content')
-        if (container) {
-          container.scrollTop = element.offsetTop - 100 // 留100px空間顯示導航列
-        }
-      }
-    }, 500)
-  }
-}
-
-// QR圖片錯誤處理
-const handleQRImageError = (event) => {
-  console.error('QR Code image failed to load:', event.target.src)
-  // 可以設置一個預設圖片或顯示錯誤訊息
-  event.target.style.display = 'none'
-}
+// 移除列印預覽相關的函數，因為現在直接下載HTML檔案
 
 // Lifecycle
 onMounted(() => {
   fetchPosinItems()
 })
 </script>
+
+<style>
+/* 移除全域列印樣式，因為現在只用下載的HTML檔案進行列印 */
+</style>
 
 <style scoped>
 /* 確保表格在小螢幕上可橫向捲動 */
@@ -1271,183 +1090,9 @@ tbody tr:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* 列印預覽樣式 */
-.print-page {
-  width: 100%;
-  min-height: 80vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  box-sizing: border-box;
-  margin-bottom: 2rem;
-  border-bottom: 3px dashed #ccc;
-}
+/* 移除列印預覽相關的樣式，因為現在直接下載HTML檔案 */
 
-.label-container {
-  width: 100%;
-  max-width: 600px;
-  border: 3px solid #000;
-  padding: 3rem;
-  text-align: center;
-  background: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+/* scoped 樣式中的列印相關設定已移至全域樣式 */
 
-.item-name {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  color: #1f2937;
-}
-
-.qr-serial-number {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #059669;
-  margin-bottom: 2rem;
-  padding: 0.5rem 1rem;
-  background: #ecfdf5;
-  border: 2px solid #059669;
-  border-radius: 8px;
-  display: inline-block;
-}
-
-.qr-code-section {
-  margin: 2rem 0;
-}
-
-.qr-image {
-  width: 200px;
-  height: 200px;
-  margin: 0 auto;
-  display: block;
-}
-
-.qr-image-placeholder {
-  width: 200px;
-  height: 200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed #ccc;
-  border-radius: 8px;
-}
-
-.item-details {
-  font-size: 1.125rem;
-  line-height: 1.6;
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  margin: 1rem 0;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.info-row .label {
-  font-weight: 600;
-  color: #374151;
-}
-
-.info-row .value {
-  font-weight: 500;
-  color: #111827;
-}
-
-.qr-data-text {
-  font-family: 'Courier New', monospace;
-  font-weight: bold !important;
-  color: #dc2626 !important;
-  background: #fef2f2;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #fecaca;
-}
-
-.label-number {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #1f2937;
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: #f3f4f6;
-  border-radius: 8px;
-}
-
-/* 列印專用樣式 */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-  
-  .print-page {
-    page-break-after: always;
-    min-height: 100vh;
-    height: 100vh;
-    padding: 1cm;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: none;
-  }
-  
-  .print-page:last-child {
-    page-break-after: avoid;
-  }
-  
-  .label-container {
-    max-width: none;
-    width: 90%;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-shadow: none;
-    border: 3px solid #000 !important;
-  }
-  
-  .qr-image {
-    width: 150px !important;
-    height: 150px !important;
-  }
-  
-  .item-name {
-    font-size: 1.5rem !important;
-  }
-  
-  .item-details {
-    font-size: 1rem !important;
-  }
-  
-  .info-row {
-    margin: 0.3rem 0 !important;
-  }
-  
-  @page {
-    size: A4;
-    margin: 1cm;
-  }
-  
-  body {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-  
-  /* 確保列印時每頁只顯示一個標籤 */
-  .print-content {
-    overflow: visible !important;
-    height: auto !important;
-  }
-}
-
-/* 螢幕預覽時的分頁效果 */
-.page-break {
-  border-bottom: 2px dashed #ccc;
-  margin-bottom: 2rem;
-}
+/* 移除不需要的分頁樣式 */
 </style>
