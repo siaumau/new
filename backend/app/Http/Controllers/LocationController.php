@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Location;
 use App\Models\QrCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LocationController extends Controller
 {
@@ -268,18 +269,17 @@ class LocationController extends Controller
             'locations.*.sub_area_code.required' => 'sub_area_code 不能為空',
         ]);
 
-        $locations = [];
         $errors = [];
-        $skipped = [];
         $uniqueCombinations = []; // 用於跟蹤唯一的組合
 
+        // 第一步：檢查所有資料的錯誤，不進行任何寫入操作
         foreach ($request->locations as $index => $locationData) {
             // 獲取必要的欄位值
             $buildingCode = $locationData['building_code'] ?? '';
             $storageTypeCode = $locationData['storage_type_code'] ?? '';
             $subAreaCode = $locationData['sub_area_code'] ?? '';
 
-            // 驗證組合是否重複
+            // 驗證組合是否在CSV中重複
             $combination = $buildingCode . '-' . $storageTypeCode . '-' . $subAreaCode;
             if (in_array($combination, $uniqueCombinations)) {
                 $errors[] = [
@@ -306,41 +306,74 @@ class LocationController extends Controller
                 continue;
             }
 
-            try {
-                // 檢查 location_code 是否已存在
+            // 檢查 location_code 是否已存在
+            if (isset($locationData['location_code'])) {
                 $existingLocation = Location::where('location_code', $locationData['location_code'])->first();
                 
                 if ($existingLocation) {
-                    $skipped[] = [
+                    $errors[] = [
                         'index' => $index,
                         'location_code' => $locationData['location_code'],
-                        'message' => '位置代碼已存在，已跳過'
+                        'error' => '位置代碼已存在於資料庫中'
                     ];
                     continue;
                 }
-
-                $location = Location::create($locationData);
-                $locations[] = $location;
-            } catch (\Exception $e) {
-                $errors[] = [
-                    'index' => $index,
-                    'location_code' => $locationData['location_code'] ?? null,
-                    'error' => $e->getMessage()
-                ];
             }
         }
 
-        $status = count($errors) > 0 ? 422 : 201;
+        // 如果有任何錯誤，返回錯誤訊息，不進行任何匯入
+        if (count($errors) > 0) {
+            return response()->json([
+                'message' => '匯入失敗：發現錯誤或重複資料',
+                'created_count' => 0,
+                'error_count' => count($errors),
+                'skipped_count' => 0,
+                'locations' => [],
+                'errors' => $errors,
+                'skipped' => []
+            ], 422);
+        }
+
+        // 第二步：所有資料都沒有錯誤，使用資料庫事務進行實際的匯入操作
+        $locations = [];
+        try {
+            DB::beginTransaction();
+            
+            foreach ($request->locations as $index => $locationData) {
+                $location = Location::create($locationData);
+                $locations[] = $location;
+            }
+            
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'message' => '匯入失敗：資料庫寫入錯誤',
+                'created_count' => 0,
+                'error_count' => 1,
+                'skipped_count' => 0,
+                'locations' => [],
+                'errors' => [
+                    [
+                        'index' => 0,
+                        'location_code' => '未知',
+                        'error' => $e->getMessage()
+                    ]
+                ],
+                'skipped' => []
+            ], 422);
+        }
 
         return response()->json([
-            'message' => '批量匯入完成',
+            'message' => '批量匯入成功',
             'created_count' => count($locations),
-            'error_count' => count($errors),
-            'skipped_count' => count($skipped),
+            'error_count' => 0,
+            'skipped_count' => 0,
             'locations' => $locations,
-            'errors' => $errors,
-            'skipped' => $skipped
-        ], $status);
+            'errors' => [],
+            'skipped' => []
+        ], 201);
     }
 
     /**
