@@ -728,6 +728,46 @@ const generateAndDownloadHTML = async (qrCodes) => {
             .no-print {
                 display: none !important;
             }
+            
+            .label {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+            }
+            
+            .qr-code {
+                flex: 0 0 50% !important;
+                margin-right: 2rem !important;
+                text-align: center !important;
+            }
+            
+            .qr-code img {
+                width: 80% !important;
+                height: auto !important;
+                max-width: 300px !important;
+            }
+            
+            .item-info {
+                flex: 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            
+            .item-name {
+                text-align: left !important;
+            }
+            
+            .info-row {
+                margin: 0.5rem 0 !important;
+                padding: 0.25rem 0 !important;
+            }
+            
+            .label-number {
+                margin: 1rem 0 !important;
+                padding: 0.75rem !important;
+                font-size: 1.1rem !important;
+            }
         }
         
         body {
@@ -744,10 +784,8 @@ const generateAndDownloadHTML = async (qrCodes) => {
             box-sizing: border-box;
             padding: 2rem;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            flex-direction: row;
             align-items: center;
-            text-align: center;
             page-break-after: always;
         }
         
@@ -756,25 +794,29 @@ const generateAndDownloadHTML = async (qrCodes) => {
         }
         
         .qr-code {
-            margin: 2rem 0;
+            flex: 0 0 50%;
+            margin-right: 3rem;
+            text-align: center;
         }
         
         .qr-code img {
-            width: 200px;
-            height: 200px;
+            width: 80%;
+            height: auto;
+            max-width: 300px;
         }
         
         .item-info {
+            flex: 1;
             font-size: 1.125rem;
-            margin: 1rem 0;
             line-height: 1.6;
         }
         
         .item-name {
             font-size: 2rem;
             font-weight: bold;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             color: #1f2937;
+            text-align: left;
         }
         
         .info-row {
@@ -798,11 +840,13 @@ const generateAndDownloadHTML = async (qrCodes) => {
         .label-number {
             font-size: 1.25rem;
             font-weight: bold;
-            color: #1f2937;
             margin: 1.5rem 0;
             padding: 1rem;
-            background: #f3f4f6;
             border-radius: 8px;
+            text-align: center;
+            border: 2px solid #059669;
+            background: #ecfdf5;
+            color: #059669;
         }
         
         .print-controls {
@@ -829,6 +873,24 @@ const generateAndDownloadHTML = async (qrCodes) => {
         .print-btn:hover {
             background: #059669;
         }
+        
+        /* 響應式設計 - 只在螢幕顯示時生效 */
+        @media screen and (max-width: 600px) {
+            .label {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .qr-code {
+                flex: none;
+                margin-right: 0;
+                margin-bottom: 2rem;
+            }
+            
+            .item-info {
+                flex: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -841,13 +903,15 @@ const generateAndDownloadHTML = async (qrCodes) => {
     for (const qrCode of qrCodes) {
       htmlContent += `
     <div class="label">
-        <div class="item-name">${qrCode.item_info.item_name}</div>
-        
+        <!-- 左側QR碼區域 -->
         <div class="qr-code">
             <img src="${qrCode.qrImage}" alt="QR Code ${qrCode.serial}" />
         </div>
         
+        <!-- 右側文字資訊區域 -->
         <div class="item-info">
+            <div class="item-name">${qrCode.item_info.item_name}</div>
+            
             <div class="info-row">
                 <span class="label-text">商品序號:</span>
                 <span class="value">${qrCode.item_info.item_sn}</span>
