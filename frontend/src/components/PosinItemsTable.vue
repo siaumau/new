@@ -844,9 +844,6 @@ const generateAndDownloadHTML = async (qrCodes) => {
             padding: 1rem;
             border-radius: 8px;
             text-align: center;
-            border: 2px solid #059669;
-            background: #ecfdf5;
-            color: #059669;
         }
         
         .print-controls {
