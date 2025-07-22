@@ -7,6 +7,7 @@ import QrCodeView from '../views/QrCodeView.vue'
 import QRCodePrintView from '../views/QRCodePrintView.vue'
 import MovementHistoryView from '../views/MovementHistoryView.vue'
 import ScanPlaceView from '../views/ScanPlaceView.vue'
+import ItemsView from '../views/ItemsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -55,6 +56,11 @@ const router = createRouter({
       path: '/products',
       name: 'products',
       component: () => import('../views/ProductsView.vue')
+    },
+    {
+      path: '/items',
+      name: 'items',
+      component: ItemsView
     }
   ]
 })

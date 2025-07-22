@@ -1,0 +1,20 @@
+{
+    "message": "批量匯入完成",
+    "created_count": 0,
+    "error_count": 2,
+    "skipped_count": 0,
+    "locations": [],
+    "errors": [
+        {
+            "index": 0,
+            "location_code": "CH-Area-A001",
+            "error": "資料庫中已存在相同的 building_code, storage_type_code, 和 sub_area_code 組合"
+        },
+        {
+            "index": 1,
+            "location_code": "TP-Shelf-S001",
+            "error": "資料庫中已存在相同的 building_code, storage_type_code, 和 sub_area_code 組合"
+        }
+    ],
+    "skipped": []
+}

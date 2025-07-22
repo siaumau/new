@@ -3,7 +3,8 @@
     "allow": [
       "Bash(php artisan migrate:*)",
       "Bash(php artisan:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(php:*)"
     ],
     "deny": []
   }

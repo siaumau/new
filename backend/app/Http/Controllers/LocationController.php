@@ -267,8 +267,50 @@ class LocationController extends Controller
         $locations = [];
         $errors = [];
         $skipped = [];
+        $uniqueCombinations = []; // 用於跟蹤唯一的組合
 
         foreach ($request->locations as $index => $locationData) {
+            // 驗證 building_code, storage_type_code, sub_area_code 是否為空
+            $buildingCode = $locationData['building_code'] ?? '';
+            $storageTypeCode = $locationData['storage_type_code'] ?? '';
+            $subAreaCode = $locationData['sub_area_code'] ?? '';
+
+            if (empty($buildingCode) || empty($storageTypeCode) || empty($subAreaCode)) {
+                $errors[] = [
+                    'index' => $index,
+                    'location_code' => $locationData['location_code'] ?? null,
+                    'error' => 'building_code, storage_type_code, 和 sub_area_code 不能為空'
+                ];
+                continue;
+            }
+
+            // 驗證組合是否重複
+            $combination = $buildingCode . '-' . $storageTypeCode . '-' . $subAreaCode;
+            if (in_array($combination, $uniqueCombinations)) {
+                $errors[] = [
+                    'index' => $index,
+                    'location_code' => $locationData['location_code'] ?? null,
+                    'error' => 'CSV中重複的 building_code, storage_type_code, 和 sub_area_code 組合'
+                ];
+                continue;
+            }
+            $uniqueCombinations[] = $combination;
+
+            // 檢查資料庫中是否已存在相同的組合
+            $existingCombination = Location::where('building_code', $buildingCode)
+                                           ->where('storage_type_code', $storageTypeCode)
+                                           ->where('sub_area_code', $subAreaCode)
+                                           ->first();
+
+            if ($existingCombination) {
+                $errors[] = [
+                    'index' => $index,
+                    'location_code' => $locationData['location_code'] ?? null,
+                    'error' => '資料庫中已存在相同的 building_code, storage_type_code, 和 sub_area_code 組合'
+                ];
+                continue;
+            }
+
             try {
                 // 檢查 location_code 是否已存在
                 $existingLocation = Location::where('location_code', $locationData['location_code'])->first();
@@ -293,6 +335,8 @@ class LocationController extends Controller
             }
         }
 
+        $status = count($errors) > 0 ? 422 : 201;
+
         return response()->json([
             'message' => '批量匯入完成',
             'created_count' => count($locations),
@@ -301,7 +345,7 @@ class LocationController extends Controller
             'locations' => $locations,
             'errors' => $errors,
             'skipped' => $skipped
-        ], 201);
+        ], $status);
     }
 
     /**
