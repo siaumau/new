@@ -255,13 +255,17 @@ class LocationController extends Controller
             'locations.*.floor_number' => 'required|string|max:10',
             'locations.*.floor_area_code' => 'nullable|string|max:10',
             'locations.*.storage_type_code' => 'required|string|max:20',
-            'locations.*.sub_area_code' => 'nullable|string|max:10',
-            'locations.*.position_code' => 'required|string|max:20',
+            'locations.*.sub_area_code' => 'required|string|max:10',
+            'locations.*.position_code' => 'nullable|string|max:20',
             'locations.*.capacity' => 'nullable|integer',
             'locations.*.current_stock' => 'nullable|integer',
             'locations.*.qr_code_data' => 'nullable|string',
             'locations.*.notes' => 'nullable|string',
             'locations.*.is_active' => 'nullable|boolean',
+        ], [
+            'locations.*.building_code.required' => 'building_code 不能為空',
+            'locations.*.storage_type_code.required' => 'storage_type_code 不能為空',
+            'locations.*.sub_area_code.required' => 'sub_area_code 不能為空',
         ]);
 
         $locations = [];
@@ -270,19 +274,10 @@ class LocationController extends Controller
         $uniqueCombinations = []; // 用於跟蹤唯一的組合
 
         foreach ($request->locations as $index => $locationData) {
-            // 驗證 building_code, storage_type_code, sub_area_code 是否為空
+            // 獲取必要的欄位值
             $buildingCode = $locationData['building_code'] ?? '';
             $storageTypeCode = $locationData['storage_type_code'] ?? '';
             $subAreaCode = $locationData['sub_area_code'] ?? '';
-
-            if (empty($buildingCode) || empty($storageTypeCode) || empty($subAreaCode)) {
-                $errors[] = [
-                    'index' => $index,
-                    'location_code' => $locationData['location_code'] ?? null,
-                    'error' => 'building_code, storage_type_code, 和 sub_area_code 不能為空'
-                ];
-                continue;
-            }
 
             // 驗證組合是否重複
             $combination = $buildingCode . '-' . $storageTypeCode . '-' . $subAreaCode;

@@ -379,11 +379,11 @@ const saveLocation = async () => {
 
 // 下載CSV模板
 const downloadTemplate = () => {
-  // CSV模板內容（簡約版）
+  // CSV模板內容（三個必填欄位）
   const csvContent = [
-    'building_code,storage_type_code,sub_area_code,notes',
-    'CH,S,C201,彰化層架區',
-    'TP,A,S101,台北區域'
+    'building_code,storage_type_code,sub_area_code',
+    'CH,Shelf,C201',
+    'TP,Area,S101'
   ].join('\n');
 
   // 添加BOM以支援Excel正確顯示繁體中文
@@ -433,20 +433,19 @@ const handleFileImport = async (event) => {
                   // 解析CSV行（處理可能包含逗號的欄位）
       const columns = parseCSVLine(line);
 
-      if (columns.length < 4) {
-        alert(`第 ${i + 2} 行資料格式錯誤，請檢查CSV格式`);
+      if (columns.length < 3) {
+        alert(`第 ${i + 2} 行資料格式錯誤，請檢查CSV格式（需要3個欄位：building_code, storage_type_code, sub_area_code）`);
         return;
       }
 
-      // 根據簡約模板格式解析資料
+      // CSV 格式：building_code, storage_type_code, sub_area_code (三個必填欄位)
       const building_code = columns[0].trim();
       const storage_type_code = columns[1].trim();
       const sub_area_code = columns[2].trim();
-      const notes = columns[3].trim() || null;
 
-            // 生成位置代碼和名稱
-      const location_code = `${building_code}-${storage_type_code === 'S' ? 'Shelf' : 'Area'}-${sub_area_code}`;
-      const location_name = `${building_code}-${storage_type_code === 'S' ? '層架' : '棧板'}-${sub_area_code}`;
+      // 生成位置代碼和名稱
+      const location_code = `${building_code}-${storage_type_code}-${sub_area_code}`;
+      const location_name = `${building_code}-${storage_type_code}-${sub_area_code}`;
 
       const locationData = {
         location_code: location_code,
@@ -454,13 +453,13 @@ const handleFileImport = async (event) => {
         building_code: building_code,
         floor_number: '1',
         floor_area_code: '01',
-        storage_type_code: storage_type_code === 'S' ? 'Shelf' : 'Area',
+        storage_type_code: storage_type_code,
         sub_area_code: sub_area_code,
-        position_code: sub_area_code, // 使用sub_area_code作為position_code
+        position_code: sub_area_code || location_code, // 使用sub_area_code作為position_code，如果為空則使用location_code
         capacity: 100, // 預設容量
         current_stock: 0,
         qr_code_data: location_code,
-        notes: notes,
+        notes: null, // 不使用notes欄位
         is_active: true
       };
 
@@ -504,6 +503,40 @@ const parseCSVLine = (line) => {
   return result;
 };
 
+// 生成並下載錯誤報告
+const generateAndDownloadErrorReport = async (errors) => {
+  const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+  const filename = `locations_import_errors_${timestamp}.txt`;
+  
+  let errorReport = `位置批量匯入錯誤報告\n`;
+  errorReport += `生成時間: ${new Date().toLocaleString('zh-TW')}\n`;
+  errorReport += `錯誤總數: ${errors.length}\n`;
+  errorReport += `${'='.repeat(50)}\n\n`;
+  
+  errors.forEach((error, index) => {
+    errorReport += `錯誤 ${index + 1}:\n`;
+    errorReport += `  CSV行號: ${error.index + 1}\n`;
+    errorReport += `  位置代碼: ${error.location_code || '未指定'}\n`;
+    errorReport += `  錯誤內容: ${error.error}\n`;
+    errorReport += `\n`;
+  });
+  
+  errorReport += `${'='.repeat(50)}\n`;
+  errorReport += `請檢查上述錯誤並修正CSV檔案後重新匯入。\n`;
+  
+  // 創建並下載文件
+  const blob = new Blob([errorReport], { type: 'text/plain;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
 // 批量匯入位置資料
 const importLocations = async (locations) => {
   loading.value = true;
@@ -529,6 +562,58 @@ const importLocations = async (locations) => {
 
     if (!response.ok) {
       console.error('API錯誤詳情:', result);
+      
+      // 處理 422 錯誤響應，顯示詳細錯誤信息
+      if (response.status === 422 && result.errors) {
+        // 檢查是否為數組格式的錯誤 (LocationController 的格式)
+        if (Array.isArray(result.errors) && result.errors.length > 0) {
+          await generateAndDownloadErrorReport(result.errors);
+          
+          // 顯示詳細錯誤信息
+          let errorSummary = `匯入失敗，共發現 ${result.error_count} 個錯誤：\n\n`;
+          result.errors.forEach((err, index) => {
+            // CSV 第2行是第1筆資料，所以 err.index + 1
+            errorSummary += `${index + 1}. 第${err.index + 1}行 (${err.location_code}): ${err.error}\n`;
+          });
+          errorSummary += `\n錯誤報告已自動下載到您的電腦`;
+          
+          throw new Error(errorSummary);
+        }
+        // 檢查是否為對象格式的錯誤 (Laravel 驗證錯誤格式)
+        else if (typeof result.errors === 'object' && Object.keys(result.errors).length > 0) {
+          const validationErrors = [];
+          Object.keys(result.errors).forEach(key => {
+            const fieldErrors = result.errors[key];
+            if (Array.isArray(fieldErrors)) {
+              fieldErrors.forEach(errorMsg => {
+                // 從 key 中提取索引，例如 "locations.1.position_code" -> 索引 1
+                const indexMatch = key.match(/locations\.(\d+)\./);
+                const index = indexMatch ? parseInt(indexMatch[1]) : 0;
+                const fieldName = key.replace(/^locations\.\d+\./, '');
+                
+                validationErrors.push({
+                  index: index,
+                  location_code: `第${index + 1}筆`,
+                  error: `${fieldName} 不能為空`
+                });
+              });
+            }
+          });
+          
+          if (validationErrors.length > 0) {
+            await generateAndDownloadErrorReport(validationErrors);
+            
+            let errorSummary = `匯入失敗，共發現 ${validationErrors.length} 個驗證錯誤：\n\n`;
+            validationErrors.forEach((err, index) => {
+              errorSummary += `${index + 1}. ${err.location_code} - ${err.error}\n`;
+            });
+            errorSummary += `\n錯誤報告已自動下載到您的電腦`;
+            
+            throw new Error(errorSummary);
+          }
+        }
+      }
+      
       throw new Error(`HTTP error! status: ${response.status}, message: ${result.message || '未知錯誤'}`);
     }
 
