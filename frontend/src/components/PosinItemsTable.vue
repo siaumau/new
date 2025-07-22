@@ -925,8 +925,9 @@ const generateAndDownloadHTML = async (qrCodes) => {
                 <span class="label-text">有效期限:</span>
                 <span class="value">${formatDate(qrCode.item_info.item_expireday)}</span>
             </div>
-            <div class="label-number">
-                標籤: ${qrCodes.length}箱之${qrCode.serial}
+            <div class="info-row">
+                <span class="label-text">標籤:</span>
+                <span class="value"> ${qrCodes.length}箱之${qrCode.serial}</span>
             </div>
             ${qrCode.item_info.posin_note ? `<div class="info-row"><span class="label-text">備註:</span><span class="value">${qrCode.item_info.posin_note}</span></div>` : ''}
         </div>
