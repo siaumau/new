@@ -1129,7 +1129,7 @@ const executeSinglePrint = async (template = 'template1') => {
               }
             }
             @page {
-              size: A4;
+              size: A4 landscape;
               margin: 0.5cm;
             }
           </style>
@@ -1280,7 +1280,7 @@ const executeBatchPrint = async (template = 'template1') => {
               }
             }
             @page {
-              size: A4;
+              size: A4 landscape;
               margin: 0.5cm;
             }
           </style>
