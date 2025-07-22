@@ -288,10 +288,50 @@ const showDetails = async (location) => {
 
 // 顯示 QR Code
 const showQRCode = (location) => {
+  if (!location) {
+    console.error('Location is null or undefined');
+    alert('選擇的位置資料有誤，請重試');
+    return;
+  }
+  
   selectedLocation.value = location;
-  // 生成 QR Code URL (這裡使用 qr-server.com 作為示例)
-  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(location.qrData)}`;
+  // 確保有 qrData 屬性，如果沒有則使用 code 作為替代
+  const qrData = location.qrData || location.code || location.location_code || '';
+  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
   showQRModal.value = true;
+};
+
+// 單個 QR Code 列印 - 顯示模板選擇
+const showSinglePrintTemplate = (location) => {
+  if (!location) {
+    console.error('Location is null or undefined');
+    alert('選擇的位置資料有誤，請重試');
+    return;
+  }
+  
+  selectedLocation.value = location;
+  // 確保有 qrData 屬性，如果沒有則使用 code 作為替代
+  const qrData = location.qrData || location.code || location.location_code || '';
+  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+  showPrintTemplateModal.value = true;
+};
+
+// 處理從 Modal 中點擊列印
+const handlePrintFromModal = () => {
+  if (!selectedLocation.value) {
+    alert('沒有選擇的位置資料');
+    return;
+  }
+  
+  // 保存當前選擇的位置，因為 closeModal 會清空它
+  const locationToSave = selectedLocation.value;
+  
+  // 關閉當前 Modal
+  closeModal();
+  
+  // 重新設置位置並顯示模板選擇
+  selectedLocation.value = locationToSave;
+  showPrintTemplateModal.value = true;
 };
 
 // 編輯位置
@@ -951,8 +991,183 @@ const batchPrintQRCodes = async () => {
 };
 
 const handleTemplateSelected = (template) => {
+  console.log('Template selected:', template);
+  console.log('selectedLocations size:', selectedLocations.value.size);
+  console.log('selectedLocation:', selectedLocation.value);
+  
   showPrintTemplateModal.value = false;
-  executeBatchPrint(template);
+  
+  // 檢查是單個列印還是批次列印
+  if (selectedLocations.value.size > 0) {
+    console.log('執行批次列印');
+    // 批次列印
+    executeBatchPrint(template);
+  } else if (selectedLocation.value) {
+    console.log('執行單個列印');
+    // 單個列印
+    executeSinglePrint(template);
+  } else {
+    console.log('沒有選擇的位置');
+    alert('沒有選擇的位置資料');
+  }
+};
+
+// 執行單個列印
+const executeSinglePrint = async (template = 'template1') => {
+  console.log('executeSinglePrint called with template:', template);
+  console.log('selectedLocation:', selectedLocation.value);
+  
+  if (!selectedLocation.value) {
+    console.log('selectedLocation is null, returning');
+    return;
+  }
+  
+  try {
+    // 確保 qrCodeUrl 已設置
+    if (!qrCodeUrl.value) {
+      const qrData = selectedLocation.value.qrData || selectedLocation.value.code || selectedLocation.value.location_code || '';
+      qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+      console.log('Generated qrCodeUrl:', qrCodeUrl.value);
+    }
+    // 創建單個位置的列印內容
+    const printContent = `
+      <html>
+        <head>
+          <title>位置 QR Code - ${selectedLocation.value.code}</title>
+          <style>
+            body {
+              font-family: 'Microsoft JhengHei', Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+              background: white;
+            }
+            .qr-page {
+              width: 100%;
+              height: 100vh;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              page-break-after: always;
+              page-break-inside: avoid;
+              padding: 20px;
+              box-sizing: border-box;
+            }
+            .qr-container {
+              width: 100%;
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              text-align: center;
+              background: white;
+            }
+            .qr-container.template2 {
+              flex-direction: row;
+              text-align: left;
+            }
+            .qr-title {
+              font-size: 3rem;
+              font-weight: bold;
+              margin-bottom: 20px;
+              color: #333;
+            }
+            .qr-title.shelf-size {
+              font-size: 1.5rem; /* 縮小一半 */
+            }
+            .qr-subtitle {
+              font-size: 2rem;
+              color: #666;
+              margin-bottom: 30px;
+            }
+            .qr-subtitle.shelf-size {
+              font-size: 1rem; /* 縮小一半 */
+            }
+            .qr-image {
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+              height: 100%;
+            }
+            .qr-image.template2 {
+              flex: 0 0 40%;
+              justify-content: flex-start;
+            }
+            .qr-image img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+            .qr-details.template2 {
+              flex: 1;
+              padding-left: 20px;
+            }
+            .qr-info {
+              margin-top: 15px;
+              font-size: 1rem;
+              color: #888;
+            }
+            @media print {
+              body { margin: 0; padding: 0; }
+              .qr-page { 
+                page-break-after: always; 
+                height: 100vh;
+                padding: 0;
+              }
+              .qr-container { 
+                width: 100%;
+                height: 100%;
+                box-shadow: none;
+              }
+              .qr-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+              }
+            }
+            @page {
+              size: A4;
+              margin: 0.5cm;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="qr-page">
+            <div class="qr-container ${template === 'template2' ? 'template2' : ''}">
+              <div class="qr-image ${template === 'template2' ? 'template2' : ''}">
+                <img src="${qrCodeUrl.value}" alt="QR Code" />
+              </div>
+              <div class="qr-details ${template === 'template2' ? 'template2' : ''}">
+                <div class="qr-title ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.code}</div>
+                <div class="qr-subtitle ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.name}</div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // 創建新視窗並列印
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+
+      // 等待圖片載入完成後執行列印
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 1000);
+      };
+    }
+  } catch (error) {
+    console.error('單個列印失敗:', error);
+    alert('單個列印失敗: ' + error.message);
+  }
 };
 
 // 執行實際的批次列印
@@ -1564,7 +1779,7 @@ onMounted(() => {
             關閉
           </button>
           <button
-            @click="printQRCode"
+            @click="handlePrintFromModal"
             class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
           >
             列印
