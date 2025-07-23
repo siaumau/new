@@ -717,8 +717,7 @@ const generateAndDownloadHTML = async (qrCodes) => {
     <style>
         @media print {
             @page {
-                size: A4 landscape;
-                margin: 0.5cm;
+                size: 40mm 30mm;
             }
             
             .page-break {
@@ -780,7 +779,6 @@ const generateAndDownloadHTML = async (qrCodes) => {
         .label {
             width: 100%;
             min-height: 100vh;
-            border: 3px solid #000;
             box-sizing: border-box;
             padding: 2rem;
             display: flex;

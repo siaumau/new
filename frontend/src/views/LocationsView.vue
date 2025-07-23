@@ -1111,6 +1111,7 @@ const executeSinglePrint = async (template = 'template1') => {
               color: #888;
             }
             @media print {
+              
               body { margin: 0; padding: 0; }
               .qr-page { 
                 page-break-after: always; 
@@ -1129,8 +1130,7 @@ const executeSinglePrint = async (template = 'template1') => {
               }
             }
             @page {
-              size: A4 landscape;
-              margin: 0.5cm;
+              size: 95mm 95mm;
             }
           </style>
         </head>
@@ -1280,8 +1280,7 @@ const executeBatchPrint = async (template = 'template1') => {
               }
             }
             @page {
-              size: A4 landscape;
-              margin: 0.5cm;
+              size: 95mm 95mm;
             }
           </style>
         </head>
