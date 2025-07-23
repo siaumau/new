@@ -443,8 +443,8 @@ const downloadTemplate = () => {
   // CSV模板內容（三個必填欄位）
   const csvContent = [
     'building_code,storage_type_code,sub_area_code',
-    'CH,Shelf,C201',
-    'TP,Area,S101'
+    'CH,S,C201',
+    'TP,A,S101'
   ].join('\n');
 
   // 添加BOM以支援Excel正確顯示繁體中文
