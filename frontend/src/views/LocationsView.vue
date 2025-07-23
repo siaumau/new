@@ -1100,9 +1100,7 @@ const executeSinglePrint = async (template = 'template1') => {
 
               text-align: center;
             }
-            .qr-title.shelf-size {
-              font-size: 1.2rem; /* 層架標題更小 */
-            }
+
             .qr-subtitle {
               font-size: 2rem;
               color: #666;
@@ -1197,8 +1195,8 @@ const executeSinglePrint = async (template = 'template1') => {
               <div class="qr-image ${template === 'template2' ? 'template2' : ''}">
                 <img src="${qrCodeUrl.value}" alt="QR Code" />
               </div>
-              <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: ${selectedLocation.value.storageType === 'Shelf' ? '-30px' : '-50px'};">
-                <div class="qr-title ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${transformLocationCode(selectedLocation.value.code)}</div>
+              <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: -50px;">
+                <div class="qr-title">${transformLocationCode(selectedLocation.value.code)}</div>
               </div>
             </div>
           </div>
@@ -1212,10 +1210,11 @@ const executeSinglePrint = async (template = 'template1') => {
       printWindow.document.write(printContent);
       printWindow.document.close();
 
-      // 只顯示預覽，不自動列印
+      // 預覽載入完成後自動觸發列印對話框
       printWindow.onload = () => {
-        // 預覽視窗載入完成，用戶可以在預覽中選擇列印
-        console.log('預覽視窗已載入完成');
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
       };
     }
   } catch (error) {
@@ -1381,8 +1380,8 @@ const executeBatchPrint = async (template = 'template1') => {
                 <div class="qr-image ${template === 'template2' ? 'template2' : ''}">
                   <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(transformLocationCode(location.qrData || location.code || location.location_code || ''))}" alt="QR Code" />
                 </div>
-                <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: ${location.storageType === 'Shelf' ? '-30px' : '-50px'};">
-                  <div class="qr-title ${location.storageType === 'Shelf' ? 'shelf-size' : ''}">${transformLocationCode(location.code)}</div>
+                <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: -50px;">
+                  <div class="qr-title">${transformLocationCode(location.code)}</div>
                 </div>
               </div>
             </div>
@@ -1397,10 +1396,11 @@ const executeBatchPrint = async (template = 'template1') => {
       printWindow.document.write(printContent);
       printWindow.document.close();
 
-      // 只顯示預覽，不自動列印
+      // 預覽載入完成後自動觸發列印對話框
       printWindow.onload = () => {
-        // 預覽視窗載入完成，用戶可以在預覽中選擇列印
-        console.log('批次列印預覽視窗已載入完成');
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
         
         // 清空選取狀態（在預覽視窗打開後立即清空）
         selectedLocations.value.clear();
