@@ -839,7 +839,6 @@ const printQRCode = () => {
       <body>
         <div class="qr-container">
           <div class="qr-title ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.code}</div>
-          <div class="qr-subtitle ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.name}</div>
           <div class="qr-image">
             <img src="${qrCodeUrl.value}" alt="QR Code" style="width: 100%; height: 100%;" />
           </div>
@@ -1090,11 +1089,11 @@ const executeSinglePrint = async (template = 'template1') => {
               padding-top: 0px;
             }
             .qr-container.template2 {
-              flex-direction: row;
-              text-align: left;
+              flex-direction: column;
+              text-align: center;
             }
             .qr-title {
-              font-size: 3rem;
+              font-size: 2rem;
               font-weight: bold;
               margin: 0 auto 10px auto;
               color: #333;
@@ -1102,7 +1101,7 @@ const executeSinglePrint = async (template = 'template1') => {
               text-align: center;
             }
             .qr-title.shelf-size {
-              font-size: 1.5rem; /* 縮小一半 */
+              font-size: 1.2rem; /* 層架標題更小 */
             }
             .qr-subtitle {
               font-size: 2rem;
@@ -1112,7 +1111,7 @@ const executeSinglePrint = async (template = 'template1') => {
               text-align: center;
             }
             .qr-subtitle.shelf-size {
-              font-size: 1rem; /* 縮小一半 */
+              font-size: 0.8rem; /* 層架副標題更小 */
             }
             .qr-image {
               flex: 0 0 auto;
@@ -1125,9 +1124,21 @@ const executeSinglePrint = async (template = 'template1') => {
               margin-bottom: -30px;
             }
             .qr-image.template2 {
-              flex: 0 0 40%;
-              justify-content: flex-start;
+              flex: 0 0 auto;
+              justify-content: center;
+              width: 80%;
+              margin: 0 auto;
             }
+            .qr-image.template2 img {
+              width: 100%;
+              height: auto;
+              max-height: 70%;
+              object-fit: contain;
+              margin-top:10px;
+            }   
+  
+
+                     
             .qr-image img {
               width: 70%;
               height: 100%;
@@ -1135,8 +1146,9 @@ const executeSinglePrint = async (template = 'template1') => {
               object-fit: contain;
             }
             .qr-details.template2 {
-              flex: 1;
-              padding-left: 20px;
+              flex: 0 0 auto;
+              padding: 10px 0;
+              text-align: center;
             }
             .qr-info {
               margin-top: 15px;
@@ -1144,6 +1156,11 @@ const executeSinglePrint = async (template = 'template1') => {
               color: #888;
             }
             @media print {
+
+           .template2 .qr-title  {
+                  font-size: 10px;
+            } 
+
               body { margin: 0; padding: 0; }
               .qr-page { 
                 page-break-after: always; 
@@ -1180,9 +1197,8 @@ const executeSinglePrint = async (template = 'template1') => {
               <div class="qr-image ${template === 'template2' ? 'template2' : ''}">
                 <img src="${qrCodeUrl.value}" alt="QR Code" />
               </div>
-              <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: -40px;">
+              <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: ${selectedLocation.value.storageType === 'Shelf' ? '-30px' : '-50px'};">
                 <div class="qr-title ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${transformLocationCode(selectedLocation.value.code)}</div>
-              
               </div>
             </div>
           </div>
@@ -1254,8 +1270,8 @@ const executeBatchPrint = async (template = 'template1') => {
               padding-top: 0px;
             }
             .qr-container.template2 {
-              flex-direction: row;
-              text-align: left;
+              flex-direction: column;
+              text-align: center;
             }
             .qr-title {
               font-size: 2rem;
@@ -1265,7 +1281,7 @@ const executeBatchPrint = async (template = 'template1') => {
               text-align: center;
             }
             .qr-title.shelf-size {
-              font-size: 1.5rem; /* 縮小一半 */
+              font-size: 1.2rem; /* 層架標題更小 */
             }
             .qr-subtitle {
               font-size: 2rem;
@@ -1275,7 +1291,7 @@ const executeBatchPrint = async (template = 'template1') => {
               text-align: center;
             }
             .qr-subtitle.shelf-size {
-              font-size: 1rem; /* 縮小一半 */
+              font-size: 0.8rem; /* 層架副標題更小 */
             }
             .qr-image {
               flex: 0 0 auto;
@@ -1284,22 +1300,32 @@ const executeBatchPrint = async (template = 'template1') => {
               justify-content: center;
               width: 100%;
               height: 100%;
-              margin-top:1rem;
               margin-bottom: -30px;
             }
             .qr-image.template2 {
-              flex: 0 0 40%;
-              justify-content: flex-start;
+              flex: 0 0 auto;
+              justify-content: center;
+              width: 80%;
+              margin: 0 auto;
             }
+            .qr-image.template2 img {
+              width: 100%;
+              height: auto;
+              max-height: 70%;
+              object-fit: contain;
+              margin-top:10px;
+            }
+
             .qr-image img {
               width: 70%;
               height: 100%;
-              max-height: 60%;
+              max-height: 80%;
               object-fit: contain;
             }
             .qr-details.template2 {
-              flex: 1;
-              padding-left: 20px;
+              flex: 0 0 auto;
+              padding: 10px 0;
+              text-align: center;
             }
             .qr-info {
               margin-top: 15px;
@@ -1307,6 +1333,13 @@ const executeBatchPrint = async (template = 'template1') => {
               color: #888;
             }
             @media print {
+              .qr-title{
+                font-size:2rem;
+                margin-top:20px;
+              }  
+           .template2 .qr-title  {
+                  font-size: 10px;
+            }                           
               body { margin: 0; padding: 0; }
               .qr-page { 
                 page-break-after: always; 
@@ -1325,7 +1358,7 @@ const executeBatchPrint = async (template = 'template1') => {
               .qr-image img {
                 width: 70%;
                 height: 100%;
-                max-height: 60%;
+                max-height: 80%;
                 object-fit: contain;
                 border: none;
                 outline: none;
@@ -1348,9 +1381,8 @@ const executeBatchPrint = async (template = 'template1') => {
                 <div class="qr-image ${template === 'template2' ? 'template2' : ''}">
                   <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(transformLocationCode(location.qrData || location.code || location.location_code || ''))}" alt="QR Code" />
                 </div>
-                <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: -40px;">
+                <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: ${location.storageType === 'Shelf' ? '-30px' : '-50px'};">
                   <div class="qr-title ${location.storageType === 'Shelf' ? 'shelf-size' : ''}">${transformLocationCode(location.code)}</div>
-              
                 </div>
               </div>
             </div>
