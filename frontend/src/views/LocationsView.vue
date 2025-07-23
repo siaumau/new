@@ -286,6 +286,25 @@ const showDetails = async (location) => {
   showDetailsModal.value = true;
 };
 
+// 轉換位置代碼的函數
+const transformLocationCode = (code) => {
+  if (!code) return '';
+  
+  // 檢查是否符合 XX-X-XXXX 格式
+  const parts = code.split('-');
+  if (parts.length >= 3) {
+    const middlePart = parts[1];
+    if (middlePart === 'A') {
+      parts[1] = '棧板';
+    } else if (middlePart === 'S') {
+      parts[1] = '層架';
+    }
+    return parts.join('-');
+  }
+  
+  return code;
+};
+
 // 顯示 QR Code
 const showQRCode = (location) => {
   if (!location) {
@@ -296,8 +315,9 @@ const showQRCode = (location) => {
   
   selectedLocation.value = location;
   // 確保有 qrData 屬性，如果沒有則使用 code 作為替代
-  const qrData = location.qrData || location.code || location.location_code || '';
-  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+  const originalCode = location.qrData || location.code || location.location_code || '';
+  const transformedCode = transformLocationCode(originalCode);
+  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(transformedCode)}`;
   showQRModal.value = true;
 };
 
@@ -311,8 +331,9 @@ const showSinglePrintTemplate = (location) => {
   
   selectedLocation.value = location;
   // 確保有 qrData 屬性，如果沒有則使用 code 作為替代
-  const qrData = location.qrData || location.code || location.location_code || '';
-  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+  const originalCode = location.qrData || location.code || location.location_code || '';
+  const transformedCode = transformLocationCode(originalCode);
+  qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(transformedCode)}`;
   showPrintTemplateModal.value = true;
 };
 
@@ -784,8 +805,9 @@ const printQRCode = () => {
           .qr-title {
             font-size:2rem;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin: 0 auto 10px auto;
             color: #333;
+            text-align: center;
           }
           .qr-title.shelf-size {
             font-size: 1rem; /* 縮小一半 */
@@ -793,7 +815,9 @@ const printQRCode = () => {
           .qr-subtitle {
             font-size: 2.5rem;
             color: #666;
-            margin-bottom: 20px;
+            margin: 0 auto 10px auto;
+            width: 70%;
+            text-align: center;
           }
           .qr-subtitle.shelf-size {
             font-size: 1.25rem; /* 縮小一半 */
@@ -817,7 +841,7 @@ const printQRCode = () => {
           <div class="qr-title ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.code}</div>
           <div class="qr-subtitle ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.name}</div>
           <div class="qr-image">
-            <img src="${qrCodeUrl.value}" alt="QR Code" style="width: 100%; height: auto;" />
+            <img src="${qrCodeUrl.value}" alt="QR Code" style="width: 100%; height: 100%;" />
           </div>
         </div>
       </body>
@@ -1025,8 +1049,9 @@ const executeSinglePrint = async (template = 'template1') => {
   try {
     // 確保 qrCodeUrl 已設置
     if (!qrCodeUrl.value) {
-      const qrData = selectedLocation.value.qrData || selectedLocation.value.code || selectedLocation.value.location_code || '';
-      qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+      const originalCode = selectedLocation.value.qrData || selectedLocation.value.code || selectedLocation.value.location_code || '';
+      const transformedCode = transformLocationCode(originalCode);
+      qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(transformedCode)}`;
       console.log('Generated qrCodeUrl:', qrCodeUrl.value);
     }
     // 創建單個位置的列印內容
@@ -1058,10 +1083,11 @@ const executeSinglePrint = async (template = 'template1') => {
               height: 100%;
               display: flex;
               flex-direction: column;
-              justify-content: center;
+              justify-content: flex-start;
               align-items: center;
               text-align: center;
               background: white;
+              padding-top: 0px;
             }
             .qr-container.template2 {
               flex-direction: row;
@@ -1070,8 +1096,10 @@ const executeSinglePrint = async (template = 'template1') => {
             .qr-title {
               font-size: 3rem;
               font-weight: bold;
-              margin-bottom: 20px;
+              margin: 0 auto 10px auto;
               color: #333;
+
+              text-align: center;
             }
             .qr-title.shelf-size {
               font-size: 1.5rem; /* 縮小一半 */
@@ -1079,26 +1107,31 @@ const executeSinglePrint = async (template = 'template1') => {
             .qr-subtitle {
               font-size: 2rem;
               color: #666;
-              margin-bottom: 30px;
+              margin: 0 auto 10px auto;
+              width: 70%;
+              text-align: center;
             }
             .qr-subtitle.shelf-size {
               font-size: 1rem; /* 縮小一半 */
             }
             .qr-image {
-              flex: 1;
+              flex: 0 0 auto;
               display: flex;
-              align-items: center;
+              align-items: flex-start;
               justify-content: center;
-              width: 100%;
+              width: 70%;
               height: 100%;
+
+              margin-bottom: -30px;
             }
             .qr-image.template2 {
               flex: 0 0 40%;
               justify-content: flex-start;
             }
             .qr-image img {
-              width: 100%;
+              width: 70%;
               height: 100%;
+              max-height: 70%;
               object-fit: contain;
             }
             .qr-details.template2 {
@@ -1111,26 +1144,33 @@ const executeSinglePrint = async (template = 'template1') => {
               color: #888;
             }
             @media print {
-              
               body { margin: 0; padding: 0; }
               .qr-page { 
                 page-break-after: always; 
                 height: 100vh;
                 padding: 0;
+                border: none;
+                outline: none;
               }
               .qr-container { 
                 width: 100%;
                 height: 100%;
                 box-shadow: none;
+                border: none;
+                outline: none;
               }
               .qr-image img {
-                width: 100%;
+                width: 70%;
                 height: 100%;
-                object-fit: contain;
+                max-height: 70%;
+              }
+              .qr-details {
+                border: none;
+                outline: none;
               }
             }
             @page {
-              size: 95mm 95mm;
+              size: ${template === 'template1' ? '40mm 30mm' : '30mm 40mm'};
             }
           </style>
         </head>
@@ -1140,9 +1180,9 @@ const executeSinglePrint = async (template = 'template1') => {
               <div class="qr-image ${template === 'template2' ? 'template2' : ''}">
                 <img src="${qrCodeUrl.value}" alt="QR Code" />
               </div>
-              <div class="qr-details ${template === 'template2' ? 'template2' : ''}">
-                <div class="qr-title ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.code}</div>
-                <div class="qr-subtitle ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${selectedLocation.value.name}</div>
+              <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: -40px;">
+                <div class="qr-title ${selectedLocation.value.storageType === 'Shelf' ? 'shelf-size' : ''}">${transformLocationCode(selectedLocation.value.code)}</div>
+              
               </div>
             </div>
           </div>
@@ -1156,12 +1196,10 @@ const executeSinglePrint = async (template = 'template1') => {
       printWindow.document.write(printContent);
       printWindow.document.close();
 
-      // 等待圖片載入完成後執行列印
+      // 只顯示預覽，不自動列印
       printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-        }, 1000);
+        // 預覽視窗載入完成，用戶可以在預覽中選擇列印
+        console.log('預覽視窗已載入完成');
       };
     }
   } catch (error) {
@@ -1209,20 +1247,22 @@ const executeBatchPrint = async (template = 'template1') => {
               height: 100%;
               display: flex;
               flex-direction: column;
-              justify-content: center;
+              justify-content: flex-start;
               align-items: center;
               text-align: center;
               background: white;
+              padding-top: 0px;
             }
             .qr-container.template2 {
               flex-direction: row;
               text-align: left;
             }
             .qr-title {
-              font-size: 3rem;
+              font-size: 2rem;
               font-weight: bold;
-              margin-bottom: 20px;
+              margin: 0 auto 10px auto;
               color: #333;
+              text-align: center;
             }
             .qr-title.shelf-size {
               font-size: 1.5rem; /* 縮小一半 */
@@ -1230,26 +1270,31 @@ const executeBatchPrint = async (template = 'template1') => {
             .qr-subtitle {
               font-size: 2rem;
               color: #666;
-              margin-bottom: 30px;
+              margin: 0 auto 10px auto;
+              width: 70%;
+              text-align: center;
             }
             .qr-subtitle.shelf-size {
               font-size: 1rem; /* 縮小一半 */
             }
             .qr-image {
-              flex: 1;
+              flex: 0 0 auto;
               display: flex;
-              align-items: center;
+              align-items: flex-start;
               justify-content: center;
               width: 100%;
               height: 100%;
+              margin-top:1rem;
+              margin-bottom: -30px;
             }
             .qr-image.template2 {
               flex: 0 0 40%;
               justify-content: flex-start;
             }
             .qr-image img {
-              width: 100%;
+              width: 70%;
               height: 100%;
+              max-height: 60%;
               object-fit: contain;
             }
             .qr-details.template2 {
@@ -1267,20 +1312,32 @@ const executeBatchPrint = async (template = 'template1') => {
                 page-break-after: always; 
                 height: 100vh;
                 padding: 0;
+                border: none;
+                outline: none;
               }
               .qr-container { 
                 width: 100%;
                 height: 100%;
                 box-shadow: none;
+                border: none;
+                outline: none;
               }
               .qr-image img {
-                width: 100%;
+                width: 70%;
                 height: 100%;
+                max-height: 60%;
                 object-fit: contain;
+                border: none;
+                outline: none;
+              }
+              .qr-details {
+                border: none;
+                outline: none;
               }
             }
             @page {
-              size: 95mm 95mm;
+              size: ${template === 'template2' ? '40mm 30mm' : '95mm 95mm'};
+              margin: ${template === 'template2' ? '6mm' : '5mm'};
             }
           </style>
         </head>
@@ -1289,11 +1346,11 @@ const executeBatchPrint = async (template = 'template1') => {
             <div class="qr-page">
               <div class="qr-container ${template === 'template2' ? 'template2' : ''}">
                 <div class="qr-image ${template === 'template2' ? 'template2' : ''}">
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(location.qrData)}" alt="QR Code" />
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(transformLocationCode(location.qrData || location.code || location.location_code || ''))}" alt="QR Code" />
                 </div>
-                <div class="qr-details ${template === 'template2' ? 'template2' : ''}">
-                  <div class="qr-title ${location.storageType === 'Shelf' ? 'shelf-size' : ''}">${location.code}</div>
-                  <div class="qr-subtitle ${location.storageType === 'Shelf' ? 'shelf-size' : ''}">${location.name}</div>
+                <div class="qr-details ${template === 'template2' ? 'template2' : ''}" style="margin-top: -40px;">
+                  <div class="qr-title ${location.storageType === 'Shelf' ? 'shelf-size' : ''}">${transformLocationCode(location.code)}</div>
+              
                 </div>
               </div>
             </div>
@@ -1308,16 +1365,14 @@ const executeBatchPrint = async (template = 'template1') => {
       printWindow.document.write(printContent);
       printWindow.document.close();
 
-      // 等待圖片載入完成後執行列印
+      // 只顯示預覽，不自動列印
       printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-          
-          // 清空選取狀態
-          selectedLocations.value.clear();
-          showBatchPrintMode.value = false;
-        }, 1000);
+        // 預覽視窗載入完成，用戶可以在預覽中選擇列印
+        console.log('批次列印預覽視窗已載入完成');
+        
+        // 清空選取狀態（在預覽視窗打開後立即清空）
+        selectedLocations.value.clear();
+        showBatchPrintMode.value = false;
       };
     }
   } catch (error) {
@@ -1764,7 +1819,7 @@ onMounted(() => {
 
         <div class="text-center">
           <div class="mb-4">
-            <img :src="qrCodeUrl" alt="QR Code" class="mx-auto border" />
+            <img :src="qrCodeUrl" alt="QR Code" class="mx-auto" />
           </div>
           <p class="text-sm text-gray-600 mb-2">{{ selectedLocation?.code }}</p>
           <p class="text-sm text-gray-500">{{ selectedLocation?.name }}</p>
