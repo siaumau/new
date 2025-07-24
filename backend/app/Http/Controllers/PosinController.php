@@ -816,16 +816,16 @@ class PosinController extends Controller
             'purchase_orders' => 'required|array|min:1',
             'purchase_orders.*.order_number' => 'required|string',
             'purchase_orders.*.user_name' => 'required|string',
-            'purchase_orders.*.order_date' => 'required|date',
+            'purchase_orders.*.order_date' => 'nullable|date',
             'purchase_orders.*.expected_date' => 'nullable|date',
             'purchase_orders.*.notes' => 'nullable|string',
             'purchase_orders.*.item_id' => 'required|integer',
             'purchase_orders.*.item_batch' => 'required|string|max:20',
             'purchase_orders.*.item_count' => 'required|integer|min:1',
-            'purchase_orders.*.item_price' => 'required|numeric|min:0',
+            'purchase_orders.*.item_price' => 'nullable|numeric|min:0',
             'purchase_orders.*.item_expireday' => 'nullable|date',
             'purchase_orders.*.item_validyear' => 'nullable|integer',
-            'purchase_orders.*.itemtype' => 'required|integer'
+            'purchase_orders.*.itemtype' => 'nullable|integer'
         ]);
 
         DB::beginTransaction();
@@ -845,7 +845,7 @@ class PosinController extends Controller
                         'order_info' => [
                             'order_number' => $orderData['order_number'],
                             'user_name' => $orderData['user_name'],
-                            'order_date' => $orderData['order_date'],
+                            'order_date' => $orderData['order_date'] ?? now()->format('Y-m-d'),
                             'expected_date' => $orderData['expected_date'] ?? null,
                             'notes' => $orderData['notes'] ?? null,
                         ],
@@ -858,10 +858,10 @@ class PosinController extends Controller
                     'item_id' => $orderData['item_id'],
                     'item_batch' => $orderData['item_batch'],
                     'item_count' => $orderData['item_count'],
-                    'item_price' => $orderData['item_price'],
+                    'item_price' => $orderData['item_price'] ?? 0,
                     'item_expireday' => $orderData['item_expireday'] ?? null,
                     'item_validyear' => $orderData['item_validyear'] ?? null,
-                    'itemtype' => $orderData['itemtype']
+                    'itemtype' => $orderData['itemtype'] ?? 1
                 ];
             }
 

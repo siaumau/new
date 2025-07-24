@@ -4,7 +4,10 @@
       "Bash(php artisan migrate:*)",
       "Bash(php artisan:*)",
       "Bash(curl:*)",
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(tasklist:*)",
+      "Bash(npm run dev:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

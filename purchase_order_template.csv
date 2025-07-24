@@ -1,4 +1,4 @@
-order_number,user_name,order_date,expected_date,notes,item_id,item_batch,item_count,item_price,item_expireday,item_validyear,itemtype
-20250703 [0001],eric,2024-01-15,2024-01-20,pct101,1,PAT001,100,25.50,2025-12-31,2,1
-20250703 [0001],eric,2024-01-15,2024-01-20,pct102,2,PAT002,50,15.00,2025-06-30,1,1
-20250703 [0002],eric,2024-01-16,2024-01-25,pct103,3,PAT003,200,30.00,2025-12-31,2,1 
+order_number,user_name,notes,item_id,item_batch,item_count,item_expireday,item_validyear
+20250703 [0001],eric,pct101,1,PAT001,100,2025-12-31,2
+20250703 [0001],eric,pct102,2,PAT002,50,2025-06-30,1
+20250703 [0002],eric,pct103,3,PAT003,200,2025-12-31,2
