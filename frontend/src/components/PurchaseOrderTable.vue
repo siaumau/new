@@ -94,10 +94,10 @@ const fetchPurchaseOrders = async () => {
 const downloadTemplate = () => {
   // 根據 purchase_order_template.csv 的格式創建模板
   const csvContent = [
-    'order_number,user_name,order_date,expected_date,notes,item_id,item_batch,item_count,item_price,item_expireday,item_validyear,itemtype',
-    '2025-0703【0001】,eric,2025-06-15,2026-01-20,pct101,10,PAT001,100,25.50,2026-12-31,2,1',
-    '2025-0703【0001】,eric,2025-06-15,2026-01-20,pct102,22,PAT002,50,15.00,2026-06-30,1,1',
-    '2025-0703【0002】,eric,2025-06-16,2026-01-25,pct103,23,PAT003,200,30.00,2026-12-31,2,1'
+    'order_number,user_name,notes,item_id,item_batch,item_count,item_expireday,item_validyear',
+    '20250703 [0001],eric,pct101,1,PAT001,100,2025-12-31,2',
+    '20250703 [0001],eric,pct102,2,PAT002,50,2025-06-30,1',
+    '20250703 [0002],eric,pct103,3,PAT003,200,2025-12-31,2'
   ].join('\n');
 
   // 添加BOM以支援Excel正確顯示繁體中文
@@ -147,28 +147,51 @@ const handleFileImport = async (event) => {
       // 解析CSV行
       const columns = parseCSVLine(line);
 
-      if (columns.length < 12) {
-        alert(`第 ${i + 2} 行資料格式錯誤，請檢查CSV格式`);
+      if (columns.length < 8) {
+        alert(`第 ${i + 2} 行資料格式錯誤，請檢查CSV格式。期望8個欄位，實際${columns.length}個欄位`);
+        console.log('CSV行內容:', line);
+        console.log('解析結果:', columns);
         return;
       }
 
-      // 根據模板格式解析資料
-      const purchaseOrderData = {
-        order_number: columns[0].trim(),
-        user_name: columns[1].trim(),
-        order_date: columns[2].trim(),
-        expected_date: columns[3].trim(),
-        notes: columns[4].trim() || null,
-        item_id: parseInt(columns[5].trim()),
-        item_batch: columns[6].trim(),
-        item_count: parseInt(columns[7].trim()),
-        item_price: parseFloat(columns[8].trim()),
-        item_expireday: columns[9].trim(),
-        item_validyear: parseInt(columns[10].trim()),
-        itemtype: parseInt(columns[11].trim())
-      };
+      // 根據新模板格式解析資料 (order_number,user_name,notes,item_id,item_batch,item_count,item_expireday,item_validyear)
+      try {
+        // 清理可能的Excel格式問題
+        const cleanColumn = (col, index) => {
+          if (!col) return '';
+          let cleaned = col.trim();
+          // 處理Excel的###########顯示問題
+          if (cleaned.includes('#')) {
+            console.warn(`第 ${i + 2} 行第 ${index + 1} 欄位可能有Excel格式問題: ${cleaned}`);
+            cleaned = cleaned.replace(/#/g, '');
+          }
+          return cleaned;
+        };
 
-      purchaseOrdersData.push(purchaseOrderData);
+        const purchaseOrderData = {
+          order_number: cleanColumn(columns[0], 0),
+          user_name: cleanColumn(columns[1], 1),
+          notes: cleanColumn(columns[2], 2) || null,
+          item_id: parseInt(cleanColumn(columns[3], 3)),
+          item_batch: cleanColumn(columns[4], 4),
+          item_count: parseInt(cleanColumn(columns[5], 5)),
+          item_expireday: cleanColumn(columns[6], 6) || null,
+          item_validyear: cleanColumn(columns[7], 7) ? parseInt(cleanColumn(columns[7], 7)) : null
+        };
+
+        // 驗證必要欄位
+        if (!purchaseOrderData.order_number || !purchaseOrderData.user_name || 
+            isNaN(purchaseOrderData.item_id) || !purchaseOrderData.item_batch || 
+            isNaN(purchaseOrderData.item_count)) {
+          throw new Error(`第 ${i + 2} 行必要欄位缺失或格式錯誤`);
+        }
+
+        purchaseOrdersData.push(purchaseOrderData);
+      } catch (parseError) {
+        alert(`第 ${i + 2} 行資料解析錯誤: ${parseError.message}`);
+        console.error('解析錯誤詳情:', parseError, 'CSV行:', line, '解析欄位:', columns);
+        return;
+      }
     }
 
     // 批量匯入進貨單資料
