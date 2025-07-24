@@ -733,58 +733,61 @@ const generateAndDownloadHTML = async (qrCodes) => {
                 display: flex !important;
                 flex-direction: column !important;
                 align-items: center !important;
-                justify-content: center !important;
+                justify-content: flex-start !important;
                 width: 90mm !important;
                 height: 90mm !important;
-                padding: 8mm !important;
+                padding: 5mm !important;
                 box-sizing: border-box !important;
             }
             
             .qr-code {
                 flex: 0 0 auto !important;
-                margin-bottom: 6mm !important;
+                margin-bottom: 3mm !important;
                 text-align: center !important;
             }
             
             .qr-code img {
-                width: 35mm !important;
-                height: 35mm !important;
-            }
-            
-            .item-info {
-                flex: 1 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                text-align: center !important;
-                width: 100% !important;
+                width: 60mm !important;
+                height: 60mm !important;
             }
             
             .item-name {
                 text-align: center !important;
-                font-size: 12px !important;
+                font-size: 14px !important;
                 font-weight: bold !important;
-                margin-bottom: 4mm !important;
                 line-height: 1.2 !important;
+                width: 100% !important;
             }
             
-            .info-row {
-                margin: 1mm 0 !important;
-                padding: 0 !important;
-                font-size: 8px !important;
-                line-height: 1.1 !important;
-                justify-content: center !important;
+            .item-info {
+                flex: 1 !important;
+                width: 100% !important;
             }
             
-            .info-row .label-text,
-            .info-row .value {
-                font-size: 8px !important;
+            .info-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr 1fr !important;
+                gap: 1mm !important;
+                width: 100% !important;
             }
             
-            .label-number {
-                margin: 2mm 0 0 0 !important;
-                padding: 1mm !important;
+            .info-item {
+                display: flex !important;
+                flex-direction: column !important;
+                text-align: center !important;
                 font-size: 9px !important;
+                line-height: 1.1 !important;
+            }
+            
+            .info-item .label-text {
+                font-weight: normal !important;
+                color: #666 !important;
+                margin-bottom: 1mm !important;
+            }
+            
+            .info-item .value {
                 font-weight: bold !important;
+                color: #000 !important;
             }
         }
         
@@ -797,16 +800,16 @@ const generateAndDownloadHTML = async (qrCodes) => {
         
         .label {
             width: 100%;
-            min-height: 100vh;
             box-sizing: border-box;
             padding: 2rem;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             page-break-after: always;
             max-width: 400px;
             margin: 0 auto;
+            border-radius: 8px;
         }
         
         .label:last-child {
@@ -815,57 +818,55 @@ const generateAndDownloadHTML = async (qrCodes) => {
         
         .qr-code {
             flex: 0 0 auto;
-            margin-bottom: 2rem;
             text-align: center;
         }
         
         .qr-code img {
-            width: 200px;
-            height: 200px;
-        }
-        
-        .item-info {
-            flex: 1;
-            font-size: 1rem;
-            line-height: 1.4;
-            text-align: center;
-            width: 100%;
+            width: 300px;
+            height: 300px;
         }
         
         .item-name {
             font-size: 1.5rem;
             font-weight: bold;
-            margin-bottom: 1.5rem;
             color: #1f2937;
             text-align: center;
+            width: 100%;
         }
         
-        .info-row {
+        .item-info {
+            flex: 1;
+            width: 100%;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            width: 100%;
+        }
+        
+        .info-item {
             display: flex;
-            justify-content: space-between;
-            margin: 0.3rem 0;
-            padding: 0.3rem 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        .info-row .label-text {
-            font-weight: 600;
-            color: #374151;
-        }
-        
-        .info-row .value {
-            font-weight: 500;
-            color: #111827;
-        }
-        
-        .label-number {
-            font-size: 1.25rem;
-            font-weight: bold;
-            margin: 1.5rem 0;
-            padding: 1rem;
-            border-radius: 8px;
+            flex-direction: column;
             text-align: center;
+            background-color: #f9f9f9;
+            border-radius: 4px;
         }
+        
+        .info-item .label-text {
+            font-size: 12px;
+            font-weight: normal;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-item .value {
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+        }
+        
         
         .print-controls {
             position: fixed;
@@ -900,15 +901,24 @@ const generateAndDownloadHTML = async (qrCodes) => {
             }
             
             .qr-code img {
-                width: 150px;
-                height: 150px;
+                width: 300px;
+                height: 300px;
             }
             
             .item-name {
                 font-size: 1.2rem;
             }
             
-            .info-row {
+            .info-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.3rem;
+            }
+            
+            .info-item .label-text {
+                font-size: 0.8rem;
+            }
+            
+            .info-item .value {
                 font-size: 0.9rem;
             }
         }
@@ -924,36 +934,43 @@ const generateAndDownloadHTML = async (qrCodes) => {
     for (const qrCode of qrCodes) {
       htmlContent += `
     <div class="label">
-        <!-- 左側QR碼區域 -->
+        <!-- QR碼區域 -->
         <div class="qr-code">
             <img src="${qrCode.qrImage}" alt="QR Code ${qrCode.serial}" />
         </div>
         
-        <!-- 右側文字資訊區域 -->
+        <!-- 商品名稱 -->
+        <div class="item-name">${qrCode.item_info.item_name}</div>
+        
+        <!-- 商品資訊區域 - 兩欄式 -->
         <div class="item-info">
-            <div class="item-name">${qrCode.item_info.item_name}</div>
-            
-            <div class="info-row">
-                <span class="label-text">商品序號:</span>
-                <span class="value">${qrCode.item_info.item_sn}</span>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="label-text">商品序號:</span>
+                    <span class="value">${qrCode.item_info.item_sn}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label-text">有效期限:</span>
+                    <span class="value">${formatDate(qrCode.item_info.item_expireday)}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label-text">批號:</span>
+                    <span class="value">${qrCode.item_info.item_batch}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label-text">標籤:</span>
+                    <span class="value">${qrCodes.length}箱之${String(qrCode.serial).padStart(3, '0')}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label-text">箱入數:</span>
+                    <span class="value">${qrCode.item_info.item_inbox || 48}個</span>
+                </div>
+                ${qrCode.item_info.posin_note ? `
+                <div class="info-item">
+                    <span class="label-text">備註:</span>
+                    <span class="value">${qrCode.item_info.posin_note}</span>
+                </div>` : ''}
             </div>
-            <div class="info-row">
-                <span class="label-text">批號:</span>
-                <span class="value">${qrCode.item_info.item_batch}</span>
-            </div>
-            <div class="info-row">
-                <span class="label-text">箱入數:</span>
-                <span class="value">${qrCode.item_info.item_inbox || 48}個</span>
-            </div>
-            <div class="info-row">
-                <span class="label-text">有效期限:</span>
-                <span class="value">${formatDate(qrCode.item_info.item_expireday)}</span>
-            </div>
-            <div class="info-row">
-                <span class="label-text">標籤:</span>
-                <span class="value"> ${qrCodes.length}箱之${qrCode.serial}</span>
-            </div>
-            ${qrCode.item_info.posin_note ? `<div class="info-row"><span class="label-text">備註:</span><span class="value">${qrCode.item_info.posin_note}</span></div>` : ''}
         </div>
     </div>
 `
