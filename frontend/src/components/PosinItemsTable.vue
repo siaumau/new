@@ -717,7 +717,8 @@ const generateAndDownloadHTML = async (qrCodes) => {
     <style>
         @media print {
             @page {
-                size: 40mm 30mm;
+                size: 90mm 90mm;
+                margin: 0;
             }
             
             .page-break {
@@ -730,42 +731,60 @@ const generateAndDownloadHTML = async (qrCodes) => {
             
             .label {
                 display: flex !important;
-                flex-direction: row !important;
+                flex-direction: column !important;
                 align-items: center !important;
-                justify-content: flex-start !important;
+                justify-content: center !important;
+                width: 90mm !important;
+                height: 90mm !important;
+                padding: 8mm !important;
+                box-sizing: border-box !important;
             }
             
             .qr-code {
-                flex: 0 0 50% !important;
-                margin-right: 2rem !important;
+                flex: 0 0 auto !important;
+                margin-bottom: 6mm !important;
                 text-align: center !important;
             }
             
             .qr-code img {
-                width: 80% !important;
-                height: auto !important;
-                max-width: 300px !important;
+                width: 35mm !important;
+                height: 35mm !important;
             }
             
             .item-info {
                 flex: 1 !important;
                 display: flex !important;
                 flex-direction: column !important;
+                text-align: center !important;
+                width: 100% !important;
             }
             
             .item-name {
-                text-align: left !important;
+                text-align: center !important;
+                font-size: 12px !important;
+                font-weight: bold !important;
+                margin-bottom: 4mm !important;
+                line-height: 1.2 !important;
             }
             
             .info-row {
-                margin: 0.5rem 0 !important;
-                padding: 0.25rem 0 !important;
+                margin: 1mm 0 !important;
+                padding: 0 !important;
+                font-size: 8px !important;
+                line-height: 1.1 !important;
+                justify-content: center !important;
+            }
+            
+            .info-row .label-text,
+            .info-row .value {
+                font-size: 8px !important;
             }
             
             .label-number {
-                margin: 1rem 0 !important;
-                padding: 0.75rem !important;
-                font-size: 1.1rem !important;
+                margin: 2mm 0 0 0 !important;
+                padding: 1mm !important;
+                font-size: 9px !important;
+                font-weight: bold !important;
             }
         }
         
@@ -782,9 +801,12 @@ const generateAndDownloadHTML = async (qrCodes) => {
             box-sizing: border-box;
             padding: 2rem;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             page-break-after: always;
+            max-width: 400px;
+            margin: 0 auto;
         }
         
         .label:last-child {
@@ -792,36 +814,37 @@ const generateAndDownloadHTML = async (qrCodes) => {
         }
         
         .qr-code {
-            flex: 0 0 50%;
-            margin-right: 3rem;
+            flex: 0 0 auto;
+            margin-bottom: 2rem;
             text-align: center;
         }
         
         .qr-code img {
-            width: 80%;
-            height: auto;
-            max-width: 300px;
+            width: 200px;
+            height: 200px;
         }
         
         .item-info {
             flex: 1;
-            font-size: 1.125rem;
-            line-height: 1.6;
+            font-size: 1rem;
+            line-height: 1.4;
+            text-align: center;
+            width: 100%;
         }
         
         .item-name {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 1.5rem;
             color: #1f2937;
-            text-align: left;
+            text-align: center;
         }
         
         .info-row {
             display: flex;
             justify-content: space-between;
-            margin: 0.5rem 0;
-            padding: 0.5rem 0;
+            margin: 0.3rem 0;
+            padding: 0.3rem 0;
             border-bottom: 1px solid #e5e7eb;
         }
         
@@ -872,18 +895,21 @@ const generateAndDownloadHTML = async (qrCodes) => {
         /* 響應式設計 - 只在螢幕顯示時生效 */
         @media screen and (max-width: 600px) {
             .label {
-                flex-direction: column;
-                text-align: center;
+                padding: 1rem;
+                max-width: 100%;
             }
             
-            .qr-code {
-                flex: none;
-                margin-right: 0;
-                margin-bottom: 2rem;
+            .qr-code img {
+                width: 150px;
+                height: 150px;
             }
             
-            .item-info {
-                flex: none;
+            .item-name {
+                font-size: 1.2rem;
+            }
+            
+            .info-row {
+                font-size: 0.9rem;
             }
         }
     </style>
